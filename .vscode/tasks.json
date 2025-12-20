@@ -23,6 +23,16 @@
 				"reveal": "always",
 				"panel": "new"
 			}
+		},
+		{
+			"label": "Deploy Mod",
+			"type": "shell",
+			"command": "./deploy.ps1",
+			"dependsOn": "Build Papyrus (Release)",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			}
 		}
     ]
 }
