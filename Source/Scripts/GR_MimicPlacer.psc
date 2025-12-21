@@ -1,187 +1,180 @@
 Scriptname GR_MimicPlacer extends Quest Hidden 
 
-; Dependencies: Papyrus Utils AE/SE for JsonUtil.GetFormValue  -  https://www.nexusmods.com/skyrimspecialedition/mods/13048
-; PO3s Papyrus Extender             for adding XMarkers 
+String Config = "../MimicPlacer/AdvancedSettings.json"
+String DistributionConfig = "../MimicPlacer/Distribution.json"
 
-Bool VoreStarted = false
+; Boss Chests (Any form with Clutter\Ruins\Ruins_LargeChest)
+FormList Property LargeChestForms Auto  
 
-; ---- Base Game
+; Keep track of processed chest reference IDs so that each chest is only 
+; rolled for once to prevent re-rolling on cell load until every chest is 
+; a trap
+Int[] KnownChestsRingbuffer
+Int KCI
+Int KnownChestBufferSize
+
+; Base Game
 Actor PlayerRef
 Form XMarkerForm
 Form XMarkerHeadingForm
 
-; ---- Baka
-Faction VoreFaction
+; Error
 
+; TNTR Forms
 Keyword BakaMimicDispenseKeyword
 Keyword BakaMimicPosKeyword
-
 Form BakaMimicForm
 Form BakaTrapTriggerBoxForm
 
-; ---- "Boss Chest" Clutter\Ruins\Ruins_LargeChest	--- RefCount
-
-; High Hrothgar Chest -> Replace it with Snowy
-; HHChest01 "Chest" [CONT:00099D87] 					1
-
-; E3DemoTrollChest "Chest" [CONT:00099A50]				1
-; DEMODraugrChestLarge02 "Chest" [CONT:000BCD2C]		0
-; DEMODraugrChestLarge04 "Chest" [CONT:000BCD2F]		0
-; TreasAfflictedChestBoss "Chest" [CONT:0008EA5D]		0
-; TG04GulumEiKillChest "Chest" [CONT:000EF578]			1
-; TreasBanditChestBossEMPTY "Chest" [CONT:0007AA90] 	1
-; TreasWerewolfChestBoss "Chest" [CONT:00020661]    	2
-; TreasDraugrChestEMPTYLarge "Chest" [CONT:00020672] 	2
-; LargeChestNoRespawn "Chest" [CONT:000F8476]			2
-
-; ----
-; TreasCWImperialChestBossLarge "Chest" [CONT:0008B1F0] 3
-; TreasCWSonsChestBossLarge "Chest" [CONT:0008B1F1]		3
-; TreasOrcChestBoss "Chest" [CONT:000774C9]				5
-; TreasGiantChestBoss "Chest" [CONT:000774BF]			7
-; TreasForswornChestBoss "Chest" [CONT:00020658] 		8
-; TreasHagravenChestBoss "Chest" [CONT:00020667]		13
-; TreasVampireChestBoss "Chest" [CONT:00020664] 		14
-; TreasWarlockChestBoss "Chest" [CONT:0002065D]			22
-; TreasBanditChestBoss "Chest" [CONT:0002064F]			81
-; TreasDraugrChestBoss "Chest" [CONT:00020671]			67
-
-; ---- DLC
-; DLC2TreasRieklingChestBoss "Chest" [CONT:04025E46]	7
-; DLC2TreasBanditChestBoss "Chest" [CONT:0402AABF]		7
-; DLC2TreasDraugrChestBoss "Chest" [CONT:0402AAC2]		8
-
 Event OnInit()
+	KnownChestsRingbuffer = new Int[127]
+	KCI = 0
+	KnownChestBufferSize = 127
 	Maintenance()
 EndEvent
-
-ObjectReference Function GetNearestViableContainer()
-	ObjectReference foundRef = Game.FindClosestReferenceOfType(Game.GetForm(0x2064F), PlayerRef.GetPositionX(), PlayerRef.GetPositionY(), PlayerRef.GetPositionZ(), 500.0)
- 	return foundRef
-EndFunction
-
-ObjectReference Function GetNextViableContainers()
-	ObjectReference foundRef = Game.FindRandomReferenceOfTypeFromRef(Game.GetForm(0x2064F), PlayerRef, 4000.0)
- 	return foundRef
-EndFunction
 
 Function Maintenance()
 	PlayerRef = Game.GetPlayer()
 	XMarkerForm = Game.GetForm(0x3B)
 	XMarkerHeadingForm = Game.GetForm(0x34)
 
-	Spell debugSpell = Game.GetFormFromFile(0xAA01, "GR_MimicPlacer.esp") as Spell
-	If !Game.GetPlayer().HasSpell(debugSpell)
-		Game.GetPlayer().AddSpell(debugSpell)
+	If JsonUtil.GetIntValue(Config, "add-debug-spell") == 1
+	    Spell debugSpell = Game.GetFormFromFile(0xAA01, "GR_MimicPlacer.esp") as Spell
+	    If !Game.GetPlayer().HasSpell(debugSpell)
+			Game.GetPlayer().AddSpell(debugSpell)
+	    EndIf
 	EndIf
 
-    VoreFaction = Game.GetFormFromFile(0xE05, "TNTR.esp") as Faction
-    If !VoreFaction
-        Debug("VoreAction not found for configured formID")
-    EndIf
-
-	BakaMimicForm = Game.GetFormFromFile(0x8e0, "TNTR.esp")
+	String explanation = "Mimic placament & fixing will not work, adapt AdvancedSettings.json with correct form IDs..."
+	BakaMimicForm = JsonUtil.GetFormValue(Config, "mimic")
 	If !BakaMimicForm
-        Debug("BakaMimicForm not found for configured formID")
+        Error("BakaMimicForm not found. " + explanation)
 	EndIf
 
-	BakaTrapTriggerBoxForm = Game.GetFormFromFile(0x83E, "TNTR.esp")
+	BakaTrapTriggerBoxForm = JsonUtil.GetFormValue(Config, "trap-trigger-box")
 	If !BakaTrapTriggerBoxForm
-        Debug("BakaTrapTriggerBoxForm not found for configured formID")
+        Error("BakaTrapTriggerBoxForm not found. " + explanation)
 	EndIf
 
-	BakaMimicDispenseKeyword = Game.GetFormFromFile(0xDFE, "TNTR.esp") as Keyword
+	BakaMimicDispenseKeyword = JsonUtil.GetFormValue(Config, "mimic-dispense-keyword") as Keyword
 	If !BakaMimicDispenseKeyword
-        Debug("MimicDispenseKeyword not found for configured formID")
+        Error("MimicDispenseKeyword not found. " + explanation)
 	EndIf
 
-	BakaMimicPosKeyword = Game.GetFormFromFile(0x8F2, "TNTR.esp") as Keyword
+	BakaMimicPosKeyword = JsonUtil.GetFormValue(Config, "mimic-pos-keyword") as Keyword
 	If !BakaMimicPosKeyword
-        Debug("BakaMimicPosKeyword not found for configured formID")
+        Error("BakaMimicPosKeyword not found. " + explanation)
 	EndIf
-
-    RegisterForAnimationEvent(PlayerRef, "MimicVoreSpitLoop")
-    RegisterForAnimationEvent(PlayerRef, "DeathWormVoreSuccessLoop")
-
-	; SnareRopeActivateLoop
-	; SnareRopeUndoSelfFailEvent
-
-	RegisterForModEvent("GRMP_VoreStarted", "OnVoreEvent")
-	RegisterForModEvent("GRMP_VoreSuccess", "OnVoreEvent")
-	RegisterForModEvent("GRMP_VoreFail", "OnVoreEvent")
-	
-    UnregisterForUpdate()
-    RegisterForSingleUpdate(2.0)
 
 	Debug("maintenance done")
 EndFunction
+	
+Function PrepareCell()
+	Debug.Notification("Preparing cell...")
+	int maxRounds = JsonUtil.GetIntValue(DistributionConfig, "scan-rounds")
+	Float scanRadius = JsonUtil.GetFloatValue(DistributionConfig, "scan-radius")
+	Float mimicChance = JsonUtil.GetFloatValue(DistributionConfig, "mimic-chance")
+	Debug("PrepareCell: rounds=" + maxRounds + " scan-radius=" + scanRadius + " mimic-chance=" + mimicChance)
 
-Event OnVoreEvent(String eventName, String strArg, Float numArg, Form sender)
-	Debug("AE" + eventName)
-EndEvent
+	; Int[] processed = new int[1]
+	int rounds = maxRounds
+	While rounds > 0
+		ObjectReference foundRef = Game.FindRandomReferenceOfAnyTypeInListFromRef(LargeChestForms, PlayerRef, scanRadius)
+		If foundRef
+			Int foundFormId = foundRef.GetFormID()
+		
+			If KnownChestsRingbuffer.Find(foundFormId) < 0 && !foundRef.IsDisabled() ; Should be always true
+				KnownChestsRingbuffer[ KCI ] = foundFormId
+				KCI += 1
+				If KCI >= KnownChestBufferSize
+					KCI = 0
+				EndIf
 
-Function OnAnimationEvent(objectreference akSource, String asEventName) 
-    Debug.MessageBox("MQ Anim " + asEventName)
+				Debug("Chest " + (foundRef as Form) + " viable for replacement")
+
+					Float roll = Utility.RandomFloat()
+					Debug("roll=" + roll)
+					If roll < mimicChance
+						Debug.Notification("Mimic created")
+						ReplaceWithMimic(foundRef, Utility.RandomInt(1,3))
+					EndIf
+				; EndIf
+			Else 
+				Debug("Chest " + (foundRef as Form) + " int=(" + foundRef.GetFormID() + ") already processed")
+			EndIf
+			rounds -= 1
+		Else
+			Debug("Nothing found")
+			rounds = 0
+		EndIf
+
+	EndWhile
 EndFunction
 
-Bool mimicObserved = false
-Event OnUpdate()
-	BakaTrapMimic mimicTrap = Game.FindClosestReferenceOfType(BakaMimicForm, PlayerRef.GetPositionX(), PlayerRef.GetPositionY(), PlayerRef.GetPositionZ(), 200.0) as BakaTrapMimic
-	If !mimicTrap
-		mimicObserved = false
-	EndIf
-	If mimicTrap && ! mimicObserved
-		mimicObserved = true
-		Debug("Observing FormId Ref " + mimicTrap.GetFormID())
-		RegisterForAnimationEvent(mimicTrap, "TriggerVoreStart")
-		RegisterForAnimationEvent(mimicTrap, "TriggerVoreInstant")
-		RegisterForAnimationEvent(mimicTrap, "TriggerMimicShake")
-		RegisterForAnimationEvent(mimicTrap, "TriggerMimicThrowup")
-		RegisterForAnimationEvent(mimicTrap, "TriggerVoreSpit")
-		RegisterForAnimationEvent(mimicTrap, "TriggerVoreMimicBurp")
-		RegisterForAnimationEvent(mimicTrap, "TriggerVoreSexA01")
-		RegisterForAnimationEvent(mimicTrap, "TriggerVoreSexA02")
-	EndIf
+Function FixMimicsInCell()
+	Debug("Fixing mimics without markers...")
+	int rounds = 8
+	float scanDistance = 4000.0
+	int[] processed = new int[1]
+	While rounds > 0
+		BakaTrapMimic mimic = Game.FindRandomReferenceOfTypeFromRef(BakaMimicForm, PlayerRef, scanDistance) as BakaTrapMimic
+		If mimic
+			If processed.Find(mimic.GetFormID()) < 0
+				PapyrusUtil.PushInt(processed, mimic.GetFormID())
+				Form f1 = mimic.GetNthLinkedRef(1) as BakaTrapTriggerBox
+				Form f2 = mimic.GetLinkedRef(BakaMimicDispenseKeyword)
+				Form f3 = mimic.GetLinkedRef(BakaMimicPosKeyword)
+				If f1 == None || f2 == None || f3 == None
+					Debug("Mimic " + mimic.GetFormID() + " needs fixing: " + f1 + "," + f2 + "," + f3)
+					FixMimic(mimic)
+				Else
+					Debug("Mimic is fine: " + (mimic as Form))
+				EndIf
+				rounds -= 1
+			Else
+				Debug("already processed")
+			EndIf
+		Else
+			Debug("Nothing found")
+			rounds = 0
+		EndIf
+	EndWhile
+EndFunction
 
-    If (PlayerRef.IsInFaction(VoreFaction))
-        If !VoreStarted
-			VoreStarted = true
-			SendModEvent("GRMP_VoreStarted")
-        Else
-            Debug.Trace("Still in vore")
-        EndIf
-    Else
-        If (VoreStarted)
-			VoreStarted = false
-			SendModEvent("GRMP_VoreFail")
-        Else
-            Debug.Trace("Not in faction")
-        EndIf
-    EndIf
-    RegisterForSingleUpdate(2.0)
-EndEvent
+; Types: 1: Vore, 2: Sex, 3: Instant-Vore
+Function ReplaceWithMimic(ObjectReference chest, Int mimicType)
+	Debug("Replacing chest with mimic... " + chest + " type=" + mimicType)
+	chest.DisableNoWait()
+	BakaTrapMimic mimic = chest.PlaceAtMe(BakaMimicForm) as BakaTrapMimic
+	mimic.MimicType = mimicType
+	FixMimic(mimic)
 
-ObjectReference Function ReplaceWithMimic(ObjectReference target)
-	target.DisableNoWait()
-	ObjectReference mimic = target.PlaceAtMe(BakaMimicForm)
+	; TODO Hotfix nearby sling traps?
+EndFunction
 
+ObjectReference Function FixMimic(ObjectReference mimic)
 	BakaTrapTriggerBox box = mimic.PlaceAtMe(BakaTrapTriggerBoxForm) as BakaTrapTriggerBox
-	box.TrapType = 2 ; 2 => Mimic
+	box.TrapType = 2 ; Always 2 for Mimic
 	box.VoreTrapref = mimic
 	PO3_SKSEFunctions.SetLinkedRef(mimic, box)
 	Debug("Placed trigger box " + box)
 
 	ObjectReference DispenseXmarker = mimic.PlaceAtMe(XMarkerForm)
 	ObjectReference x = PO3_SKSEFunctions.SetLinkedRef(mimic, DispenseXmarker, BakaMimicDispenseKeyword)
-	Debug("Placed Dispense Marker " + x)
+	Debug("DispenseXMarker " + (DispenseXmarker as Form) )
 
 	ObjectReference PosXmarker = mimic.PlaceAtMe(XMarkerHeadingForm) 
 	x = PO3_SKSEFunctions.SetLinkedRef(mimic, PosXmarker, BakaMimicPosKeyword)
-	Debug("Placed Position Marker " + x)
+	Debug("PositionXMarker " + (PosXmarker as Form))
 	return mimic
 EndFunction
 
 Function Debug(String msg)
 	Debug.Trace("[GRMP] " + msg)
-	Debug.Notification("[GRMP] " + msg)
+	; Debug.Notification("[GRMP] " + msg)
 EndFunction
+
+Function Error(String err)
+	Debug.Trace("[GRMP] ERROR " + err)
+EndFunction
+

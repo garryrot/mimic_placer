@@ -1,0 +1,9 @@
+{
+    "int": {
+        "scan-rounds": 10
+    },
+    "float": {
+        "scan-radius": 4000.0,
+        "mimic-chance": 0.2
+    }
+}

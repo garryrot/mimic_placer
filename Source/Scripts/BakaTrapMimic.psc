@@ -206,6 +206,7 @@ Function FireVoreInstantTrap()
 	actorref.SheatheWeapon()
 	SetCoordinates(actorref)
 	wait( initialDelay )
+	SendModEvent("Mimic_StruggleFail")
 	PlayAnimation("TriggerVoreInstant")
 	actorref.playidle(MimicVoreInstant)
 	WaitForAnimationEvent("TransVoreInstant")
@@ -232,6 +233,7 @@ Function FireVoreSimpleTrap()
 	actorref.addtofaction(MimicVoreDefaultFaction);for oar
 	SetCoordinates(actorref)
 	wait( initialDelay )
+	SendModEvent("Mimic_StruggleStart")
 	PlayAnimation("TriggerVoreStart")
 	actorref.playidle(MimicVoreStart)
 	WaitForAnimationEvent("TransVoreStart")
@@ -257,6 +259,7 @@ Function FireVoreSexTrap()
 	actorref.SheatheWeapon()
 	SetCoordinates(actorref)
 	wait( initialDelay )
+	SendModEvent("Mimic_StruggleStart")
 	PlayAnimation("TriggerVoreStart")
 	actorref.playidle(MimicVoreStart)
 	PlayVoice(ActorRef, 30, 50, 3.0)
@@ -996,11 +999,11 @@ Function ResolveLeveledDamage()
 EndFunction
 
 Function PlayVoice(actor akactor, int VoiceStrength = 80, int numcount = 1, float interval = 3.5)
-	icount = numcount
-	finterval = interval
-	iVoiceStrength = VoiceStrength
-	VoiceActor = akactor
-	Registerforsingleupdate(0.1)
+icount = numcount
+finterval = interval
+iVoiceStrength = VoiceStrength
+VoiceActor = akactor
+Registerforsingleupdate(0.1)
 EndFunction
 
 Function PlayVoiceInstantStop()

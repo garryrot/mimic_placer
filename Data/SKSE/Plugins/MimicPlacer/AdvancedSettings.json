@@ -1,0 +1,11 @@
+{
+    "int": {
+        "add-debug-spell": 1
+    },
+    "form": {
+        "mimic": "0x8e0|TNTR.esp",
+        "trap-trigger-box": "0x83E|TNTR.esp",
+        "mimic-dispense-keyword": "0xDFE|TNTR.esp",
+        "mimic-pos-keyword": "0x8F2|TNTR.esp"
+    }
+}
