@@ -64,7 +64,6 @@ String Property TNTRRemoveLowerFormList = "tntr.removelower" autoreadonly hidden
 String Property TNTRRemoveSkirtFormList = "tntr.removeskirt" autoreadonly hidden
 String Property TNTRRemoveUpperFormList = "tntr.removeupper" autoreadonly hidden
 
-
 int Xaxis
 int Yaxis
 
@@ -206,10 +205,10 @@ Function FireVoreInstantTrap()
 	actorref.SheatheWeapon()
 	SetCoordinates(actorref)
 	wait( initialDelay )
-	SendModEvent("Mimic_StruggleFail")
 	PlayAnimation("TriggerVoreInstant")
 	actorref.playidle(MimicVoreInstant)
 	WaitForAnimationEvent("TransVoreInstant")
+	SendModEvent("Mimic_VoreStart", "", 3.0)
 	actorref.playidle(MimicVoreIdle)
 	Wait(1.0)
 	(GetNthLinkedRef(1) as BakaTrapTriggerBox).DesignateTarget(actorref)
@@ -233,7 +232,7 @@ Function FireVoreSimpleTrap()
 	actorref.addtofaction(MimicVoreDefaultFaction);for oar
 	SetCoordinates(actorref)
 	wait( initialDelay )
-	SendModEvent("Mimic_StruggleStart")
+	SendModEvent("Mimic_StruggleStart", "", MimicType as Float)
 	PlayAnimation("TriggerVoreStart")
 	actorref.playidle(MimicVoreStart)
 	WaitForAnimationEvent("TransVoreStart")
@@ -259,7 +258,7 @@ Function FireVoreSexTrap()
 	actorref.SheatheWeapon()
 	SetCoordinates(actorref)
 	wait( initialDelay )
-	SendModEvent("Mimic_StruggleStart")
+	SendModEvent("Mimic_StruggleStart", "", MimicType as Float) ; <------------------
 	PlayAnimation("TriggerVoreStart")
 	actorref.playidle(MimicVoreStart)
 	PlayVoice(ActorRef, 30, 50, 3.0)
@@ -276,6 +275,7 @@ Function FailVore()
 	PlayVoiceInstantStop()
 	PlayAnimation("TransVoreLooptoFail")
 	actorref.playidle(MimicVoreEndFail)
+	SendModEvent("Mimic_StruggleSuccess", "", MimicType as Float) ; <------------------
 	WaitForAnimationEvent("TransVoreEndFail")
 	if RemoveHeel
 		(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
@@ -322,15 +322,16 @@ EndFunction
 Function SuccessVore()
 	PlayVoiceInstantStop()
 	actorref.moveto(PosXmarker)
+	SendModEvent("Mimic_StruggleFail", "", MimicType as Float) ; <------------------
 	;actorref.MoveTo(self, rMoveX, rMoveY, rMoveZ)
 	if actorref.isinfaction(MimicVoreDefaultFaction)
 		PlayAnimation("TransVoreLooptoSuccessDefault")
 		actorref.playidle(MimicVoreEndSuccessDefault)
 		WaitForAnimationEvent("TransVoreEndSuccessDefault")
+		SendModEvent("Mimic_VoreStart", "", MimicType as Float) ; <-----------------------
 		actorref.playidle(MimicVoreIdle)
 	else
 		form thisarmor = (TNTRController as TNTRControllerScript).FindArmorFromList(actorref, "tntr.removelower", false)
-		
 		PlayVoice(ActorRef, 30, 4, 2.0)
 		PlayAnimation("TransVoreLooptoSuccess")
 		actorref.playidle(MimicVoreEndSuccess)
@@ -344,6 +345,7 @@ Function SuccessVore()
 		(TNTRController as TNTRControllerScript).InflationEventcustom(actorref, 2, 10.0)
 		PlayVoice(ActorRef, 40, 3, 3.0)
 		Wait(20.0)
+		SendModEvent("Mimic_VoreStart", "", MimicType as Float) ; <-----------------------
 		PlayAnimation("TransVoreEndSuccessLoop")
 		actorref.playidle(MimicVoreStage02Preface)
 		WaitForAnimationEvent("TransVoreStage02Preface");This goes to VoreInert state
@@ -393,6 +395,7 @@ State VoreQTEStage01
 		if !banimating
 			banimating = true
 			playAnimationAndWait("TriggerMimicShake","TransMimicShake01")
+			SendModEvent("Mimic_VoreStruggle", "", MimicType as Float) ; <---------------------------------------------
 			banimating = false
 		endif
 	EndFunction
@@ -407,6 +410,7 @@ State VoreQTEStage01
 		Wait(3.0)
 		PlayAnimation("TriggerVoreSpit")
 		actorref.playidle(MimicVoreSpit)
+		SendModEvent("Mimic_VoreEnd", "", MimicType as Float) ; <---------------------------------------------
 		WaitForAnimationEvent("TransPlay")
 		if RemoveHeel
 			(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
@@ -420,6 +424,7 @@ State VoreQTEStage01
 		while banimating
 			Wait(1.0)
 		endwhile
+		SendModEvent("Mimic_VoreContinue", "", MimicType as Float) ; <---------------------------------------------
 		playAnimationAndWait("TriggerMimicShake","TransMimicShake01")
 		(TNTRController as TNTRControllerScript).Getnaked(actorref, true, true)
 		PlayVoice(ActorRef, 40, 3, 3.0)
@@ -443,6 +448,7 @@ State VoreQTEStage02
 		if !banimating
 			banimating = true
 			playAnimationAndWait("TriggerMimicShake","TransMimicShake01")
+			SendModEvent("Mimic_VoreStruggle", "", MimicType as Float) ; <---------------------------------------------
 			banimating = false
 		endif
 	EndFunction
@@ -457,6 +463,7 @@ State VoreQTEStage02
 		Wait(3.0)
 		PlayAnimation("TriggerVoreSpit")
 		actorref.playidle(MimicVoreSpit)
+		SendModEvent("Mimic_VoreEnd", "", MimicType as Float) ; <---------------------------------------------
 		WaitForAnimationEvent("TransPlay")
 		if RemoveHeel
 			(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
@@ -471,14 +478,18 @@ State VoreQTEStage02
 			Wait(1.0)
 		endwhile
 		if actorref.isinfaction(MimicVoreDefaultFaction)
-			playAnimationAndWait("TriggerMimicBurp","TransMimicBurp");Digestion complete
-
-			PlayAnimation("TriggerVoreSpit");This is test so it doesn't actually kill the actor.
+			playAnimation("TriggerMimicBurp") ;Digestion complete ; playAnimationAndWait("TriggerMimicBurp","TransMimicBurp")
+			
+			SendModEvent("Mimic_VoreDeath", "", MimicType as Float) ; <---------------------------------------------
+			Wait(10.0)
+			PlayAnimation("TriggerVoreSpit") ;This is test so it doesn't actually kill the actor.
 			actorref.playidle(MimicVoreSpit)
 			
-			;actorref.kill()
+			; actorref.kill()
 			
+			SendModEvent("Mimic_VoreEnd", "", MimicType as Float) ; <---------------------------------------------
 			WaitForAnimationEvent("TransPlay")
+
 			if RemoveHeel
 				(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
 			endif
@@ -489,6 +500,8 @@ State VoreQTEStage02
 			(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 1)
 			(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 2)
 			PlayVoice(ActorRef, 30, 30, 4.0)
+			
+			SendModEvent("Mimic_VoreContinue", "", MimicType as Float) ; <---------------------------------------------
 			PlayAnimation("TriggerVoreStage02Start");Phase 02 start
 			actorref.playidle(MimicVoreStage02Start)
 			WaitForAnimationEvent("TransVoreStage02Start")
@@ -519,6 +532,7 @@ State VoreQTEStage03
 		if !banimating
 			banimating = true
 			playAnimationAndWait("TriggerMimicShake","TransMimicShake01")
+			SendModEvent("Mimic_VoreStruggle", "", MimicType as Float) ; <---------------------------------------------
 			banimating = false
 		endif
 	EndFunction
@@ -533,6 +547,7 @@ State VoreQTEStage03
 		Wait(3.0)
 		PlayAnimation("TriggerVoreSpit")
 		actorref.playidle(MimicVoreSpit)
+		SendModEvent("Mimic_VoreEnd", "", MimicType as Float) ; <---------------------------------------------
 		WaitForAnimationEvent("TransPlay")
 		if RemoveHeel
 			(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
@@ -551,6 +566,7 @@ State VoreQTEStage03
 		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 2)
 		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 3)
 
+		SendModEvent("Mimic_VoreContinue", "", MimicType as Float) ; <---------------------------------------------
 		Wait(5.0)
 		PlayVoice(ActorRef, 80, 20, 3.0)
 		PlayAnimation("TriggerVoreSexA01")
@@ -582,6 +598,7 @@ State VoreQTEStage04
 		if !banimating
 			banimating = true
 			playAnimationAndWait("TriggerMimicShake","TransMimicShake01")
+			SendModEvent("Mimic_VoreStruggle", "", MimicType as Float) ; <---------------------------------------------
 			banimating = false
 		endif
 	EndFunction
@@ -596,6 +613,7 @@ State VoreQTEStage04
 		Wait(3.0)
 		PlayAnimation("TriggerVoreSpit")
 		actorref.playidle(MimicVoreSpit)
+		SendModEvent("Mimic_VoreEnd", "", MimicType as Float) ; <---------------------------------------------
 		WaitForAnimationEvent("TransPlay")
 		if RemoveHeel
 			(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
@@ -613,6 +631,7 @@ State VoreQTEStage04
 		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 1)
 		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 2)
 		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 3)
+		SendModEvent("Mimic_VoreContinue", "", MimicType as Float) ; <---------------------------------------------
 
 		Wait(5.0)
 		PlayVoice(ActorRef, 80, 20, 3.0)
@@ -640,6 +659,7 @@ State VoreQTEStage04
 		
 		PlayAnimation("TriggerVoreSpit")
 		actorref.playidle(MimicVoreSpit)
+		SendModEvent("Mimic_VoreEnd", "", MimicType as Float) ; <---------------------------------------------
 		WaitForAnimationEvent("TransPlay")
 		if RemoveHeel
 			(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
@@ -675,7 +695,8 @@ State VoreInstantQTE
 		SetMorphValueZero()
 		Wait(3.0)
 		PlayAnimation("TriggerVoreSpit")
-		actorref.playidle(MimicVoreSpit)
+		actorref.playidle(MimicVoreSpit)		
+		SendModEvent("Mimic_VoreEnd", "", MimicType as Float) ; <---------------------------------------------
 		WaitForAnimationEvent("TransPlay")
 		if RemoveHeel
 			(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
@@ -689,6 +710,8 @@ State VoreInstantQTE
 		PrefaceVorePhase02()
 		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 3)
 		Wait(5.0)
+		SendModEvent("Mimic_VoreContinue", "", MimicType as Float) ; <---------------------------------------------
+	
 		PlayVoice(ActorRef, 80, 20, 3.0)
 		PlayAnimation("TriggerVoreStage02Success")
 		actorref.playidle(MimicVoreStage02Success)
@@ -715,14 +738,13 @@ State VoreInstantQTE
 		
 		PlayAnimation("TriggerVoreSpit")
 		actorref.playidle(MimicVoreSpit)
+		SendModEvent("Mimic_VoreEnd", "", MimicType as Float) ; <---------------------------------------------
 		WaitForAnimationEvent("TransPlay")
 		if RemoveHeel
 			(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
 		endif
 		ResetTrap()
 	EndFunction
-
-
 EndState
 
 Event onReset()

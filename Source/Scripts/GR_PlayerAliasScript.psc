@@ -1,19 +1,23 @@
 Scriptname GR_PlayerAliasScript extends ReferenceAlias
 
-Event OnPlayerLoadGame()
-    GR_MimicPlacer mainQuest = GetOwningQuest() as GR_MimicPlacer
-    if mainQuest
-        mainQuest.Maintenance()
+GR_MimicPlacer Property lib Auto
 
-        ; Diamonds are forever but PO3_SKSEFunctions.SetLinkedRef  
-        ; is temporary so we need to prepare the mimics on every reload
-        ; mainQuest.FixMimicsInCell() 
-        mainQuest.FixMimicsInCell()
-    endif
+Event OnPlayerLoadGame()
+    If !lib
+        lib = GetOwningQuest() as GR_MimicPlacer
+    EndIf
+    lib.Debug("OnPlayerLoadGame()")
+    lib.Maintenance()
+    RegisterForSingleUpdate(0.75)
+
+    (GetOwningQuest() as GR_MimicConsequences).Maintenance()
 EndEvent
 
 Event OnCellLoad()
-    GR_MimicPlacer mainQuest = GetOwningQuest() as GR_MimicPlacer
-    mainQuest.PrepareCell()
-    mainQuest.FixMimicsInCell()
+    RegisterForSingleUpdate(0.75)
 EndEvent
+
+Event OnUpdate()
+    (GetOwningQuest() as GR_MimicPlacer).ProcessCell()
+EndEvent
+
