@@ -1,5 +1,8 @@
 Scriptname BakaTrapMimic extends BakaMovingTrap  
 
+{ This is a 'patched' version of bakas original mimic introducing
+  some events }
+
 import debug
 import utility
 
