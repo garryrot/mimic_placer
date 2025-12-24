@@ -31,32 +31,6 @@ bool property StartOpen = True Auto
 globalVariable property LightFootTriggerPercent auto
 actor property playerRef Auto
 
-; MimicVoreDefaultFaction "MimicVoreDefaultFaction" [FACT:05000E05]
-; MimicVoreEndFail [IDLE:050008E4]
-; MimicVoreEndSuccess [IDLE:050008E5]
-; MimicVoreEndSuccessDefault [IDLE:05000E06]
-; MimicVoreEndSuccessLoop [IDLE:050008E6]
-; MimicVoreGetUpAfterSpit [IDLE:05000D68]
-; MimicVoreIdle [IDLE:050008EF]
-; MimicVoreInstant [IDLE:05000D67]
-; MimicVoreLoop [IDLE:050008E3]
-; MimicVoreSexEnter [IDLE:0503DB28]
-; MimicVoreSexLoop [IDLE:0503DB29]
-; MimicVoreSexStop [IDLE:0503DB2A]
-; MimicVoreSpit [IDLE:050008F0]
-; MimicVoreStage02EndPreface [IDLE:050008EA]
-; MimicVoreStage02Fail [IDLE:050008EB]
-; MimicVoreStage02Finale [IDLE:050008EE]
-; MimicVoreStage02Loop [IDLE:050008E9]
-; MimicVoreStage02Preface [IDLE:050008E7]
-; MimicVoreStage02Start [IDLE:050008E8]
-; MimicVoreStage02Success [IDLE:050008EC]
-; MimicVoreStage02SuccessLoop [IDLE:050008ED]
-; MimicVoreStart [IDLE:050008E2]
-
-; TNTRController "TNTRController" [QUST:0500086A]
-; TNTRDoNothing [PACK:05000885]
-
 idle property MimicVoreStart auto
 idle property MimicVoreLoop auto
 idle property MimicVoreEndFail auto
@@ -104,68 +78,50 @@ float finterval
 int icount
 int iVoiceStrength
 
-; Base Variables - MovingTrap ------------------------------
-
-; bool property isLoaded = True auto hidden
-; bool property isFiring = False auto hidden
-; 
-; int property LvlThreshold1 auto
-; int property LvlDamage1 auto
-; int property LvlThreshold2 auto
-; int property LvlDamage2 auto
-; int property LvlThreshold3 auto
-; int property LvlDamage3 auto
-; int property LvlThreshold4 auto
-; int property LvlDamage4 auto
-; int property LvlThreshold5 auto
-; int property LvlDamage5 auto
-; int property LvlDamage6 auto
-
-; Base Base Variables - BaseTrap ------------------------------
-
-; bool property init auto hidden				; This should not be set by the user
-; bool property trapDisarmed auto	hidden	; This should not be set by the user
-; bool property loop auto hidden				; This should not be set by the user
-; objectReference property lastActivateRef auto hidden
-; 
-; bool Property fireOnlyOnce auto	;This should be set by the user
-; sound property WindupSound auto ;Played when winding up or releasing trap
-; ;sound Property TrapHitSound auto ;Played when the trap hits something
-; ;int property trapPushBack auto 		;push back impulse provided by the trap
-; 
-; bool property overrideLoop = False auto hidden
-; 
-; int Property TrapLevel = 1 auto
-; ; Used to determine the difficulty of the trap, currently only tied to damage
-; ; 	0 = Easy
-; ; 	1 = Medium (DEFAULT)
-; ; 	2 = Hard
-; ; 	3 = VeryHard
-; 	
-; int Property damage auto hidden
-;
-
-; ------------------------------------------------------------------------------
-
 ; ############################ My Snippets ################
 
-ObjectReference __dispenseXMarker
+; MimicVoreDefaultFaction "MimicVoreDefaultFaction" [FACT:05000E05]
+; MimicVoreEndFail [IDLE:050008E4]
+; MimicVoreEndSuccess [IDLE:050008E5]
+; MimicVoreEndSuccessDefault [IDLE:05000E06]
+; MimicVoreEndSuccessLoop [IDLE:050008E6]
+; MimicVoreGetUpAfterSpit [IDLE:05000D68]
+; MimicVoreIdle [IDLE:050008EF]
+; MimicVoreInstant [IDLE:05000D67]
+; MimicVoreLoop [IDLE:050008E3]
+; MimicVoreSexEnter [IDLE:0503DB28]
+; MimicVoreSexLoop [IDLE:0503DB29]
+; MimicVoreSexStop [IDLE:0503DB2A]
+; MimicVoreSpit [IDLE:050008F0]
+; MimicVoreStage02EndPreface [IDLE:050008EA]
+; MimicVoreStage02Fail [IDLE:050008EB]
+; MimicVoreStage02Finale [IDLE:050008EE]
+; MimicVoreStage02Loop [IDLE:050008E9]
+; MimicVoreStage02Preface [IDLE:050008E7]
+; MimicVoreStage02Start [IDLE:050008E8]
+; MimicVoreStage02Success [IDLE:050008EC]
+; MimicVoreStage02SuccessLoop [IDLE:050008ED]
+; MimicVoreStart [IDLE:050008E2]
+; TNTRController "TNTRController" [QUST:0500086A]
+; TNTRDoNothing [PACK:05000885]
+
+; Support for not previously set up dispense-markers
 ObjectReference Function GetDispenseMarker()
-    If !__dispenseXMarker
-	    __dispenseXMarker = PlaceAtMe(Game.GetForm(0x3B)) ; XMarker
+    If !DispenseXmarker
+	    DispenseXmarker = PlaceAtMe(Game.GetForm(0x3B)) ; XMarker
     EndIf
-    return __dispenseXMarker
+    return DispenseXmarker
 EndFunction
 
-ObjectReference __posMarker
+; Support for not previously set up pos-markers
 ObjectReference Function GetPosMarker()
-    If !__posMarker
-        __posMarker = PlaceAtMe(Game.GetForm(0x34)) ; XMarkerHeading
+    If !PosXmarker
+        PosXmarker = PlaceAtMe(Game.GetForm(0x34)) ; XMarkerHeading
     EndIf
-    return __posMarker
+    return PosXmarker
 EndFunction
 
-;0500083E
+; Support for not previously set up trigger box
 BakaTrapTriggerBox __bakaTrapTriggerBox
 BakaTrapTriggerBox Function GetTriggerBox()
 	If !__bakaTrapTriggerBox
@@ -176,12 +132,12 @@ BakaTrapTriggerBox Function GetTriggerBox()
     return __bakaTrapTriggerBox
 EndFunction
 
-TNTRControllerScript __tntrControllerScript
+; Just nicer
 TNTRControllerScript Function GetTNTRController()
-	If !__tntrControllerScript
-        __tntrControllerScript = Game.GetFormFromFile(0x86A, "TNTR.esp") as TNTRControllerScript
-    EndIf
-    return __tntrControllerScript
+	; If !TNTRController
+    ;     TNTRController = Game.GetFormFromFile(0x86A, "TNTR.esp") as TNTRControllerScript
+    ; EndIf
+    return TNTRController as TNTRControllerScript
 EndFunction
 
 ; ----------------- Game -----------------
@@ -322,8 +278,8 @@ Function SetCoordinates(Actor akactor)
 			akactor.SetDontMove(True)
 		Endif
 	;akactor.SetVehicle(Self)
-		ObjectReference _dispenseXmarker = GetDispenseMarker() ; getLinkedRef(MimicDispenseKeyword)
-		ObjectReference _posXmarker = GetPosMarker() ; getLinkedRef(MimicPosKeyword);It should be placed y axis -60 of the mimic
+		DispenseXmarker = GetDispenseMarker() ; getLinkedRef(MimicDispenseKeyword)
+		PosXmarker = GetPosMarker() ; getLinkedRef(MimicPosKeyword);It should be placed y axis -60 of the mimic
 		Xaxis = 0
 		Yaxis = -60
 		Utility.Wait(0.5)
@@ -332,12 +288,12 @@ Function SetCoordinates(Actor akactor)
 		rMoveY = (Math.cos(AngleZ) * Yaxis) - (Math.sin(AngleZ) * Xaxis)
 		rMoveZ = -10.0;I have no idea but it seems the actor always gets +10.0 z axis.
 		
-		_posXmarker.MoveTo(self, rMoveX, rMoveY, rMoveZ)
-		_posXmarker.setangle(0, 0, AngleZ)
+		PosXmarker.MoveTo(self, rMoveX, rMoveY, rMoveZ)
+		PosXmarker.setangle(0, 0, AngleZ)
 		
-		if _posXmarker
-			akactor.SetVehicle(_posXmarker)
-			akactor.MoveTo(_posXmarker)
+		if PosXmarker
+			akactor.SetVehicle(PosXmarker)
+			akactor.MoveTo(PosXmarker)
 		endif
 		LockPosition = true
 EndFunction
@@ -413,8 +369,6 @@ Function FireVoreSexTrap()
 	;actorref.moveto(PosXmarker)
 	GetTNTRController().CheckArmor(actorref)
 	Wait(1.0)
-	; GetTriggerBox().DesignateTarget(actorref);QTE
-	; GetTriggerBox().FireQTE(self);QTE
 	StartGame()
 EndFunction
 
@@ -724,7 +678,6 @@ State VoreQTEStage04
 	Event OnBeginState()
 		PlayVoice(ActorRef, 30, 3, 3.0)
 		playAnimationAndWait("TriggerMimicShake","TransMimicShake01");Mimic shake goes back to VoreInert State.
-		; GetTriggerBox().FireQTE(self);QTE
 		StartGame()
 	endEvent
 
@@ -814,8 +767,6 @@ State VoreInstantQTE
 	WaitForAnimationEvent("TransVoreStage02Start")
 	actorref.playidle(MimicVoreStage02Loop)
 	actorref.moveto(GetPosMarker())
-	;GetTriggerBox().FireVorePhase02(self);QTE
-	; GetTriggerBox().FireQTE(self);QTE
 	StartGame()
 	endEvent
 
