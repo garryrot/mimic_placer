@@ -4,10 +4,10 @@
     },
     "float": {
         "scan-radius": 4000.0,
-        "mimic-chance": 1.0,
+        "mimic-chance": 0.25,
         
-        "mimic-weight-vore": 100.0,
-        "mimic-weight-sex": 0.0,
-        "mimic-weight-instant": 0.0
+        "mimic-weight-vore": 30.0,
+        "mimic-weight-sex": 40.0,
+        "mimic-weight-instant": 30.0
     }
 }
