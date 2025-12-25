@@ -40,6 +40,16 @@ Function Maintenance()
 	    If !Game.GetPlayer().HasSpell(debugSpell)
 			Game.GetPlayer().AddSpell(debugSpell)
 	    EndIf
+
+		debugSpell = Game.GetFormFromFile(0x23f14, "GR_MimicPlacer.esp") as Spell
+	    If !Game.GetPlayer().HasSpell(debugSpell)
+			Game.GetPlayer().AddSpell(debugSpell)
+	    EndIf
+
+		debugSpell = Game.GetFormFromFile(0x23f15, "GR_MimicPlacer.esp") as Spell
+	    If !Game.GetPlayer().HasSpell(debugSpell)
+			Game.GetPlayer().AddSpell(debugSpell)
+	    EndIf
 	EndIf
 
 	BakaMimicForm = JsonUtil.GetFormValue(Config, "mimic")
