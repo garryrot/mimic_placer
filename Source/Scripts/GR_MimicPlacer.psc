@@ -1,11 +1,16 @@
-Scriptname GR_MimicPlacer extends Quest Hidden 
+ScriptName GR_MimicPlacer extends Quest Hidden 
 
 String Config = "../MimicPlacer/AdvancedSettings.json"
 String DistributionConfig = "../MimicPlacer/Distribution.json"
 
-; Boss Chests (Any form with Clutter\Ruins\Ruins_LargeChest)
-FormList Property LargeChestForms Auto
+Actor Property PlayerRef Auto
+FormList Property LargeChestForms Auto ; Boss Chests (Any form with Clutter\Ruins\Ruins_LargeChest)
 Bool Property LockMimicPlacement = False Auto
+Perk Property ActivateMimicPerk Auto
+
+Spell Property DebugSpellMimic Auto
+Spell Property DebugSpellMimicVore Auto
+Spell Property DebugSpellMimicInstant Auto
 
 ; Keep track of processed chest reference IDs so that each chest is only 
 ; rolled for once, to prevent re-rolling until every chest is a mimic.
@@ -19,6 +24,8 @@ Keyword BakaMimicDispenseKeyword
 Keyword BakaMimicPosKeyword
 Form BakaMimicForm
 Form BakaTrapTriggerBoxForm
+Bool Init = True
+ObjectReference lastMimic
 
 Event OnInit()
 	Maintenance()
@@ -35,20 +42,24 @@ Function Maintenance()
 		KnownChestBufferSize = 128
 	Endif
 
+	If !PlayerRef
+		PlayerRef = Game.GetPlayer() ; Just cause I'm paranoid
+	EndIf
+
 	If JsonUtil.GetIntValue(Config, "add-debug-spell") == 1
 	    Spell debugSpell = Game.GetFormFromFile(0xAA01, "GR_MimicPlacer.esp") as Spell
-	    If !Game.GetPlayer().HasSpell(debugSpell)
-			Game.GetPlayer().AddSpell(debugSpell)
+	    If !PlayerRef.HasSpell(debugSpell)
+			PlayerRef.AddSpell(debugSpell)
 	    EndIf
 
 		debugSpell = Game.GetFormFromFile(0x23f14, "GR_MimicPlacer.esp") as Spell
-	    If !Game.GetPlayer().HasSpell(debugSpell)
-			Game.GetPlayer().AddSpell(debugSpell)
+	    If !PlayerRef.HasSpell(debugSpell)
+			PlayerRef.AddSpell(debugSpell)
 	    EndIf
 
 		debugSpell = Game.GetFormFromFile(0x23f15, "GR_MimicPlacer.esp") as Spell
-	    If !Game.GetPlayer().HasSpell(debugSpell)
-			Game.GetPlayer().AddSpell(debugSpell)
+	    If !PlayerRef.HasSpell(debugSpell)
+			PlayerRef.AddSpell(debugSpell)
 	    EndIf
 	EndIf
 
@@ -71,11 +82,26 @@ Function Maintenance()
 	If !BakaMimicPosKeyword
         Error("BakaMimicPosKeyword not found")
 	EndIf
+	
+	Init = True
+	RegisterForSingleUpdate(0.25)
 
 	Debug("maintenance done")
 EndFunction
 
 Event OnUpdate()
+	If Init
+		Init = False
+		If !ActivateMimicPerk
+			ActivateMimicPerk = Game.GetFormFromFile(0x29017, "GR_MimicPlacer.esp") as Perk
+		EndIf
+		If !PlayerRef.HasPerk(ActivateMimicPerk)
+			PlayerRef.AddPerk(ActivateMimicPerk)
+			Debug("Added activate mimic perk to player: " + PlayerRef.HasPerk(ActivateMimicPerk))
+		EndIf
+	Else
+		FixMimic(lastMimic)
+	EndIf
 EndEvent
 
 Function ProcessCell()
@@ -102,7 +128,7 @@ Function PlaceMimicsInCurrentCell()
 
 	int rounds = maxRounds
 	While rounds > 0
-		ObjectReference foundRef = Game.FindRandomReferenceOfAnyTypeInListFromRef(LargeChestForms, Game.GetPlayer(), scanRadius)
+		ObjectReference foundRef = Game.FindRandomReferenceOfAnyTypeInListFromRef(LargeChestForms, PlayerRef, scanRadius)
 		If foundRef
 			Int foundFormId = foundRef.GetFormID()
 		
@@ -141,22 +167,27 @@ Function PlaceMimicsInCurrentCell()
 	EndWhile
 EndFunction
 
+Function OnActivateMimic(ObjectReference mimic)
+	lastMimic = mimic
+	FixMimic(mimic)
+EndFunction
+
 ; Types: 1: Vore, 2: Sex, 3: Instant-Vore
 Function PlaceMimic(ObjectReference chest, Int mimicType)
 	Debug("PlaceMimic(): " + chest + " type=" + mimicType)
 	chest.DisableNoWait()
 	BakaTrapMimic mimic = chest.PlaceAtMe(BakaMimicForm) as BakaTrapMimic
 	mimic.MimicType = mimicType
-	FixMimic(mimic)
 EndFunction
 
 Function FixMimicsInCurrentCell()
 	Debug("FixMimicsInCurrentCell()")
+
 	int rounds = 12
 	float scanDistance = 4000.0
 	int[] processed = new int[1]
 	While rounds > 0
-		BakaTrapMimic mimic = Game.FindRandomReferenceOfTypeFromRef(BakaMimicForm, Game.GetPlayer(), scanDistance) as BakaTrapMimic
+		BakaTrapMimic mimic = Game.FindRandomReferenceOfTypeFromRef(BakaMimicForm, PlayerRef, scanDistance) as BakaTrapMimic
 		If mimic
 			If processed.Find(mimic.GetFormID()) < 0
 				Debug( mimic.GetFormID() +  " not in " + processed )
@@ -180,31 +211,34 @@ Function FixMimicsInCurrentCell()
 EndFunction
 
 ObjectReference Function FixMimic(ObjectReference mimic)
+	If (mimic.GetNthLinkedRef(1) as BakaTrapTriggerBox)
+		return mimic ; doesn't need fixing
+	EndIf
+	Debug("fixing mimic")
+
 	BakaTrapTriggerBox box = Game.FindClosestReferenceOfTypeFromRef(BakaTrapTriggerBoxForm, mimic, 120.0) as BakaTrapTriggerBox
 	If box == None
-		Debug("New trigger box")
 	 	box = mimic.PlaceAtMe(BakaTrapTriggerBoxForm) as BakaTrapTriggerBox
+		Debug("Placed trigger box " + box)
 	EndIf
+
 	box.TrapType = 2 ; Always 2 for Mimic
 	box.VoreTrapref = mimic
 	PO3_SKSEFunctions.SetLinkedRef(mimic, box)
-	Debug("Placed trigger box " + box)
 
 	ObjectReference dispenseXmarker = Game.FindClosestReferenceOfTypeFromRef(Game.GetForm(0x3B), mimic, 120.0)
 	If dispenseXmarker == None
-		Debug("New dispense marker")
 		dispenseXmarker = mimic.PlaceAtMe(Game.GetForm(0x3B))
+		Debug("Placed DispenseXMarker " + (dispenseXmarker as Form))
 	EndIf
 	PO3_SKSEFunctions.SetLinkedRef(mimic, dispenseXmarker, BakaMimicDispenseKeyword)
-	Debug("Placed DispenseXMarker " + (dispenseXmarker as Form))
 
 	ObjectReference posXmarkerHeading = Game.FindClosestReferenceOfTypeFromRef(Game.GetForm(0x34), mimic, 120.0)
 	If posXmarkerHeading == None
-		Debug("New pos marker")
 		posXmarkerHeading = mimic.PlaceAtMe( Game.GetForm(0x34)) 
+		Debug("Placed PositionXMarker " + (posXmarkerHeading as Form))
 	EndIf
 	PO3_SKSEFunctions.SetLinkedRef(mimic, posXmarkerHeading, BakaMimicPosKeyword)
-	Debug("PositionXMarker " + (posXmarkerHeading as Form))
 	return mimic
 EndFunction
 
