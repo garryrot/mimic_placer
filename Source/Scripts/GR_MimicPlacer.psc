@@ -25,14 +25,12 @@ Keyword BakaMimicPosKeyword
 Form BakaMimicForm
 Form BakaTrapTriggerBoxForm
 Bool Init = True
-ObjectReference lastMimic
-
-Event OnInit()
-	Maintenance()
-EndEvent
 
 Function Maintenance()
 	Debug("Maintenace()")
+	If !PlayerRef
+		PlayerRef = Game.GetPlayer() ; Just cause I'm paranoid
+	EndIf
 	LockMimicPlacement = false ; Just in case it gets stuck
 
 	If !KnownChests
@@ -41,10 +39,6 @@ Function Maintenance()
 		KCI = 0
 		KnownChestBufferSize = 128
 	Endif
-
-	If !PlayerRef
-		PlayerRef = Game.GetPlayer() ; Just cause I'm paranoid
-	EndIf
 
 	If JsonUtil.GetIntValue(Config, "add-debug-spell") == 1
 	    Spell debugSpell = Game.GetFormFromFile(0xAA01, "GR_MimicPlacer.esp") as Spell
@@ -63,7 +57,7 @@ Function Maintenance()
 	    EndIf
 	EndIf
 
-	BakaMimicForm = JsonUtil.GetFormValue(Config, "mimic")
+	BakaMimicForm = JsonUtil.GetFormValue(Config, "placed-mimic")
 	If !BakaMimicForm
         Error("BakaMimicForm not found")
 	EndIf
@@ -84,14 +78,38 @@ Function Maintenance()
 	EndIf
 	
 	Init = True
-	RegisterForSingleUpdate(0.25)
-
+	RegisterForSingleUpdate(0.5)
 	Debug("maintenance done")
+EndFunction
+
+Event OnInit()
+	Maintenance()
+	((self as Form) as GR_MimicConsequences).Maintenance()
+EndEvent
+
+Function OnActivateMimic(ObjectReference mimic)
+	Debug("Sending GR_MimicActivated...")
+	mimic.SendModEvent("GR_MimicActivated", "", 0.0)
+	FixMimic(mimic)
 EndFunction
 
 Event OnUpdate()
 	If Init
 		Init = False
+		int extraMimicCount = JsonUtil.GetIntValue(Config, "extra-mimic-count");
+		FormList mimicActivators = Game.GetFormFromFile(0x2901C, "GR_MimicPlacer.esp") As FormList
+		If mimicActivators
+			int i = 0
+			While i < extraMimicCount
+				Form add = JsonUtil.GetFormValue(Config, "extra-mimic-" + i)
+				If mimicActivators.Find(add) < 0
+					Debug("Adding form " + i + ": " + add)
+					mimicActivators.AddForm(add)
+				EndIf
+				i += 1
+			EndWhile
+		EndIf
+
 		If !ActivateMimicPerk
 			ActivateMimicPerk = Game.GetFormFromFile(0x29017, "GR_MimicPlacer.esp") as Perk
 		EndIf
@@ -99,8 +117,6 @@ Event OnUpdate()
 			PlayerRef.AddPerk(ActivateMimicPerk)
 			Debug("Added activate mimic perk to player: " + PlayerRef.HasPerk(ActivateMimicPerk))
 		EndIf
-	Else
-		FixMimic(lastMimic)
 	EndIf
 EndEvent
 
@@ -167,10 +183,6 @@ Function PlaceMimicsInCurrentCell()
 	EndWhile
 EndFunction
 
-Function OnActivateMimic(ObjectReference mimic)
-	lastMimic = mimic
-	FixMimic(mimic)
-EndFunction
 
 ; Types: 1: Vore, 2: Sex, 3: Instant-Vore
 Function PlaceMimic(ObjectReference chest, Int mimicType)

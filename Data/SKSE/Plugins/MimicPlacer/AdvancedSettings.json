@@ -3,12 +3,16 @@
         "add-debug-spell": 1,
         "use-alternative-qte": 0,
         "alternative-qte-fast-start": 1,
-        "alternative-qte-prog-diff-mode": 1
+        "alternative-qte-prog-diff-mode": 1,
+        "extra-mimic-count": 3
     },
     "form": {
-        "mimic": "0x8e0|TNTR.esp",
+        "placed-mimic": "0x8e0|TNTR.esp",
         "trap-trigger-box": "0x83E|TNTR.esp",
         "mimic-dispense-keyword": "0xDFE|TNTR.esp",
-        "mimic-pos-keyword": "0x8F2|TNTR.esp"
+        "mimic-pos-keyword": "0x8F2|TNTR.esp",
+        "extra-mimic-0": "0x806|O Skyrim Has Insane Traps.esp",
+        "extra-mimic-1": "0x8e0|TNTR.esp",
+        "extra-mimic-2": "0x8e0|TNTR.esp"
     }
 }
