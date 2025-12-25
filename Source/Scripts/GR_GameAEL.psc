@@ -1,33 +1,16 @@
 ScriptName GR_GameAEL extends ObjectReference  
 
-Quest Property TNTRController Auto
-TNTRMCM Property MCM Auto
-
-{Type 1: Alphabet, Type 0: Normal struggle bar}
-BakaTrapQTEWidgetEx Property StruggleBar Auto
-ObjectReference Property VoreTrapref Auto Hidden
-int RunningScenario
-Sound Property BakaTrapDeathWormVoreStruggle auto
-Int Property TrapType auto
-
-{0 = Null, 1 = DeathWorm, 2 = Mimic, 3 = SnareRope}
-Float FillDifficulty = 0.0
-Float FillThreshold = 0.0
-int Time = 0
-Float DownedTime ; How much time the player will be stayed down.
-
-; Custom code
-; ########################################################
-
 Bool InGame = False
 Bool StartingGame = False
+Int lastStage = 0
 ObjectReference lastTarget
 
-Function StartGame(ObjectReference target)
+Function StartGame(ObjectReference target, int stage)
 	Debug.Trace("[GRMP] GR_GameAEL.StartGame()")
     lastTarget = target
 	StartingGame = true
-	RegisterForSingleUpdate(1.0)
+	lastStage = stage
+	RegisterForSingleUpdate(0.75)
 EndFunction
 
 Event OnGameEnd(string eventName, string strArg, float numArg, form sender)
@@ -48,9 +31,10 @@ Event OnUpdate()
 		RegisterForSingleUpdate(1.0)
 	ElseIf StartingGame
 		StartingGame = False
-		InGame = True
-		AELStruggle.MakeGame(100.0)
+		int difficulty = ((90.0 - (lastStage as float * 5.0)) as int)
+		AELStruggle.MakeGame(difficulty)
+		Debug.Trace("[GRMP] Game Difficulaty " + lastStage + " " + difficulty)
 		RegisterForModEvent("AEL_GameEnd", "OnGameEnd")
-		RegisterForSingleUpdate(1.0)
+		RegisterForSingleUpdate(3.0)
 	EndIf
 EndEvent

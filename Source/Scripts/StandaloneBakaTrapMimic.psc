@@ -122,40 +122,44 @@ ObjectReference Function GetPosMarker()
 EndFunction
 
 ; Support for not previously set up trigger box
-BakaTrapTriggerBox __bakaTrapTriggerBox
+BakaTrapTriggerBox _triggerBox
 BakaTrapTriggerBox Function GetTriggerBox()
-	If !__bakaTrapTriggerBox
-        __bakaTrapTriggerBox = PlaceAtMe(Game.GetFormFromFile(0x83E, "TNTR.esp")) as BakaTrapTriggerBox
-		__bakaTrapTriggerBox.TrapType = 2 ; 2 for Mimic
-		__bakaTrapTriggerBox.VoreTrapref = self
+	If !_triggerBox
+        _triggerBox = PlaceAtMe(Game.GetFormFromFile(0x83E, "TNTR.esp")) as BakaTrapTriggerBox
+		_triggerBox.TrapType = 2 ; 2 for Mimic
+		_triggerBox.VoreTrapref = self
     EndIf
-    return __bakaTrapTriggerBox
-EndFunction
-
-; Just nicer
-TNTRControllerScript Function GetTNTRController()
-	; If !TNTRController
-    ;     TNTRController = Game.GetFormFromFile(0x86A, "TNTR.esp") as TNTRControllerScript
-    ; EndIf
-    return TNTRController as TNTRControllerScript
+    return _triggerBox
 EndFunction
 
 ; ----------------- Game -----------------
 
-GR_GameAEL struggleGame
-Function StartGame()
-	If (true)
-		If (!struggleGame)
-			struggleGame = PlaceAtMe(Game.GetFormFromFile(0x23F0F, "GR_MimicPlacer.esp")) as GR_GameAEL
+GR_GameQTEText gameQteText
+GR_GameAEL gameAel
+Function StartGame(int stage)
+	; If (JsonUtil.GetIntValue("../MimicPlacer/AdvancedSettings.json", "use-alternative-qte") == 1)
+		If (!gameAel)
+			gameAel = PlaceAtMe(Game.GetFormFromFile(0x23F0F, "GR_MimicPlacer.esp")) as GR_GameAEL
 		EndIf
 		RegisterForModEvent("GR_GameSuccess", "OnGameSuccess")
 		RegisterForModEvent("GR_GameFail", "OnGameFail")
 		RegisterForModEvent("GR_GameTick", "OnGameTick")
-		struggleGame.StartGame(self)
-	Else
-		GetTriggerBox().DesignateTarget(actorref)
-		GetTriggerBox().FireQTE(self)
-	EndIf	
+		gameAel.StartGame(self, stage)
+	
+	; QTE Text is broken
+	; Else
+	; 	Debug.Trace("[GRMP] QteText")
+	; 	If (!gameQteText)
+	; 		Debug.Trace("[GRMP] !gameQteText")
+	; 		gameQteText = PlaceAtMe(Game.GetFormFromFile(0x23F16, "GR_MimicPlacer.esp")) as GR_GameQTEText
+	; 	EndIf
+	; 	Debug.Trace("[GRMP] " + gameQteText)
+	; 	RegisterForModEvent("GR_GameSuccess", "OnGameSuccess")
+	; 	RegisterForModEvent("GR_GameFail", "OnGameFail")
+	; 	RegisterForModEvent("GR_GameTick", "OnGameTick")
+	; 	Debug.Trace("[GRMP] starting" + gameQteText)
+	; 	gameQteText.StartGame(self, stage)
+	; EndIf	
 EndFunction
 
 Function UnregisterGame()
@@ -165,24 +169,20 @@ Function UnregisterGame()
 EndFunction
 
 Event OnGameSuccess(string eventName, string strArg, float numArg, form sender)
-	Debug.Trace("[GRMP] Standaloe.OnGameSuccess()")
 	UnregisterGame()
 	FailVore()
 EndEvent
 
 Event OnGameFail(string eventName, string strArg, float afNumArg, form sender)
-	Debug.Trace("[GRMP] Standaloe.OnGameFail()")
 	UnregisterGame()
 	SuccessVore()
 EndEvent
 
 Event OnGameTick(string eventName, string strArg, float afNumArg, form sender)
-	Debug.Trace("[GRMP] Standaloe.OnGameTick()")
 	MimicShake()
 EndEvent
 
 ; ############################ Original Code Begins #########################
-
 
 ; TriggerVoreStart - Mimic Start
 
@@ -202,8 +202,8 @@ EndFunction
 
 Function DispenseArmor(String FormlistString, bool bUnequipall)
 	GetDispenseMarker().MoveToNode(Self, "4_Mimic_Sucker14")
-	GetTNTRController().RemoveArmorfromList(actorref, GetDispenseMarker(), FormlistString, bUnequipall)
-	GetTNTRController().RemoveWeapon(ActorRef, GetDispenseMarker(), false, true)
+	(TNTRController as TNTRControllerScript).RemoveArmorfromList(actorref, GetDispenseMarker(), FormlistString, bUnequipall)
+	(TNTRController as TNTRControllerScript).RemoveWeapon(ActorRef, GetDispenseMarker(), false, true)
 EndFunction
 
 int function acceptableTrigger(objectReference triggerRef)
@@ -324,7 +324,7 @@ EndFunction
 Function FireVoreSimpleTrap()
 	isFiring = True
 			;play windup sound
-	if GetTNTRController().RemoveHeelEffect(actorref)
+	if (TNTRController as TNTRControllerScript).RemoveHeelEffect(actorref)
 		RemoveHeel = true
 	endif
 	wait( initialDelay )		;wait for windup
@@ -336,20 +336,20 @@ Function FireVoreSimpleTrap()
 	actorref.SheatheWeapon()
 	actorref.addtofaction(MimicVoreDefaultFaction);for oar
 	SetCoordinates(actorref)
+	StartGame( 0 )
 	wait( initialDelay )
 	PlayAnimation("TriggerVoreStart")
 	actorref.playidle(MimicVoreStart)
 	WaitForAnimationEvent("TransVoreStart")
 	actorref.playidle(MimicVoreLoop)
 	;actorref.moveto(PosXmarker)
-	Wait(1.0)
-	StartGame()
+	;Wait(1.0)
 EndFunction
 
 Function FireVoreSexTrap()
 	isFiring = True
 			;play windup sound
-	if GetTNTRController().RemoveHeelEffect(actorref)
+	if (TNTRController as TNTRControllerScript).RemoveHeelEffect(actorref)
 		RemoveHeel = true
 	endif
 	wait( initialDelay )		;wait for windup
@@ -367,9 +367,9 @@ Function FireVoreSexTrap()
 	WaitForAnimationEvent("TransVoreStart")
 	actorref.playidle(MimicVoreLoop)
 	;actorref.moveto(PosXmarker)
-	GetTNTRController().CheckArmor(actorref)
-	Wait(1.0)
-	StartGame()
+	(TNTRController as TNTRControllerScript).CheckArmor(actorref)
+	StartGame(0) ; TODO if "fast-start"
+	; Wait(1.0)
 EndFunction
 
 Function FailVore()
@@ -378,7 +378,7 @@ Function FailVore()
 	actorref.playidle(MimicVoreEndFail)
 	WaitForAnimationEvent("TransVoreEndFail")
 	if RemoveHeel
-		GetTNTRController().ResetHeelEffect(actorref)
+		(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
 	endif
 	ResetTrap()
 EndFunction
@@ -401,9 +401,9 @@ Function FailVorePhase02()
 	WaitForAnimationEvent("TransVoreStage02Fail")
 	actorref.playidle(MimicVoreIdle)
 	
-	GetTNTRController().SetMorphValue(actorref, 0.0, 1)
-	GetTNTRController().SetMorphValue(actorref, 0.0, 2)
-	GetTNTRController().SetMorphValue(actorref, 0.0, 3)
+	(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 0.0, 1)
+	(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 0.0, 2)
+	(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 0.0, 3)
 	Wait(10.0)
 	
 	PlayAnimation("TriggerVoreSpit")
@@ -412,7 +412,7 @@ Function FailVorePhase02()
 	WaitForAnimationEvent("TransPlay")
 	
 	if RemoveHeel
-		GetTNTRController().ResetHeelEffect(actorref)
+		(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
 	endif
 	Wait(6.0)
 	actorref.playidle(MimicVoreGetUpAfterSpit)
@@ -429,19 +429,19 @@ Function SuccessVore()
 		WaitForAnimationEvent("TransVoreEndSuccessDefault")
 		actorref.playidle(MimicVoreIdle)
 	else
-		form thisarmor = GetTNTRController().FindArmorFromList(actorref, "tntr.removelower", false)
+		form thisarmor = (TNTRController as TNTRControllerScript).FindArmorFromList(actorref, "tntr.removelower", false)
 		Debug.Trace("thisarmor " + thisarmor + " actorref " + actorref)
 		PlayVoice(ActorRef, 30, 4, 2.0)
 		PlayAnimation("TransVoreLooptoSuccess")
 		actorref.playidle(MimicVoreEndSuccess)
 		if WaitForAnimationEvent("StripEventLowerA")
-			GetTNTRController().SetMorphValue(actorref, 1.0, 2)
+			(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 2)
 			PlayVoice(ActorRef, 30, 1, 3.0)
 			actorref.UnequipItem(thisarmor)
 		endif
 		WaitForAnimationEvent("TransVoreEndSuccess")
 		actorref.playidle(MimicVoreEndSuccessLoop)
-		GetTNTRController().InflationEventcustom(actorref, 2, 10.0)
+		(TNTRController as TNTRControllerScript).InflationEventcustom(actorref, 2, 10.0)
 		PlayVoice(ActorRef, 40, 3, 3.0)
 		Wait(20.0)
 		PlayAnimation("TransVoreEndSuccessLoop")
@@ -475,9 +475,9 @@ Function MimicShake()
 EndFunction
 
 Function SetMorphValueZero()
-	GetTNTRController().SetMorphValue(actorref, 0.0, 1)
-	GetTNTRController().SetMorphValue(actorref, 0.0, 2)
-	GetTNTRController().SetMorphValue(actorref, 0.0, 3)
+	(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 0.0, 1)
+	(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 0.0, 2)
+	(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 0.0, 3)
 EndFunction
 
 State VoreQTEStage01
@@ -487,7 +487,7 @@ State VoreQTEStage01
 		PlayVoice(ActorRef, 30, 3, 3.0)
 		playAnimationAndWait("TriggerMimicShake","TransMimicShake01");Mimic shake goes back to VoreInert State.
 		; GetTriggerBox().FireQTE(self);QTE
-		StartGame()
+		StartGame( 1 )
 	endEvent
 
 	Function MimicShake()
@@ -510,7 +510,7 @@ State VoreQTEStage01
 		actorref.playidle(MimicVoreSpit)
 		WaitForAnimationEvent("TransPlay")
 		if RemoveHeel
-			GetTNTRController().ResetHeelEffect(actorref)
+			(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
 		endif
 		Wait(6.0)
 		actorref.playidle(MimicVoreGetUpAfterSpit)
@@ -522,7 +522,7 @@ State VoreQTEStage01
 			Wait(1.0)
 		endwhile
 		playAnimationAndWait("TriggerMimicShake","TransMimicShake01")
-		GetTNTRController().Getnaked(actorref, true, true)
+		(TNTRController as TNTRControllerScript).Getnaked(actorref, true, true)
 		PlayVoice(ActorRef, 40, 3, 3.0)
 		playAnimationAndWait("TriggerMimicShake","TransMimicShake01")
 		PlayAnimation("TriggerMimicThrowup");it spits skull
@@ -538,7 +538,7 @@ State VoreQTEStage02
 		PlayVoice(ActorRef, 30, 3, 3.0)
 		playAnimationAndWait("TriggerMimicShake","TransMimicShake01");Mimic shake goes back to VoreInert State.
 		; GetTriggerBox().FireQTE(self);QTE
-		StartGame()
+		StartGame( 2 )
 	endEvent
 
 	Function MimicShake()
@@ -561,7 +561,7 @@ State VoreQTEStage02
 		actorref.playidle(MimicVoreSpit)
 		WaitForAnimationEvent("TransPlay")
 		if RemoveHeel
-			GetTNTRController().ResetHeelEffect(actorref)
+			(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
 		endif
 		Wait(6.0)
 		actorref.playidle(MimicVoreGetUpAfterSpit)
@@ -582,14 +582,14 @@ State VoreQTEStage02
 			
 			WaitForAnimationEvent("TransPlay")
 			if RemoveHeel
-				GetTNTRController().ResetHeelEffect(actorref)
+				(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
 			endif
 			actorref.playidle(MimicVoreGetUpAfterSpit)
 			ResetTrap()
 		else
-			GetTNTRController().InflationEventcustom(actorref, 6, 0.5)
-			GetTNTRController().SetMorphValue(actorref, 1.0, 1)
-			GetTNTRController().SetMorphValue(actorref, 1.0, 2)
+			(TNTRController as TNTRControllerScript).InflationEventcustom(actorref, 6, 0.5)
+			(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 1)
+			(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 2)
 			PlayVoice(ActorRef, 30, 30, 4.0)
 			PlayAnimation("TriggerVoreStage02Start");Phase 02 start
 			actorref.playidle(MimicVoreStage02Start)
@@ -602,7 +602,7 @@ State VoreQTEStage02
 			actorref.playidle(MimicVoreStage02EndPreface)
 			WaitForAnimationEvent("TransVoreStage02EndPreface");This goes to VoreInert state again.
 			actorref.playidle(MimicVoreIdle)
-			GetTNTRController().InflationEventcustom(actorref, 6, 0.5);Anal and Oral
+			(TNTRController as TNTRControllerScript).InflationEventcustom(actorref, 6, 0.5);Anal and Oral
 			GotoState("VoreQTEStage03")
 			;GetTriggerBox().FireVorePhase02(self);QTE
 		endif
@@ -615,7 +615,7 @@ State VoreQTEStage03
 		PlayVoice(ActorRef, 30, 3, 3.0)
 		playAnimationAndWait("TriggerMimicShake","TransMimicShake01");Mimic shake goes back to VoreInert State.
 		; GetTriggerBox().FireQTE(self);QTE
-		StartGame()
+		StartGame( 3 )
 	endEvent
 
 	Function MimicShake()
@@ -638,7 +638,7 @@ State VoreQTEStage03
 		actorref.playidle(MimicVoreSpit)
 		WaitForAnimationEvent("TransPlay")
 		if RemoveHeel
-			GetTNTRController().ResetHeelEffect(actorref)
+			(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
 		endif
 		Wait(6.0)
 		actorref.playidle(MimicVoreGetUpAfterSpit)
@@ -649,10 +649,10 @@ State VoreQTEStage03
 		while banimating
 			Wait(1.0)
 		endwhile
-		GetTNTRController().InflationEventcustom(actorref, 1, 1.0)
-		GetTNTRController().SetMorphValue(actorref, 1.0, 1)
-		GetTNTRController().SetMorphValue(actorref, 1.0, 2)
-		GetTNTRController().SetMorphValue(actorref, 1.0, 3)
+		(TNTRController as TNTRControllerScript).InflationEventcustom(actorref, 1, 1.0)
+		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 1)
+		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 2)
+		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 3)
 
 		Wait(5.0)
 		PlayVoice(ActorRef, 80, 20, 3.0)
@@ -668,7 +668,7 @@ State VoreQTEStage03
 		PlayVoiceInstantStop()
 		Wait(5.0)
 		PlayVoice(ActorRef, 30, 2, 2.0)
-		GetTNTRController().InflationEventcustom(actorref, 1, 2.0)
+		(TNTRController as TNTRControllerScript).InflationEventcustom(actorref, 1, 2.0)
 		GotoState("VoreQTEStage04")
 	EndFunction
 
@@ -678,7 +678,7 @@ State VoreQTEStage04
 	Event OnBeginState()
 		PlayVoice(ActorRef, 30, 3, 3.0)
 		playAnimationAndWait("TriggerMimicShake","TransMimicShake01");Mimic shake goes back to VoreInert State.
-		StartGame()
+		StartGame( 4 )
 	endEvent
 
 	Function MimicShake()
@@ -701,7 +701,7 @@ State VoreQTEStage04
 		actorref.playidle(MimicVoreSpit)
 		WaitForAnimationEvent("TransPlay")
 		if RemoveHeel
-			GetTNTRController().ResetHeelEffect(actorref)
+			(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
 		endif
 		Wait(6.0)
 		actorref.playidle(MimicVoreGetUpAfterSpit)
@@ -712,10 +712,10 @@ State VoreQTEStage04
 		while banimating
 			Wait(1.0)
 		endwhile
-		GetTNTRController().InflationEventcustom(actorref, 1, 5.0)
-		GetTNTRController().SetMorphValue(actorref, 1.0, 1)
-		GetTNTRController().SetMorphValue(actorref, 1.0, 2)
-		GetTNTRController().SetMorphValue(actorref, 1.0, 3)
+		(TNTRController as TNTRControllerScript).InflationEventcustom(actorref, 1, 5.0)
+		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 1)
+		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 2)
+		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 3)
 
 		Wait(5.0)
 		PlayVoice(ActorRef, 80, 20, 3.0)
@@ -733,11 +733,11 @@ State VoreQTEStage04
 		PlayVoiceInstantStop()
 		WaitForAnimationEvent("TransVoreStage02Finale")
 		actorref.playidle(MimicVoreIdle)
-		GetTNTRController().SetMorphValue(actorref, 0.0, 1)
-		GetTNTRController().SetMorphValue(actorref, 0.0, 2)
-		GetTNTRController().SetMorphValue(actorref, 0.0, 3)
+		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 0.0, 1)
+		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 0.0, 2)
+		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 0.0, 3)
 		PlayVoice(ActorRef, 30, 2, 2.0)
-		GetTNTRController().InflationEventcustom(actorref, 7, 15.0)
+		(TNTRController as TNTRControllerScript).InflationEventcustom(actorref, 7, 15.0)
 		
 		Wait(10.0)
 		
@@ -745,7 +745,7 @@ State VoreQTEStage04
 		actorref.playidle(MimicVoreSpit)
 		WaitForAnimationEvent("TransPlay")
 		if RemoveHeel
-			GetTNTRController().ResetHeelEffect(actorref)
+			(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
 		endif
 		ResetTrap()
 	EndFunction
@@ -754,7 +754,7 @@ EndState
 
 State VoreInstantQTE
 	Event OnBeginState()
-	GetTNTRController().InflationEventcustom(actorref, 2, 10.0)
+	(TNTRController as TNTRControllerScript).InflationEventcustom(actorref, 2, 10.0)
 	Wait(7.0)
 	playAnimationAndWait("TriggerMimicShake","TransMimicShake01");Mimic shake goes back to VoreInert State.
 	Wait(3.0)
@@ -767,7 +767,7 @@ State VoreInstantQTE
 	WaitForAnimationEvent("TransVoreStage02Start")
 	actorref.playidle(MimicVoreStage02Loop)
 	actorref.moveto(GetPosMarker())
-	StartGame()
+	StartGame( 1 )
 	endEvent
 
 	Function FailVore()
@@ -780,7 +780,7 @@ State VoreInstantQTE
 		actorref.playidle(MimicVoreSpit)
 		WaitForAnimationEvent("TransPlay")
 		if RemoveHeel
-			GetTNTRController().ResetHeelEffect(actorref)
+			(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
 		endif
 		Wait(6.0)
 		actorref.playidle(MimicVoreGetUpAfterSpit)
@@ -789,7 +789,7 @@ State VoreInstantQTE
 
 	Function SuccessVore()
 		PrefaceVorePhase02()
-		GetTNTRController().SetMorphValue(actorref, 1.0, 3)
+		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 3)
 		Wait(5.0)
 		PlayVoice(ActorRef, 80, 20, 3.0)
 		PlayAnimation("TriggerVoreStage02Success")
@@ -807,11 +807,11 @@ State VoreInstantQTE
 		PlayVoiceInstantStop()
 		WaitForAnimationEvent("TransVoreStage02Finale")
 		actorref.playidle(MimicVoreIdle)
-		GetTNTRController().SetMorphValue(actorref, 0.0, 1)
-		GetTNTRController().SetMorphValue(actorref, 0.0, 2)
-		GetTNTRController().SetMorphValue(actorref, 0.0, 3)
+		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 0.0, 1)
+		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 0.0, 2)
+		(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 0.0, 3)
 		PlayVoice(ActorRef, 30, 2, 2.0)
-		GetTNTRController().InflationEventcustom(actorref, 1, 15.0)
+		(TNTRController as TNTRControllerScript).InflationEventcustom(actorref, 1, 15.0)
 		
 		Wait(10.0)
 		
@@ -819,7 +819,7 @@ State VoreInstantQTE
 		actorref.playidle(MimicVoreSpit)
 		WaitForAnimationEvent("TransPlay")
 		if RemoveHeel
-			GetTNTRController().ResetHeelEffect(actorref)
+			(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
 		endif
 		ResetTrap()
 	EndFunction
@@ -836,7 +836,6 @@ event OnTriggerEnter(objectReference TriggerRef)
 endEvent
 	
 event OnActivate(objectReference TriggerRef)
-	Debug.Trace("OnActivate 1")
 endEvent
 
 Event OnHit(ObjectReference akAggressor, Form akSource, Projectile akProjectile, bool abPowerAttack, bool abSneakAttack, bool abBashAttack, bool abHitBlocked)
@@ -861,7 +860,6 @@ state EndPhase
 	endEvent
 	
 	event OnActivate(objectReference TriggerRef)
-	Debug.Trace("OnActivate 2")
 		playAnimation("Reset")
 	endEvent
 endState
@@ -874,7 +872,6 @@ State Dead
 	endEvent
 	
 	event OnActivate(objectReference TriggerRef)
-	Debug.Trace("OnActivate 3")
 		goToState("Open")
 	endEvent
 endstate
@@ -891,7 +888,6 @@ State Open
 	endEvent
 	
 	event OnActivate(objectReference TriggerRef)
-	Debug.Trace("OnActivate 4")
 		if !isfiring
 			goToState("Close")
 		endif
@@ -911,7 +907,6 @@ state Close
 	endEvent
 	
 	event OnActivate(objectReference TriggerRef)
-	Debug.Trace("OnActivate 5 ")
 	endEvent
 endState
 
@@ -949,12 +944,9 @@ auto State Ready
 	TNTRDoNothing = Game.GetFormFromFile( 0x0885, "TNTR.esp") as Package
 	int itrigger
 	if !isfiring
-		Debug.Trace("1")
 		if MimicType == 2
-			Debug.Trace("2")
 			itrigger = acceptableTrigger(TriggerRef)
 		else
-			Debug.Trace("3")
 			itrigger = MimicType
 			actorref = triggerRef as actor
 		endif
@@ -1009,7 +1001,6 @@ state VoreStartDefaultState
 	endEvent
 	
 	event OnActivate(objectReference TriggerRef);WIP
-	Debug.Trace("OnActivate 7")
 	endEvent
 endState
 
@@ -1022,7 +1013,6 @@ state VoreStartState
 	endEvent
 	
 	event OnActivate(objectReference TriggerRef);WIP
-	Debug.Trace("OnActivate 8")
 	endEvent
 endState
 
@@ -1035,7 +1025,6 @@ state VoreInstantState
 	endEvent
 	
 	event OnActivate(objectReference TriggerRef);WIP
-	Debug.Trace("OnActivate 9")
 	endEvent
 endState
 
@@ -1043,7 +1032,6 @@ State Busy	;Dummy state to prevent interaction while animating
 	Event OnBeginState()
 	endEvent
 	event OnActivate(objectReference TriggerRef)
-	Debug.Trace("OnActivate 10")
 	endevent
 EndState
 
@@ -1060,7 +1048,6 @@ State AttackBusy
 		goToState("Ready")
 	endEvent
 	event OnActivate(objectReference TriggerRef)
-	Debug.Trace("OnActivate 11")
 	endevent
 EndState
 
@@ -1072,7 +1059,6 @@ State ShakeBusy
 		goToState("Ready")
 	endEvent
 	event OnActivate(objectReference TriggerRef)
-	Debug.Trace("OnActivate 12")
 	endevent
 EndState
 
@@ -1133,7 +1119,7 @@ EndFunction
 
 Event Onupdate()
 	if VoiceActor
-		GetTNTRController().PlayVoice(VoiceActor, true, iVoiceStrength)
+		(TNTRController as TNTRControllerScript).PlayVoice(VoiceActor, true, iVoiceStrength)
 	endif
 	if icount > 0
 		icount -= 1

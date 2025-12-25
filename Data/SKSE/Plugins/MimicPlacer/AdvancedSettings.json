@@ -1,6 +1,9 @@
 {
     "int": {
-        "add-debug-spell": 1
+        "add-debug-spell": 1,
+        "use-alternative-qte": 0,
+        "alternative-qte-fast-start": 1,
+        "alternative-qte-prog-diff-mode": 1
     },
     "form": {
         "mimic": "0x8e0|TNTR.esp",
