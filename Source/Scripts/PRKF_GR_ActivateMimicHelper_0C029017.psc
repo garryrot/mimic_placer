@@ -16,10 +16,10 @@ EndFunction
 ObjectReference activatorRef
 
 Function OnPerkActivate()
-	Debug.Trace("[GRMP] OnPerkActivate")
+	Debug.Trace("[GRMP] HelperPerk: detected activator interaction")
 	If Mimics.HasForm( activatorRef.GetBaseObject() )
-		Debug.Trace("[GRMP] Form is Mimic " + activatorRef as Form)
-		(MimicPlacer as GR_MimicPlacer).OnActivateMimic(activatorRef)
+		Debug.Trace("[GRMP] HelperPerk:  is viable mimic " + activatorRef as Form)
+		(MimicPlacer as GR_MimicObserver).OnActivateMimic(activatorRef)
 	EndIf
 EndFunction
 

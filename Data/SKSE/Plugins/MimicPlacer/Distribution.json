@@ -4,6 +4,8 @@
     },
     "float": {
         "scan-radius": 4000.0,
+        "scan-interval": 20.0,
+
         "mimic-chance": 0.25,
         
         "mimic-weight-vore": 30.0,
