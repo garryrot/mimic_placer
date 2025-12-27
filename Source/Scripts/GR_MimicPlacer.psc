@@ -45,6 +45,11 @@ Function Maintenance()
 	    If !PlayerRef.HasSpell(DebugSpellMimicInstant)
 			PlayerRef.AddSpell(DebugSpellMimicInstant)
 	    EndIf
+		
+		Spell removeSpell = Game.GetFormFromFile(0x47622, "GR_MimicPlacer.esp") as Spell
+		If !PlayerRef.HasSpell(removeSpell)
+			PlayerRef.AddSpell(removeSpell)
+		EndIf
 	EndIf
 
 	If !BakaMimicForm
@@ -105,6 +110,11 @@ EndFunction
 ObjectReference Function PlaceBakaMimicClosestChest(Int mimicType)
 	ObjectReference result = Game.FindClosestReferenceOfAnyTypeInListFromRef(LargeChestForms, Game.GetPlayer(), 500.0)
 	ObjectReference mimic = PlaceBakaMimic(result, mimicType)
+EndFunction
+
+ObjectReference Function RemoveBakaMimicClosest()
+	ObjectReference result = Game.FindClosestReferenceOfAnyTypeInListFromRef(Game.GetFormFromFile(0x2901C, "GR_MimicPlacer.esp") As FormList, Game.GetPlayer(), 500.0)
+	RemoveBakaMimic(result)
 EndFunction
 
 Bool Function RemoveBakaMimic(ObjectReference mimic)

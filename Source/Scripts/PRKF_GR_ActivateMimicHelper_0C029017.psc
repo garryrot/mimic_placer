@@ -16,10 +16,8 @@ EndFunction
 ObjectReference activatorRef
 
 Function OnPerkActivate()
-	If Mimics.HasForm( activatorRef.GetBaseObject() )
-		(MimicPlacer as GR_MimicBakaObserver).OnActivateMimic(activatorRef)
-	EndIf
+	(MimicPlacer as GR_MimicBakaObserver).OnActivateMimic(activatorRef)
 EndFunction
 
-FormList Property Mimics Auto
+FormList Property Mimics Auto ; Unused, check via perk
 Quest Property MimicPlacer Auto
