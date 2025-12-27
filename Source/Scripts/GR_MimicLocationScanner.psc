@@ -3,137 +3,202 @@ ScriptName GR_MimicLocationScanner extends Quest Hidden
 GR_MimicPlacer Property lib Auto ; GR_MimicPlacer
 Actor Property PlayerRef Auto
 FormList Property LargeChestForms Auto ; Boss Chests (Any form with Clutter\Ruins\Ruins_LargeChest)
+; FormList Property MimicForms Auto ; TODO
 
 String DistributionConfig = "../MimicPlacer/Distribution.json"
+
+; Config
+Float ScanInterval = 30.0
+Float ScanRadius = 10000.0
+Float ScanRadiusExterior = 20000.0 ; unused
+Float MimicChance = 0.5
+Float Weight1Vore = 20.0 ; Vore
+Float Weight2Vore = 80.0 ; Sex
+Float Weight3Vore = 20.0 ; Instant-Vore
+int cheatNotifyMimics = 0
 
 ; Keep track of processed chest reference IDs so that each chest is only 
 ; rolled for once, to prevent re-rolling until every chest is a mimic.
 ; Should work okay'ish as there's only 200 viable chests in the entire game
 Int[] KnownChests
-Int KCI
-Int KnownChestBufferSize
+Int KCI = 0
+Int KnownChestBufferSize = 128
 
-Int[] PlacedMimics
-Int[] PlacedMimicLocs
-
-Bool LockMimicPlacement = False
+; Keep track of all created mimics for debugging and potential cleanup
+ObjectReference[] PlacedMimics
+Cell[] PlacedMimicLocs
+Int PMI = 0
 
 Event OnInit()
 	Maintenance()
 EndEvent
 
 Function Maintenance()
-    lib.Debug("Maintenance()")
+    Debug("Maintenance()")
 	If !KnownChests
         ResetChests()
 	Endif
-	LockMimicPlacement = false ; Just in case it gets stuck
-	
-	RegisterForSingleUpdate(20.0)
+	ProcessCellLock = false ; Just in case it gets stuck
+	Init = True
+	RegisterForSingleUpdate(0.1)
 EndFunction
+
+Bool Init = False
+Event OnUpdate()
+	Debug("OnUpdate()")
+	If Init
+		Init = False
+		cheatNotifyMimics = JsonUtil.GetIntValue(DistributionConfig, "cheat-notify-mimics")
+		ScanRadius = JsonUtil.GetFloatValue(DistributionConfig, "scan-radius")
+		ScanRadiusExterior = JsonUtil.GetFloatValue(DistributionConfig, "scan-radius-outside")
+		ScanInterval = JsonUtil.GetFloatValue(DistributionConfig, "scan-interval")
+		MimicChance = JsonUtil.GetFloatValue(DistributionConfig, "mimic-chance")
+		Weight1Vore = JsonUtil.GetFloatValue(DistributionConfig, "mimic-weight-vore")
+		Weight2Vore = JsonUtil.GetFloatValue(DistributionConfig, "mimic-weight-sex")
+		Weight3Vore = JsonUtil.GetFloatValue(DistributionConfig, "mimic-weight-instant")
+		Debug("Init settings ScanInterval=" + ScanInterval + " ScanRadius=" + ScanRadius + " MimicChance=" + MimicChance)
+	Else
+		If Utility.GetCurrentRealTime() - lastProcessCells > ScanInterval
+			ProcessCell()
+		Else
+			Float secUntil = ScanInterval - (Utility.GetCurrentRealTime() - lastProcessCells)
+			Debug("last scna too early, scanning in " + secUntil + "s current-time=" + Utility.GetCurrentRealTime() + " last-scan=" + lastProcessCells)
+			RegisterForSingleUpdate(secUntil)
+		EndIf
+	EndIf
+	UnregisterForUpdate()
+	RegisterForSingleUpdate(ScanInterval)
+EndEvent
 
 Function ResetChests()
 	Debug("ResetChests() - resetting known chest...")
-	KnownChests = new Int[128]
 	KCI = 0
+	PMI = 0
 	KnownChestBufferSize = 128
-	PlacedMimics = new Int[128]
-	PlacedMimicLocs = new Int[128]
+	KnownChests = new Int[128]
+	PlacedMimics = new ObjectReference[128]
+	PlacedMimicLocs = new Cell[128]
 EndFunction
 
+Bool ProcessCellLock = False
+Float lastProcessCells = 0.0
 Function ProcessCell()
-	Debug("ProcessCell()")
-    If !LockMimicPlacement
-        LockMimicPlacement = true
-        PlaceMimicsInCurrentCell()
-        FixMimicsInCurrentCell()
-        LockMimicPlacement = false
+    If !ProcessCellLock
+        ProcessCellLock = true
+        PlaceMimicsInRadius()
+        FixBakaMimicsInRadius()
+		lastProcessCells = Utility.GetCurrentRealTime()
+        ProcessCellLock = false
 	Else
 		Debug("Locked")
     EndIf
 EndFunction
 
 ; Search for viable boss chests using 'FindRandomReference' and replace them with a mimic
-Function PlaceMimicsInCurrentCell()
-	int maxRounds = JsonUtil.GetIntValue(DistributionConfig, "scan-rounds")
-	Float scanRadius = JsonUtil.GetFloatValue(DistributionConfig, "scan-radius")
-	Float mimicChance = JsonUtil.GetFloatValue(DistributionConfig, "mimic-chance")
-	Float weight1 = JsonUtil.GetFloatValue(DistributionConfig, "mimic-weight-vore")
-	Float weight2 = JsonUtil.GetFloatValue(DistributionConfig, "mimic-weight-sex")
-	Float weight3 = JsonUtil.GetFloatValue(DistributionConfig, "mimic-weight-instant")
-	Debug("PlaceMimicsInCurrentCell(): rounds=" + maxRounds + " scan-radius=" + scanRadius + " mimic-chance=" + mimicChance)
+Function PlaceMimicsInRadius()
+	Debug("PlaceMimicsInRadius(): scan-radius=" + ScanRadius + " mimic-chance=" + MimicChance)
+	Int visited = 0
+	Int skipped = 0
+	Int placed = 0
 
-	int rounds = maxRounds
-	While rounds > 0
-		ObjectReference foundRef = Game.FindRandomReferenceOfAnyTypeInListFromRef(LargeChestForms, PlayerRef, scanRadius)
-		If foundRef
-			Int foundFormId = foundRef.GetFormID()
-		
-			If KnownChests.Find(foundFormId) < 0 && !foundRef.IsDisabled() ; Should be always true
-				KnownChests[ KCI ] = foundFormId
-				KCI += 1
-				If KCI >= KnownChestBufferSize
-					KCI = 0
-				EndIf
-
-				Debug("Chest " + (foundRef as Form) + " viable for replacement")
-				Float roll = Utility.RandomFloat()
-				Debug("roll=" + roll)
-				If roll < mimicChance
-					Float rollType = Utility.RandomFloat(0.0, weight1 + weight2 + weight3)
-					Debug("rollType=" + rollType + "/" + weight1 + weight2 + weight3)
-					If rollType < weight1
-						Debug.Notification("Mimic created (Vore)")
-						lib.PlaceMimic(foundRef, 1)
-					ElseIf rollType < (weight1 + weight2)
-						Debug.Notification("Mimic created")
-						lib.PlaceMimic(foundRef, 2)
-					ElseIf rollType < (weight1 + weight2 + weight3)
-						Debug.Notification("Mimic created (Instant Vore)")
-						lib.PlaceMimic(foundRef, 3)
-					EndIf
-				EndIf
-			Else 
-				Debug("Chest " + (foundRef as Form) + " int=(" + foundRef.GetFormID() + ") already processed")
+	ObjectReference[] largeChests = PO3_SKSEFunctions.FindAllReferencesOfType(PlayerRef, LargeChestForms, ScanRadius)
+	Int i = 0
+	While i < largeChests.Length
+		ObjectReference largeChest = largeChests[i]
+		If !largeChest.IsDisabled() && KnownChests.Find(largeChest.GetFormID()) < 0
+			KnownChests[ KCI ] = largeChest.GetFormID()
+			KCI += 1
+			If KCI >= KnownChestBufferSize
+				KCI = 0
 			EndIf
-			rounds -= 1
+			visited += 1
+			Debug("Processing chest " + largeChest as Form)
+			If Utility.RandomFloat() < MimicChance
+				placed += 1
+				Float rollType = Utility.RandomFloat(0.0, Weight1Vore + Weight2Vore + Weight3Vore)
+				ObjectReference mimic
+				If rollType < Weight1Vore
+					If cheatNotifyMimics > 0
+						Debug.Notification("Mimic created (Vore)")
+					EndIf
+					mimic = lib.PlaceMimic(largeChest, 1)
+				ElseIf rollType < (Weight1Vore + Weight2Vore)
+					If cheatNotifyMimics > 0
+						Debug.Notification("Mimic created")
+					EndIf
+					mimic = lib.PlaceMimic(largeChest, 2)
+				Else
+					If cheatNotifyMimics > 0
+						Debug.Notification("Mimic created (Instant Vore)")
+					EndIf
+					mimic = lib.PlaceMimic(largeChest, 3)
+				EndIf
+				PlacedMimics[ PMI ] = mimic
+				PlacedMimicLocs[ PMI ] = PlayerRef.GetParentCell()
+				PMI += 1
+				; TODO configurable
+				DumpMimics()
+				If PMI >= 128
+					PMI = 0
+					Error("Resetting placed mimics array")
+				EndIf
+			EndIf
 		Else
-			Debug("Nothing found")
-			rounds = 0
+			skipped += 1
 		EndIf
+		i += 1
+	EndWhile
+	Debug("Result - placed=" + placed + " checked=" + visited + " skipped=" + skipped)
+EndFunction
+
+Function FixBakaMimicsInRadius()
+	Debug("FixBakaMimicsInRadius()")
+	Int fixed = 0
+	FormList mimicForms = Game.GetFormFromFile(0x2901C, "GR_MimicPlacer.esp") As FormList ; TODO move to property
+	ObjectReference[] mimics = PO3_SKSEFunctions.FindAllReferencesOfType(PlayerRef, mimicForms, ScanRadius)
+	Int i = 0
+	While i < mimics.Length
+		BakaTrapMimic mimic = mimics[ i ] as BakaTrapMimic
+		If mimic
+			If !(mimic.GetNthLinkedRef(1) as BakaTrapTriggerBox) && \
+			   ! mimic.GetLinkedRef(lib.BakaMimicDispenseKeyword) && \
+			   ! mimic.GetLinkedRef(lib.BakaMimicPosKeyword)
+				Debug("Mimic " + mimic.GetFormID() + " needs fixing")
+				lib.FixMimic(mimic)
+				fixed += 1
+			EndIf
+		EndIf
+		i += 1
+	EndWhile
+	Debug(mimics.Length + " mimics found, " + fixed + " fixed...")
+EndFunction
+
+Function DumpMimics()
+	Debug("Placed Mimics")
+	Int i = 0
+	While i < 128
+		String loc
+		If PlacedMimicLocs[ i ]
+			loc = PlacedMimicLocs[ i ].GetName()
+		EndIf
+		If !loc
+			loc = "World"
+		EndIf
+		If PlacedMimics[ i ] != None
+			Debug(i + ": " + PlacedMimics[ i ] as Form + " in " + loc)
+		EndIf
+		i += 1
 	EndWhile
 EndFunction
 
-Function FixMimicsInCurrentCell()
-	Debug("FixMimicsInCurrentCell()")
-
-	int rounds = 12
-	float scanDistance = 4000.0
-	int[] processed = new int[1]
-	While rounds > 0
-		BakaTrapMimic mimic = Game.FindRandomReferenceOfTypeFromRef(lib.BakaMimicForm, PlayerRef, scanDistance) as BakaTrapMimic
-		If mimic
-			If processed.Find(mimic.GetFormID()) < 0
-				Debug( mimic.GetFormID() +  " not in " + processed )
-				processed = PapyrusUtil.PushInt(processed, mimic.GetFormID())
-				Form f1 = mimic.GetNthLinkedRef(1) as BakaTrapTriggerBox
-				Form f2 = mimic.GetLinkedRef(lib.BakaMimicDispenseKeyword)
-				Form f3 = mimic.GetLinkedRef(lib.BakaMimicPosKeyword)
-				If f1 == None || f2 == None || f3 == None
-					Debug("Mimic " + mimic.GetFormID() + " needs fixing: " + f1 + "," + f2 + "," + f3)
-					lib.FixMimic(mimic)
-				Else
-					Debug("Mimic is fine: " + (mimic as Form))
-				EndIf
-			EndIf
-			rounds -= 1
-		Else
-			Debug("Nothing found")
-			rounds = 0
-		EndIf
-	EndWhile
+Function Trace(String msg)
+	; lib.Debug("SCAN: " + msg)
 EndFunction
 
 Function Debug(String msg)
-	lib.Debug("Scanner: " + msg)
+	lib.Debug("SCAN: " + msg)
+EndFunction
+
+Function Error(String msg)
+	lib.Error("SCAN: " + msg)
 EndFunction

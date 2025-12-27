@@ -1,14 +1,16 @@
 ScriptName GR_MimicObserver extends Quest Hidden 
 
+String Config = "../MimicPlacer/Settings.json"
+
 GR_MimicPlacer Property lib Auto
 Actor Property PlayerRef Auto
 Perk Property ActivateMimicPerk Auto
 
 BakaTrapMimic currentMimic
 Bool maintenance = true
+Bool activate = false
 
 Event OnInit()
-    Debug("OnInit()")
     Maintenance()
 EndEvent
 
@@ -34,9 +36,10 @@ Event OnUpdate()
         RegisterForAnimationEvent(PlayerRef, "MimicVoreSpitLoop")			
         RegisterForAnimationEvent(PlayerRef, "FootLeft")
         RegisterForAnimationEvent(PlayerRef, "FootRight")
-        RegisterForAnimationEvent(PlayerRef, "IdleStop")
+        RegisterForAnimationEvent(PlayerRef, "IdleForceDefaultState")
     EndIf
 EndEvent
+
 
 ; Called by perk
 Function OnActivateMimic(ObjectReference mimic)
@@ -52,7 +55,7 @@ Function OnActivateMimic(ObjectReference mimic)
         RegisterForSingleUpdate(1.0)
     ElseIf currentMimic.MimicType == 1
         ; Vore Mimic
-        RegisterForSingleUpdate(10.0)
+        RegisterForSingleUpdate(12.0)
     Else
         RegisterForSingleUpdate(20.0)
     EndIf
@@ -63,7 +66,7 @@ Function StopObserving()
     UnregisterForAnimationEvent(PlayerRef, "MimicVoreSpitLoop")			
     UnregisterForAnimationEvent(PlayerRef, "FootLeft")
     UnregisterForAnimationEvent(PlayerRef, "FootRight")
-    UnregisterForAnimationEvent(PlayerRef, "IdleStop")
+    UnregisterForAnimationEvent(PlayerRef, "IdleForceDefaultState")
 EndFunction
 
 Function OnAnimationEvent(ObjectReference source, String eventName)
@@ -80,5 +83,5 @@ Function OnAnimationEvent(ObjectReference source, String eventName)
 EndFunction
 
 Function Debug(String msg)
-	lib.Debug("Observer: " + msg)
+	lib.Debug("OBSR: " + msg)
 EndFunction

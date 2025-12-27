@@ -1,6 +1,7 @@
 ScriptName GR_MimicPlacer extends Quest Hidden 
 
-String Config = "../MimicPlacer/AdvancedSettings.json"
+String Config = "../MimicPlacer/Settings.json"
+String ConfigBakaMimics = "../MimicPlacer/BakaMimics.json"
 
 Actor Property PlayerRef Auto
 
@@ -47,22 +48,22 @@ Function Maintenance()
 	EndIf
 
 	If !BakaMimicForm
-		BakaMimicForm = JsonUtil.GetFormValue(Config, "placed-mimic")
+		BakaMimicForm = JsonUtil.GetFormValue(ConfigBakaMimics, "placed-mimic")
         Error("Fallback BakaMimicForm from json." + BakaMimicForm)
 	EndIf
 
 	If !BakaTrapTriggerBoxForm
-		BakaTrapTriggerBoxForm = JsonUtil.GetFormValue(Config, "trap-trigger-box")
+		BakaTrapTriggerBoxForm = JsonUtil.GetFormValue(ConfigBakaMimics, "trap-trigger-box")
         Error("Fallback trap-trigger-box from json " + BakaTrapTriggerBoxForm)
 	EndIf
 
 	If !BakaMimicDispenseKeyword
-		BakaMimicDispenseKeyword = JsonUtil.GetFormValue(Config, "mimic-dispense-keyword") as Keyword
+		BakaMimicDispenseKeyword = JsonUtil.GetFormValue(ConfigBakaMimics, "mimic-dispense-keyword") as Keyword
         Error("Fallback mimic-dispense-keyword from json " + BakaTrapTriggerBoxForm)
 	EndIf
 
 	If !BakaMimicPosKeyword
-		BakaMimicPosKeyword = JsonUtil.GetFormValue(Config, "mimic-pos-keyword") as Keyword
+		BakaMimicPosKeyword = JsonUtil.GetFormValue(ConfigBakaMimics, "mimic-pos-keyword") as Keyword
         Error("Fallback BakaMimicPosKeyword from json " + BakaMimicPosKeyword)
 	EndIf
 	
@@ -77,12 +78,12 @@ Event OnUpdate()
 	EndIf
 	Init = False
 
-	int extraMimicCount = JsonUtil.GetIntValue(Config, "extra-mimic-count");
+	int extraMimicCount = JsonUtil.GetIntValue(ConfigBakaMimics, "extra-mimic-count");
 	FormList mimics = Game.GetFormFromFile(0x2901C, "GR_MimicPlacer.esp") As FormList
 	If mimics
 		int i = 0
 		While i < extraMimicCount
-			Form add = JsonUtil.GetFormValue(Config, "extra-mimic-" + i)
+			Form add = JsonUtil.GetFormValue(ConfigBakaMimics, "extra-mimic-" + i)
 			If mimics.Find(add) < 0
 				Debug("Adding extra mimic-form " + i + ": " + add)
 				mimics.AddForm(add)
@@ -93,23 +94,27 @@ Event OnUpdate()
 EndEvent
 
 ; Types: 1: Vore, 2: Sex, 3: Instant-Vore
-Function PlaceMimic(ObjectReference chest, Int mimicType)
+ObjectReference Function PlaceMimic(ObjectReference chest, Int mimicType)
 	Debug("PlaceMimic(): " + chest + " type=" + mimicType)
 	chest.DisableNoWait()
 	BakaTrapMimic mimic = chest.PlaceAtMe(BakaMimicForm) as BakaTrapMimic
 	mimic.MimicType = mimicType
+	return mimic
+EndFunction
+
+Function RemoveMimic(ObjectReference mimic)
 EndFunction
 
 ObjectReference Function FixMimic(ObjectReference mimic)
 	If (mimic.GetNthLinkedRef(1) as BakaTrapTriggerBox)
 		return mimic ; doesn't need fixing
 	EndIf
-	Debug("fixing mimic")
+	Trace("fixing mimic " + mimic as Form)
 
 	BakaTrapTriggerBox box = Game.FindClosestReferenceOfTypeFromRef(BakaTrapTriggerBoxForm, mimic, 120.0) as BakaTrapTriggerBox
 	If box == None
 	 	box = mimic.PlaceAtMe(BakaTrapTriggerBoxForm) as BakaTrapTriggerBox
-		Debug("Placed trigger box " + box)
+		Trace("Placed trigger box " + box)
 	EndIf
 
 	box.TrapType = 2 ; Always 2 for Mimic
@@ -119,24 +124,28 @@ ObjectReference Function FixMimic(ObjectReference mimic)
 	ObjectReference dispenseXmarker = Game.FindClosestReferenceOfTypeFromRef(Game.GetForm(0x3B), mimic, 120.0)
 	If dispenseXmarker == None
 		dispenseXmarker = mimic.PlaceAtMe(Game.GetForm(0x3B))
-		Debug("Placed DispenseXMarker " + (dispenseXmarker as Form))
+		Trace("Placed DispenseXMarker " + (dispenseXmarker as Form))
 	EndIf
 	PO3_SKSEFunctions.SetLinkedRef(mimic, dispenseXmarker, BakaMimicDispenseKeyword)
 
 	ObjectReference posXmarkerHeading = Game.FindClosestReferenceOfTypeFromRef(Game.GetForm(0x34), mimic, 120.0)
 	If posXmarkerHeading == None
 		posXmarkerHeading = mimic.PlaceAtMe( Game.GetForm(0x34)) 
-		Debug("Placed PositionXMarker " + (posXmarkerHeading as Form))
+		Trace("Placed PositionXMarker " + (posXmarkerHeading as Form))
 	EndIf
 	PO3_SKSEFunctions.SetLinkedRef(mimic, posXmarkerHeading, BakaMimicPosKeyword)
 	return mimic
 EndFunction
 
+Function Trace(String msg)
+	; Debug.Trace("[omnom] " + msg)
+EndFunction
+
 Function Debug(String msg)
-	Debug.Trace("[GRMP] " + msg)
+	Debug.Trace("[omnom] " + msg)
 	; Debug.Notification("[GRMP] " + msg)
 EndFunction
 
 Function Error(String err)
-	Debug.Trace("[GRMP] ERROR " + err)
+	Debug.Trace("[omnom] error " + err)
 EndFunction

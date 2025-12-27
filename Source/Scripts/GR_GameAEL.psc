@@ -6,7 +6,7 @@ Int lastStage = 0
 ObjectReference lastTarget
 
 Function StartGame(ObjectReference target, int stage)
-	Debug.Trace("[GRMP] GR_GameAEL.StartGame()")
+	Debug.Trace("[omnom] GR_GameAEL.StartGame()")
     lastTarget = target
 	StartingGame = true
 	lastStage = stage
@@ -33,7 +33,7 @@ Event OnUpdate()
 		StartingGame = False
 		int difficulty = ((90.0 - (lastStage as float * 5.0)) as int)
 		AELStruggle.MakeGame(difficulty)
-		Debug.Trace("[GRMP] Game Difficulaty " + lastStage + " " + difficulty)
+		Debug.Trace("[omnom] Game Difficulaty " + lastStage + " " + difficulty)
 		RegisterForModEvent("AEL_GameEnd", "OnGameEnd")
 		RegisterForSingleUpdate(3.0)
 	EndIf

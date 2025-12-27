@@ -1,5 +1,14 @@
 {
     "int": {
-        "simple-consequences": 1
+        "mimic-loot": 1,
+        "mimic-loot-max-item-count": 2,
+        "mimic-loot-max-gold-count": 20,
+        "mimic-loot-chance-accumulates": 1,
+
+        "mimic-vore-kills": 1,
+        "mimic-vore-kills-after-ticks": 11
+    },
+    "float": {
+        "mimic-loot-chance-per-tick": 0.05
     }
 }

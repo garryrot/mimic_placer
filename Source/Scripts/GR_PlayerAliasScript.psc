@@ -9,26 +9,16 @@ Event OnPlayerLoadGame()
     If !lib
         lib = GetOwningQuest() as GR_MimicPlacer
     EndIf
-    (lib as GR_MimicPlacer).Debug("OnPlayerLoadGame()")
-    (lib as GR_MimicPlacer).Maintenance()
-    RegisterForSingleUpdate(0.75)
-
-    if !scanner
-        lib.Error("GR_MimicConsequences is null?! " + scanner)
-    EndIf
-    (scanner as GR_MimicLocationScanner).Maintenance()
-
-    if !observer
-        lib.Error("GR_MimicObserver is null?! " + observer)
-    EndIf
-    (observer as GR_MimicObserver).Maintenance()
-
-    lib.Error("GR_MimicConsequences: " + consequences)
+    lib.Debug("OnPlayerLoadGame()")
+    lib.Maintenance()
+    scanner.Maintenance()
+    observer.Maintenance()
     (consequences as GR_MimicConsequences).Maintenance()
+    RegisterForSingleUpdate(3.00)
 EndEvent
 
 Event OnCellLoad()
-    RegisterForSingleUpdate(0.75)
+    RegisterForSingleUpdate(1.0)
 EndEvent
 
 Event OnUpdate()

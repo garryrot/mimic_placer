@@ -7,7 +7,7 @@ ObjectReference lastTarget
 Quest Property TNTRController Auto; as TNTRControllerScript
 
 Function StartGame(ObjectReference target, int stage)
-	Debug.Trace("[GRMP] GR_GameQTEText.StartGame()")
+	Debug.Trace("[omnom] GR_GameQTEText.StartGame()")
 	If TNTRController as TNTRControllerScript
 		RegisterForSingleUpdate(0.75)
 		InGame = True

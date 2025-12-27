@@ -3,22 +3,26 @@ Scriptname GR_MimicConsequences extends Quest
 GR_MimicPlacer Property lib Auto
 Actor Property PlayerRef Auto
 
-String ConsequenceType = "../MimicPlacer/Consequences.json"
+String ConfigConsequences = "../MimicPlacer/Consequences.json"
+
+; Config
+Int ConfigMimicLoot = 1
+Int ConfigMimicLootMaxItemCount = 2
+Int ConfigMimicLootMaxGoldCount = 20
+Int ConfigMimicLootChanceAccumulates = 1
+Float ConfigMimicLootChancePerTick = 0.5
+Int ConfigMimicVoreKills = 1
+Int ConfigMimicVoreKillsAfterTicks = 11
 
 ; State
 BakaTrapMimic currentMimic
 BakaTrapTriggerBox currentTriggerBox
 ObjectReference originalChest
-
 Bool InVore = False
-Bool IsSexVore = False
 Int MimicType = 0
-
 ; The more ticks, the longer the player was in the belly of the mimic
 Int VoreTicks = 0
 Int FoundLoot = 0
-
-Int DeathAfterRounds = 12
 
 Event OnInit()
 	Maintenance()
@@ -31,25 +35,50 @@ Function Maintenance()
     EndIf
     UnregisterForAllModEvents()
     RegisterForModEvent("Mimic_VoreStart", "StartVore")
-    RegisterForModEvent("Mimic_VoreStart", "StopVore")
+    RegisterForModEvent("Mimic_VoreEnd", "StopVore")
+
+    Init = True
+    RegisterForSingleUpdate(2.0)
 EndFunction
 
+Bool Init = True
 Event OnUpdate()
+    If Init
+        Init = False
+        ConfigMimicLoot = JsonUtil.GetIntValue(ConfigConsequences, "mimic-loot")
+        ConfigMimicLootMaxItemCount = JsonUtil.GetIntValue(ConfigConsequences, "mimic-loot-max-item-count")
+        ConfigMimicLootMaxGoldCount = JsonUtil.GetIntValue(ConfigConsequences, "mimic-loot-max-gold-count")
+        ConfigMimicLootChanceAccumulates = JsonUtil.GetIntValue(ConfigConsequences, "mimic-loot-chance-accumulates")
+        ConfigMimicLootChancePerTick = JsonUtil.GetFloatValue(ConfigConsequences, "mimic-loot-chance-per-tick")
+        ConfigMimicVoreKills = JsonUtil.GetIntValue(ConfigConsequences, "mimic-vore-kills")
+        ConfigMimicVoreKillsAfterTicks = JsonUtil.GetIntValue(ConfigConsequences, "mimic-vore-kills-after-ticks")
+
+        Debug("Init settings MimicLoot=" + ConfigMimicLoot + " MimicLootMaxItemCount=" + ConfigMimicLootMaxItemCount + \ 
+             " MimicLootMaxGoldCount=" + ConfigMimicLootMaxGoldCount  + " MimicLootChanceAccumulates=" + \
+             ConfigMimicLootChanceAccumulates + " MimicLootChancePerTick=" + ConfigMimicLootChancePerTick  + \
+             " MimicVoreKills=" + ConfigMimicVoreKills + " MimicVoreKillsAfterTicks=" + ConfigMimicVoreKillsAfterTicks )
+        return
+    EndIf
+
     Debug("OnUpdate() MimicType=" + MimicType + " Ticks=" + VoreTicks + \
-            " InVore=" + InVore + " PairedChest=" + originalChest)
+            " InVore=" + InVore + " FoundLoot=" + FoundLoot + " PairedLootChest=" + originalChest)
     If InVore
         FindChest()
         VoreTicks += 1
-
         If originalChest != None
-            If Utility.RandomFloat() < 0.20
-                ConsFindLoot()
+            Float lootChance = ConfigMimicLootChancePerTick
+            If ConfigMimicLootChanceAccumulates
+                lootChance = VoreTicks * ConfigMimicLootChancePerTick
+            EndIf
+            If VoreTicks > 2 && FoundLoot < 2 && Utility.RandomFloat() < lootChance
+                FoundLoot += 1
             EndIf
         EndIf
-        If !IsSexVore && VoreTicks > DeathAfterRounds
-            ConsFadeOutAndDeath()
+        If MimicType == 1 && ConfigMimicVoreKills && VoreTicks > ConfigMimicVoreKillsAfterTicks
+            Debug("Vore killed the player VoreTicks=" + VoreTicks)
+            ConsFadeOutAndDeath() 
         EndIf
-        RegisterForSingleUpdate(4.0)
+        RegisterForSingleUpdate(8.0)
     EndIf
 EndEvent
 
@@ -63,20 +92,23 @@ Event StartVore(string eventName, string strArg, float numArg, form mimic)
 
     InVore = True
     VoreTicks = 0
-    IsSexVore = currentMimic.MimicType == 2
+    FoundLoot = 0
     MimicType = currentMimic.MimicType
     originalChest = None
 
-    RegisterForSingleUpdate(1.0)
+    RegisterForSingleUpdate(8.0)
     ; DeathWormVoreSuccessLoop -> Worm Vore Failed
     ; SnareRopeUndoSelfFailEvent -> Snare Rope Failed
 EndEvent
 
-Function StopVore()
+Function StopVore(string eventName, string strArg, float numArg, form mimic)
+    Debug("Vore stopped")
+    WrapupFindLoot()
     InVore = False
+    FoundLoot = 0
 EndFunction
 
-; ------------ Utilities
+; ~~~   Loot   ~~~
 
 Function FindChest()
     If !originalChest
@@ -89,24 +121,35 @@ Function FindChest()
     EndIf
 EndFunction
 
-; -------------- Consequences
+Function WrapupFindLoot()
+    int i = 0
+    If FoundLoot > 0
+        FindLootMessage()
+    EndIf
+    While i < FoundLoot
+        ConsFindLoot()
+        i += 1
+    EndWhile
+EndFunction
+
+Function FindLootMessage()
+    int roll = Utility.RandomInt(1, 5)
+    If roll == 1
+        Debug.Notification("Desperately probing for an escape, you held on to some items in the chest")
+    ElseIf roll == 2
+        Debug.Notification("While being ravaged by tentacles in the chest you found some valuables")
+    ElseIf roll == 3
+        Debug.Notification("You found some valuables in the chest")
+    ElseIf roll == 4
+        Debug.Notification("Desperately probing for an escape, you held on to some items in the chest")
+    ElseIf roll == 5
+        Debug.Notification("You collected enough presence of mind to take some things from the chest")
+    EndIf
+EndFunction
 
 Function ConsFindLoot()
     Form[] allItems = originalChest.GetContainerForms()
     lib.Debug("ConsFindLoot() " + allItems)
-
-    int roll = Utility.RandomInt(1, 5)
-    If roll == 1
-        Debug.Notification("You find some junk in the creatures crevices")
-    ElseIf roll == 3
-        Debug.Notification("You find some valuables while being ravaged by the tentacles")
-    ElseIf roll == 4
-        Debug.Notification("Desperately probing for an escape, your hands manage to grab an item")
-    ElseIf roll == 5
-        Debug.Notification("There are still things in this chest...")
-    EndIf
-
-    FoundLoot += 1
     Form retrieved = allItems[Utility.RandomInt(0, allItems.Length - 1)]
     Int count = 1
     If retrieved.GetFormID() == 0xf
@@ -117,10 +160,12 @@ Function ConsFindLoot()
     lib.Debug("Retrieved " + retrieved + " x" + count)
 EndFunction
 
+; ~~~   Death   ~~~
+
 Function ConsFadeOutAndDeath()
     currentMimic.MimicShake()
     ; This doesn't work
-    Game.FadeOutGame(true, true, 0.0, 40.0)
+    Game.FadeOutGame(true, true, 0.0, 50.0)
     Utility.Wait(1.5)
     currentMimic.MimicShake()
     Utility.Wait(2.5)
@@ -131,26 +176,16 @@ Function ConsFadeOutAndDeath()
     currentMimic.MimicShake()
     Utility.Wait(5)
     currentMimic.MimicShake()
-    Utility.Wait(9)
+    Utility.Wait(12)
     currentMimic.MimicShake()
+    Utility.Wait(9)
     Debug.MessageBox("Worn down by the endless assault of the tentacles, you no longer have the strength to fight back. " + \
                     "You are helplessly trapped, slowly being digested as your sanity and consiousness fades away...")
-    Utility.Wait(15)
+    Utility.Wait(3)
     currentMimic.MimicShake()
     Game.GetPlayer().Kill()
 EndFunction
 
-; ---------------------------------------- Fallback
-
-; Function Consequences()
-;     ; SexVore = ~43 Ticks
-;     float roll = Utility.RandomFloat()
-;     lib.Debug("Consequences " + VoreTicks + " roll=" + roll + " type=" + IsSexVore)
-;     If FoundLoot > 0
-;         Debug.MessageBox("You managed to retrieve some things from the chest")
-;     EndIf
-; EndFunction
-
 Function Debug(String msg)
-	lib.Debug("Consequences: " + msg)
+	lib.Debug("CONS: " + msg)
 EndFunction
