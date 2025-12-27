@@ -1,9 +1,9 @@
 Scriptname GR_PlayerAliasScript extends ReferenceAlias
 
 GR_MimicPlacer Property lib Auto
-GR_MimicLocationScanner Property scanner Auto 
-GR_MimicObserver Property observer Auto
-Quest Property consequences Auto
+GR_MimicScanner Property scanner Auto 
+GR_MimicBakaObserver Property observer Auto
+GR_MimicConsequences Property consequences Auto
 
 Event OnPlayerLoadGame()
     If !lib
@@ -13,7 +13,7 @@ Event OnPlayerLoadGame()
     lib.Maintenance()
     scanner.Maintenance()
     observer.Maintenance()
-    (consequences as GR_MimicConsequences).Maintenance()
+    consequences.Maintenance()
     RegisterForSingleUpdate(3.00)
 EndEvent
 

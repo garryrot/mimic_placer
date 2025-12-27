@@ -1,4 +1,4 @@
-ScriptName GR_MimicLocationScanner extends Quest Hidden 
+ScriptName GR_MimicScanner extends Quest Hidden 
 
 GR_MimicPlacer Property lib Auto ; GR_MimicPlacer
 Actor Property PlayerRef Auto
@@ -121,17 +121,17 @@ Function PlaceMimicsInRadius()
 					If cheatNotifyMimics > 0
 						Debug.Notification("Mimic created (Vore)")
 					EndIf
-					mimic = lib.PlaceMimic(largeChest, 1)
+					mimic = lib.PlaceBakaMimic(largeChest, 1)
 				ElseIf rollType < (Weight1Vore + Weight2Vore)
 					If cheatNotifyMimics > 0
 						Debug.Notification("Mimic created")
 					EndIf
-					mimic = lib.PlaceMimic(largeChest, 2)
+					mimic = lib.PlaceBakaMimic(largeChest, 2)
 				Else
 					If cheatNotifyMimics > 0
 						Debug.Notification("Mimic created (Instant Vore)")
 					EndIf
-					mimic = lib.PlaceMimic(largeChest, 3)
+					mimic = lib.PlaceBakaMimic(largeChest, 3)
 				EndIf
 				PlacedMimics[ PMI ] = mimic
 				PlacedMimicLocs[ PMI ] = PlayerRef.GetParentCell()
@@ -164,7 +164,7 @@ Function FixBakaMimicsInRadius()
 			   ! mimic.GetLinkedRef(lib.BakaMimicDispenseKeyword) && \
 			   ! mimic.GetLinkedRef(lib.BakaMimicPosKeyword)
 				Debug("Mimic " + mimic.GetFormID() + " needs fixing")
-				lib.FixMimic(mimic)
+				lib.FixBakaMimic(mimic)
 				fixed += 1
 			EndIf
 		EndIf

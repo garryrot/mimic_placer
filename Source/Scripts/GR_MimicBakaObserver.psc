@@ -1,4 +1,4 @@
-ScriptName GR_MimicObserver extends Quest Hidden 
+ScriptName GR_MimicBakaObserver extends Quest Hidden 
 
 String Config = "../MimicPlacer/Settings.json"
 
@@ -45,7 +45,7 @@ EndEvent
 Function OnActivateMimic(ObjectReference mimic)
 	Debug("OnActivateMimic(" + mimic as Form + ")")
     currentMimic = mimic as BakaTrapMimic
-	lib.FixMimic(mimic)
+	lib.FixBakaMimic(mimic)
     
     ; Just estimate the duration of the struggle and intro 
     ; animations based on the mimic type worst case the 

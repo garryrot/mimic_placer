@@ -94,7 +94,7 @@ Event OnUpdate()
 EndEvent
 
 ; Types: 1: Vore, 2: Sex, 3: Instant-Vore
-ObjectReference Function PlaceMimic(ObjectReference chest, Int mimicType)
+ObjectReference Function PlaceBakaMimic(ObjectReference chest, Int mimicType)
 	Debug("PlaceMimic(): " + chest + " type=" + mimicType)
 	chest.DisableNoWait()
 	BakaTrapMimic mimic = chest.PlaceAtMe(BakaMimicForm) as BakaTrapMimic
@@ -102,10 +102,32 @@ ObjectReference Function PlaceMimic(ObjectReference chest, Int mimicType)
 	return mimic
 EndFunction
 
-Function RemoveMimic(ObjectReference mimic)
+ObjectReference Function PlaceBakaMimicClosestChest(Int mimicType)
+	ObjectReference result = Game.FindClosestReferenceOfAnyTypeInListFromRef(LargeChestForms, Game.GetPlayer(), 500.0)
+	ObjectReference mimic = PlaceBakaMimic(result, mimicType)
 EndFunction
 
-ObjectReference Function FixMimic(ObjectReference mimic)
+Bool Function RemoveBakaMimic(ObjectReference mimic)
+	ObjectReference pairedChest = FindPairedChest(mimic)
+	If pairedChest
+		mimic.Delete()
+		pairedChest.Enable()
+		return True
+	EndIf
+	return False
+EndFunction
+
+ObjectReference Function FindPairedChest(ObjectReference mimic)
+    ObjectReference originalChest = Game.FindClosestReferenceOfAnyTypeInListFromRef(LargeChestForms, mimic, 10.0)
+    If originalChest
+		If !originalChest.IsDisabled()
+			originalChest = None
+		EndIf
+	EndIf
+	return originalChest
+EndFunction
+
+ObjectReference Function FixBakaMimic(ObjectReference mimic)
 	If (mimic.GetNthLinkedRef(1) as BakaTrapTriggerBox)
 		return mimic ; doesn't need fixing
 	EndIf

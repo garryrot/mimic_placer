@@ -17,7 +17,7 @@ ObjectReference activatorRef
 
 Function OnPerkActivate()
 	If Mimics.HasForm( activatorRef.GetBaseObject() )
-		(MimicPlacer as GR_MimicObserver).OnActivateMimic(activatorRef)
+		(MimicPlacer as GR_MimicBakaObserver).OnActivateMimic(activatorRef)
 	EndIf
 EndFunction
 
