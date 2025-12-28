@@ -8,7 +8,7 @@ Actor Property PlayerRef Auto
 ; Boss Chests (Any form with Clutter\Ruins\Ruins_LargeChest)
 FormList Property LargeChestForms Auto
 FormList Property MimicActivatorForms Auto 
-Form Property MimicAddonForm Auto
+Form Property MimicAddonForm Auto ; Doens't werk
 
 Spell Property DebugSpellMimic Auto
 Spell Property DebugSpellMimicVore Auto
@@ -85,7 +85,7 @@ Event OnUpdate()
 	EndIf
 	Init = False
 
-	int extraMimicCount = JsonUtil.GetIntValue(ConfigBakaMimics, "extra-mimic-count");
+	int extraMimicCount = JsonUtil.GetIntValue(ConfigBakaMimics, "extra-mimic-form-count");
 	If !MimicActivatorForms
 		Error("Mimic activator form was not set")
 		MimicActivatorForms = Game.GetFormFromFile(0x2901C, "GR_MimicPlacer.esp") As FormList
@@ -102,32 +102,37 @@ Event OnUpdate()
 EndEvent
 
 ; Types: 1: Vore, 2: Sex, 3: Instant-Vore
-ObjectReference Function PlaceBakaMimic(ObjectReference chest, Int mimicType)
+GR_BakaMimicAddon Function PlaceBakaMimic(ObjectReference chest, Int mimicType)
 	Debug("PlaceMimic(): " + chest + " type=" + mimicType)
 	chest.DisableNoWait()
-	BakaTrapMimic mimic = chest.PlaceAtMe(BakaMimicForm) as BakaTrapMimic
+	BakaTrapMimic mimic = chest.PlaceAtMe(BakaMimicForm, 1, true) as BakaTrapMimic
 	mimic.MimicType = mimicType
-
-	; ObjectReference result = chest.PlaceAtMe(Game.GetFormFromFile(0x4C725, "GR_MimicPlacer.esp"))
-	; Debug("Created addon objects" + result)
-	return mimic
+	If mimic
+		GR_BakaMimicAddon addon = mimic.PlaceAtMe(Game.GetFormFromFile(0x4C725, "GR_MimicPlacer.esp"), 1, true) as GR_BakaMimicAddon
+		addon.lib = self
+		addon.AttachToMimic(mimic, chest)
+		return addon
+	EndIf
+	return None
 EndFunction
 
+; Used by debugging functions
 ObjectReference Function PlaceBakaMimicClosestChest(Int mimicType)
 	ObjectReference result = Game.FindClosestReferenceOfAnyTypeInListFromRef(LargeChestForms, Game.GetPlayer(), 500.0)
 	If !result.IsDisabled()
 		ObjectReference mimic = PlaceBakaMimic(result, mimicType)
 	Else
-		Error("Chest already disabled " + result as Form)
+		Debug.Notification("Chest already disabled " + result as Form)
 	EndIf
 EndFunction
 
+; User by debugging functions
 ObjectReference Function RemoveBakaMimicClosest()
 	ObjectReference result = Game.FindClosestReferenceOfAnyTypeInListFromRef(Game.GetFormFromFile(0x2901C, "GR_MimicPlacer.esp") As FormList, Game.GetPlayer(), 500.0)
 	If !result.IsDeleted()
 		RemoveBakaMimic(result)
 	Else
-		Error("Mimic already deleted " + result as Form)
+		Debug.Notification("Mimic already deleted " + result as Form)
 	EndIf
 EndFunction
 

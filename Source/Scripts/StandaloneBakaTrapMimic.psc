@@ -108,7 +108,7 @@ int iVoiceStrength
 ; Support for not previously set up dispense-markers
 ObjectReference Function GetDispenseMarker()
     If !DispenseXmarker
-	    DispenseXmarker = PlaceAtMe(Game.GetForm(0x3B)) ; XMarker
+	    DispenseXmarker = PlaceAtMe(Game.GetForm(0x3B), 1, true) ; XMarker
     EndIf
     return DispenseXmarker
 EndFunction
@@ -116,7 +116,7 @@ EndFunction
 ; Support for not previously set up pos-markers
 ObjectReference Function GetPosMarker()
     If !PosXmarker
-        PosXmarker = PlaceAtMe(Game.GetForm(0x34)) ; XMarkerHeading
+        PosXmarker = PlaceAtMe(Game.GetForm(0x34), 1, true) ; XMarkerHeading
     EndIf
     return PosXmarker
 EndFunction
@@ -125,7 +125,7 @@ EndFunction
 BakaTrapTriggerBox _triggerBox
 BakaTrapTriggerBox Function GetTriggerBox()
 	If !_triggerBox
-        _triggerBox = PlaceAtMe(Game.GetFormFromFile(0x83E, "TNTR.esp")) as BakaTrapTriggerBox
+        _triggerBox = PlaceAtMe(Game.GetFormFromFile(0x83E, "TNTR.esp"), 1, true) as BakaTrapTriggerBox
 		_triggerBox.TrapType = 2 ; 2 for Mimic
 		_triggerBox.VoreTrapref = self
     EndIf

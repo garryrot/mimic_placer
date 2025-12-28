@@ -5,6 +5,7 @@ GR_MimicScanner Property scanner Auto
 GR_MimicBakaObserver Property observer Auto
 GR_MimicConsequences Property consequences Auto
 
+Bool GameLoad = True
 Event OnPlayerLoadGame()
     If !lib
         lib = GetOwningQuest() as GR_MimicPlacer
@@ -14,7 +15,8 @@ Event OnPlayerLoadGame()
     scanner.Maintenance()
     observer.Maintenance()
     consequences.Maintenance()
-    RegisterForSingleUpdate(3.00)
+    GameLoad = True
+    RegisterForSingleUpdate(2.0)
 EndEvent
 
 Event OnCellLoad()
@@ -22,5 +24,9 @@ Event OnCellLoad()
 EndEvent
 
 Event OnUpdate()
+    If GameLoad 
+        GameLoad = False
+        scanner.FixMimicsOnGameLoad()
+    EndIf
     scanner.ProcessCell()
 EndEvent
