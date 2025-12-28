@@ -18,7 +18,7 @@ Event OnPlayerLoadGame()
 EndEvent
 
 Event OnCellLoad()
-    RegisterForSingleUpdate(1.0)
+    RegisterForSingleUpdate(5.0)
 EndEvent
 
 Event OnUpdate()

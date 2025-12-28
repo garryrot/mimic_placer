@@ -86,7 +86,7 @@ Function ProcessCell()
     If !ProcessCellLock
         ProcessCellLock = true
         PlaceMimicsInRadius()
-        FixBakaMimicsInRadius()
+        ; FixBakaMimicsInRadius()
 		lastProcessCells = Utility.GetCurrentRealTime()
         ProcessCellLock = false
 	Else
@@ -151,27 +151,27 @@ Function PlaceMimicsInRadius()
 	Debug("Result - placed=" + placed + " checked=" + visited + " skipped=" + skipped)
 EndFunction
 
-Function FixBakaMimicsInRadius()
-	Debug("FixBakaMimicsInRadius()")
-	Int fixed = 0
-	FormList mimicForms = Game.GetFormFromFile(0x2901C, "GR_MimicPlacer.esp") As FormList ; TODO move to property
-	ObjectReference[] mimics = PO3_SKSEFunctions.FindAllReferencesOfType(PlayerRef, mimicForms, ScanRadius)
-	Int i = 0
-	While i < mimics.Length
-		BakaTrapMimic mimic = mimics[ i ] as BakaTrapMimic
-		If mimic
-			If !(mimic.GetNthLinkedRef(1) as BakaTrapTriggerBox) && \
-			   ! mimic.GetLinkedRef(lib.BakaMimicDispenseKeyword) && \
-			   ! mimic.GetLinkedRef(lib.BakaMimicPosKeyword)
-				Debug("Mimic " + mimic.GetFormID() + " needs fixing")
-				lib.FixBakaMimic(mimic)
-				fixed += 1
-			EndIf
-		EndIf
-		i += 1
-	EndWhile
-	Debug(mimics.Length + " mimics found, " + fixed + " fixed...")
-EndFunction
+; Function FixBakaMimicsInRadius()
+; 	Debug("FixBakaMimicsInRadius()")
+; 	Int fixed = 0
+; 	FormList mimicForms = Game.GetFormFromFile(0x2901C, "GR_MimicPlacer.esp") As FormList ; TODO move to property
+; 	ObjectReference[] mimics = PO3_SKSEFunctions.FindAllReferencesOfType(PlayerRef, mimicForms, ScanRadius)
+; 	Int i = 0
+; 	While i < mimics.Length
+; 		BakaTrapMimic mimic = mimics[ i ] as BakaTrapMimic
+; 		If mimic
+; 			If !(mimic.GetNthLinkedRef(1) as BakaTrapTriggerBox) && \
+; 			   ! mimic.GetLinkedRef(lib.BakaMimicDispenseKeyword) && \
+; 			   ! mimic.GetLinkedRef(lib.BakaMimicPosKeyword)
+; 				Debug("Mimic " + mimic.GetFormID() + " needs fixing")
+; 				; lib.FixBakaMimic(mimic)
+; 				fixed += 1
+; 			EndIf
+; 		EndIf
+; 		i += 1
+; 	EndWhile
+; 	Debug(mimics.Length + " mimics found, " + fixed + " fixed...")
+; EndFunction
 
 Function DumpMimics()
 	Debug("Placed Mimics")

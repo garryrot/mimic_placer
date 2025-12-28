@@ -6,7 +6,9 @@ String ConfigBakaMimics = "../MimicPlacer/BakaMimics.json"
 Actor Property PlayerRef Auto
 
 ; Boss Chests (Any form with Clutter\Ruins\Ruins_LargeChest)
-FormList Property LargeChestForms Auto 
+FormList Property LargeChestForms Auto
+FormList Property MimicActivatorForms Auto 
+Form Property MimicAddonForm Auto
 
 Spell Property DebugSpellMimic Auto
 Spell Property DebugSpellMimicVore Auto
@@ -45,7 +47,7 @@ Function Maintenance()
 	    If !PlayerRef.HasSpell(DebugSpellMimicInstant)
 			PlayerRef.AddSpell(DebugSpellMimicInstant)
 	    EndIf
-		
+
 		Spell removeSpell = Game.GetFormFromFile(0x47622, "GR_MimicPlacer.esp") as Spell
 		If !PlayerRef.HasSpell(removeSpell)
 			PlayerRef.AddSpell(removeSpell)
@@ -84,18 +86,19 @@ Event OnUpdate()
 	Init = False
 
 	int extraMimicCount = JsonUtil.GetIntValue(ConfigBakaMimics, "extra-mimic-count");
-	FormList mimics = Game.GetFormFromFile(0x2901C, "GR_MimicPlacer.esp") As FormList
-	If mimics
-		int i = 0
-		While i < extraMimicCount
-			Form add = JsonUtil.GetFormValue(ConfigBakaMimics, "extra-mimic-" + i)
-			If mimics.Find(add) < 0
-				Debug("Adding extra mimic-form " + i + ": " + add)
-				mimics.AddForm(add)
-			EndIf
-			i += 1
-		EndWhile
+	If !MimicActivatorForms
+		Error("Mimic activator form was not set")
+		MimicActivatorForms = Game.GetFormFromFile(0x2901C, "GR_MimicPlacer.esp") As FormList
 	EndIf
+	int i = 0
+	While i < extraMimicCount
+		Form add = JsonUtil.GetFormValue(ConfigBakaMimics, "extra-mimic-" + i)
+		If MimicActivatorForms.Find(add) < 0
+			Debug("Adding extra mimic-form " + i + ": " + add)
+			MimicActivatorForms.AddForm(add)
+		EndIf
+		i += 1
+	EndWhile
 EndEvent
 
 ; Types: 1: Vore, 2: Sex, 3: Instant-Vore
@@ -104,17 +107,28 @@ ObjectReference Function PlaceBakaMimic(ObjectReference chest, Int mimicType)
 	chest.DisableNoWait()
 	BakaTrapMimic mimic = chest.PlaceAtMe(BakaMimicForm) as BakaTrapMimic
 	mimic.MimicType = mimicType
+
+	; ObjectReference result = chest.PlaceAtMe(Game.GetFormFromFile(0x4C725, "GR_MimicPlacer.esp"))
+	; Debug("Created addon objects" + result)
 	return mimic
 EndFunction
 
 ObjectReference Function PlaceBakaMimicClosestChest(Int mimicType)
 	ObjectReference result = Game.FindClosestReferenceOfAnyTypeInListFromRef(LargeChestForms, Game.GetPlayer(), 500.0)
-	ObjectReference mimic = PlaceBakaMimic(result, mimicType)
+	If !result.IsDisabled()
+		ObjectReference mimic = PlaceBakaMimic(result, mimicType)
+	Else
+		Error("Chest already disabled " + result as Form)
+	EndIf
 EndFunction
 
 ObjectReference Function RemoveBakaMimicClosest()
 	ObjectReference result = Game.FindClosestReferenceOfAnyTypeInListFromRef(Game.GetFormFromFile(0x2901C, "GR_MimicPlacer.esp") As FormList, Game.GetPlayer(), 500.0)
-	RemoveBakaMimic(result)
+	If !result.IsDeleted()
+		RemoveBakaMimic(result)
+	Else
+		Error("Mimic already deleted " + result as Form)
+	EndIf
 EndFunction
 
 Bool Function RemoveBakaMimic(ObjectReference mimic)
@@ -135,38 +149,6 @@ ObjectReference Function FindPairedChest(ObjectReference mimic)
 		EndIf
 	EndIf
 	return originalChest
-EndFunction
-
-ObjectReference Function FixBakaMimic(ObjectReference mimic)
-	If (mimic.GetNthLinkedRef(1) as BakaTrapTriggerBox)
-		return mimic ; doesn't need fixing
-	EndIf
-	Trace("fixing mimic " + mimic as Form)
-
-	BakaTrapTriggerBox box = Game.FindClosestReferenceOfTypeFromRef(BakaTrapTriggerBoxForm, mimic, 120.0) as BakaTrapTriggerBox
-	If box == None
-	 	box = mimic.PlaceAtMe(BakaTrapTriggerBoxForm) as BakaTrapTriggerBox
-		Trace("Placed trigger box " + box)
-	EndIf
-
-	box.TrapType = 2 ; Always 2 for Mimic
-	box.VoreTrapref = mimic
-	PO3_SKSEFunctions.SetLinkedRef(mimic, box)
-
-	ObjectReference dispenseXmarker = Game.FindClosestReferenceOfTypeFromRef(Game.GetForm(0x3B), mimic, 120.0)
-	If dispenseXmarker == None
-		dispenseXmarker = mimic.PlaceAtMe(Game.GetForm(0x3B))
-		Trace("Placed DispenseXMarker " + (dispenseXmarker as Form))
-	EndIf
-	PO3_SKSEFunctions.SetLinkedRef(mimic, dispenseXmarker, BakaMimicDispenseKeyword)
-
-	ObjectReference posXmarkerHeading = Game.FindClosestReferenceOfTypeFromRef(Game.GetForm(0x34), mimic, 120.0)
-	If posXmarkerHeading == None
-		posXmarkerHeading = mimic.PlaceAtMe( Game.GetForm(0x34)) 
-		Trace("Placed PositionXMarker " + (posXmarkerHeading as Form))
-	EndIf
-	PO3_SKSEFunctions.SetLinkedRef(mimic, posXmarkerHeading, BakaMimicPosKeyword)
-	return mimic
 EndFunction
 
 Function Trace(String msg)
