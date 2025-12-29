@@ -32,8 +32,8 @@ Function AttachToMimic(ObjectReference mimic, ObjectReference pairedChest)
 	MimicRef = mimic
 	PairedContainer = pairedChest
 	TriggerBox = box
-	XMarkerPos = mimic.PlaceAtMe(Game.GetForm(0x34), 1, true) ; Debug("Created PositionXMarker" + (posXmarkerHeading as Form))
-	XMarkerDispense = mimic.PlaceAtMe(Game.GetForm(0x3B), 1, true) ; Debug("Created DispenseXMarker" + (dispenseXmarker as Form))
+	XMarkerPos = mimic.PlaceAtMe(Game.GetForm(0x34), 1, true)
+	XMarkerDispense = mimic.PlaceAtMe(Game.GetForm(0x3B), 1, true)
 	Debug("Attaching addon (" + self as Form + " posMarker=" + XMarkerPos as Form \
             + " dispenseMarker=" + XMarkerDispense as Form + " triggerBox=" + TriggerBox as Form \
             +  " pairedChest=" + pairedChest as Form + ") to mimic " + MimicRef as Form)
@@ -45,6 +45,13 @@ String Function GetCell()
 		return "World"
 	EndIf
 	return GetParentCell().GetName()
+EndFunction
+
+Int Function GetMimicType()
+	If MimicRef as BakaTrapMimic
+		return (MimicRef as BakaTrapMimic).MimicType
+	EndIf
+	return 0
 EndFunction
 
 Bool Function LinkRefsIfRequired()
@@ -85,7 +92,6 @@ Bool Function SanityCheckPreAttach(ObjectReference mimic)
         Debug.MessageBox("Sanity check failed: Mimic " + mimic as Form + " has existing trigger box " + box as Form)
 		return False
 	EndIf
-    ; Note: Cannot have been moved on creation, i.e. must be exactly on the chest
 	ObjectReference dispenseXmarker = Game.FindClosestReferenceOfTypeFromRef(Game.GetForm(0x3B), mimic, 10.0) 
 	If dispenseXmarker
         Debug.MessageBox("Sanity check failed: Mimic " + mimic as Form + " has existing dispense marker " + dispenseXmarker as Form)

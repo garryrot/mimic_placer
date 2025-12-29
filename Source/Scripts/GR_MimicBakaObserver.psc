@@ -3,6 +3,7 @@ ScriptName GR_MimicBakaObserver extends Quest Hidden
 String Config = "../MimicPlacer/Settings.json"
 
 GR_MimicPlacer Property lib Auto
+Form Property BakaMimicAddonForm Auto
 Actor Property PlayerRef Auto
 Perk Property ActivateMimicPerk Auto
 
@@ -48,7 +49,7 @@ Function OnActivateMimic(ObjectReference mimic)
     ; This might create a small stutter
 	if !(mimic.GetNthLinkedRef(1) as BakaTrapTriggerBox)
         Error("Mimic is not referenced, SHOULD NOT HAPPEN " + mimic as Form)
-        GR_BakaMimicAddon addon = mimic.PlaceAtMe(Game.GetFormFromFile(0x4C725, "GR_MimicPlacer.esp"), 1, true) as GR_BakaMimicAddon
+        GR_BakaMimicAddon addon = mimic.PlaceAtMe(Game.GetFormFromFile(0x816, "GR_MimicPlacer.esp"), 1, true) as GR_BakaMimicAddon
 		addon.lib = lib
 		addon.AttachToMimic(mimic, None)
     EndIf
@@ -69,11 +70,6 @@ EndFunction
 
 Function StopObserving()
     Debug("StopObserving()")
-    ; If mimicHasSoftRefs
-    ;     RemoveSoftRefs(currentMimic)
-    ;     currentMimic = None
-    ;     mimicHasSoftRefs = false
-    ; EndIf
     UnregisterForAnimationEvent(PlayerRef, "MimicVoreSpitLoop")			
     UnregisterForAnimationEvent(PlayerRef, "FootLeft")
     UnregisterForAnimationEvent(PlayerRef, "FootRight")

@@ -1,6 +1,8 @@
 Scriptname GR_DebugPlaceMimicEffectVore extends ActiveMagicEffect
 
+GR_MimicPlacer Property lib Auto
+
 Event OnEffectStart(Actor target, Actor caster)
-	(Game.GetFormFromFile( 0x5900, "GR_MimicPlacer.esp" ) as GR_MimicPlacer).PlaceBakaMimicClosestChest(1)
+	lib.PlaceBakaMimicClosestChest(1)
 	Debug.Notification("Created Mimic (Vore)")
 EndEvent

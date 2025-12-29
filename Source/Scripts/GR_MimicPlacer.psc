@@ -7,12 +7,12 @@ Actor Property PlayerRef Auto
 
 ; Boss Chests (Any form with Clutter\Ruins\Ruins_LargeChest)
 FormList Property LargeChestForms Auto
-FormList Property MimicActivatorForms Auto 
-Form Property MimicAddonForm Auto ; Doens't werk
+FormList Property MimicActivatorForms Auto
 
 Spell Property DebugSpellMimic Auto
 Spell Property DebugSpellMimicVore Auto
 Spell Property DebugSpellMimicInstant Auto
+Spell Property DebugDestroyMimic Auto
 
 ; TNTR Forms
 Keyword Property BakaMimicDispenseKeyword Auto
@@ -40,18 +40,14 @@ Function Maintenance()
 	    If !PlayerRef.HasSpell(DebugSpellMimic)
 			PlayerRef.AddSpell(DebugSpellMimic)
 	    EndIf
-
 	    If !PlayerRef.HasSpell(DebugSpellMimicVore)
 			PlayerRef.AddSpell(DebugSpellMimicVore)
 	    EndIf
-
 	    If !PlayerRef.HasSpell(DebugSpellMimicInstant)
 			PlayerRef.AddSpell(DebugSpellMimicInstant)
 	    EndIf
-
-		Spell removeSpell = Game.GetFormFromFile(0x47622, "GR_MimicPlacer.esp") as Spell
-		If !PlayerRef.HasSpell(removeSpell)
-			PlayerRef.AddSpell(removeSpell)
+		If !PlayerRef.HasSpell(DebugDestroyMimic)
+			PlayerRef.AddSpell(DebugDestroyMimic)
 		EndIf
 	EndIf
 
@@ -87,10 +83,6 @@ Event OnUpdate()
 	Init = False
 
 	int extraMimicCount = JsonUtil.GetIntValue(ConfigBakaMimics, "extra-mimic-form-count");
-	If !MimicActivatorForms
-		Error("Mimic activator form was not set")
-		MimicActivatorForms = Game.GetFormFromFile(0x2901C, "GR_MimicPlacer.esp") As FormList
-	EndIf
 	int i = 0
 	While i < extraMimicCount
 		Form add = JsonUtil.GetFormValue(ConfigBakaMimics, "extra-mimic-" + i)
@@ -109,7 +101,7 @@ GR_BakaMimicAddon Function PlaceBakaMimic(ObjectReference chest, Int mimicType)
 	BakaTrapMimic mimic = chest.PlaceAtMe(BakaMimicForm, 1, true) as BakaTrapMimic
 	mimic.MimicType = mimicType
 	If mimic
-		GR_BakaMimicAddon addon = mimic.PlaceAtMe(Game.GetFormFromFile(0x4C725, "GR_MimicPlacer.esp"), 1, true) as GR_BakaMimicAddon
+		GR_BakaMimicAddon addon = mimic.PlaceAtMe(Game.GetFormFromFile(0x816, "GR_MimicPlacer.esp"), 1, true) as GR_BakaMimicAddon
 		addon.lib = self
 		addon.AttachToMimic(mimic, chest)
 		return addon
@@ -129,7 +121,7 @@ EndFunction
 
 ; User by debugging functions
 ObjectReference Function RemoveBakaMimicClosest()
-	ObjectReference result = Game.FindClosestReferenceOfAnyTypeInListFromRef(Game.GetFormFromFile(0x2901C, "GR_MimicPlacer.esp") As FormList, Game.GetPlayer(), 500.0)
+	ObjectReference result = Game.FindClosestReferenceOfAnyTypeInListFromRef(Game.GetFormFromFile(0x810, "GR_MimicPlacer.esp") As FormList, Game.GetPlayer(), 500.0)
 	If !result.IsDeleted()
 		RemoveBakaMimic(result)
 	Else

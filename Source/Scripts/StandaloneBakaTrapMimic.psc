@@ -139,7 +139,7 @@ GR_GameAEL gameAel
 Function StartGame(int stage)
 	; If (JsonUtil.GetIntValue("../MimicPlacer/AdvancedSettings.json", "use-alternative-qte") == 1)
 		If (!gameAel)
-			gameAel = PlaceAtMe(Game.GetFormFromFile(0x23F0F, "GR_MimicPlacer.esp")) as GR_GameAEL
+			gameAel = PlaceAtMe(Game.GetFormFromFile(0x804, "GR_MimicPlacer.esp")) as GR_GameAEL
 		EndIf
 		RegisterForModEvent("GR_GameSuccess", "OnGameSuccess")
 		RegisterForModEvent("GR_GameFail", "OnGameFail")
@@ -151,7 +151,7 @@ Function StartGame(int stage)
 	; 	Debug.Trace("[GRMP] QteText")
 	; 	If (!gameQteText)
 	; 		Debug.Trace("[GRMP] !gameQteText")
-	; 		gameQteText = PlaceAtMe(Game.GetFormFromFile(0x23F16, "GR_MimicPlacer.esp")) as GR_GameQTEText
+	; 		gameQteText = PlaceAtMe(Game.GetFormFromFile(0x80A, "GR_MimicPlacer.esp")) as GR_GameQTEText
 	; 	EndIf
 	; 	Debug.Trace("[GRMP] " + gameQteText)
 	; 	RegisterForModEvent("GR_GameSuccess", "OnGameSuccess")
@@ -941,7 +941,7 @@ auto State Ready
 
 	event OnActivate(objectReference TriggerRef)
 	Debug.Trace("OnActivate 6 "  + (triggerRef as Form)  + " "  + (playerRef as Form))
-	TNTRDoNothing = Game.GetFormFromFile( 0x0885, "TNTR.esp") as Package
+	TNTRDoNothing = Game.GetFormFromFile(0x0885, "TNTR.esp") as Package
 	int itrigger
 	if !isfiring
 		if MimicType == 2

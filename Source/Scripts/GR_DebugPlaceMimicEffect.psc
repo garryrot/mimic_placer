@@ -1,7 +1,8 @@
 Scriptname GR_DebugPlaceMimicEffect extends ActiveMagicEffect
 
+GR_MimicPlacer Property lib Auto
+
 Event OnEffectStart(Actor target, Actor caster)
-	(Game.GetFormFromFile( 0x5900, "GR_MimicPlacer.esp" ) as GR_MimicPlacer).PlaceBakaMimicClosestChest(2)
+	lib.PlaceBakaMimicClosestChest(2)
 	Debug.Notification("Created Mimic (Sex)")
 EndEvent
-	

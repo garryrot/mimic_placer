@@ -1,6 +1,8 @@
 Scriptname GR_DebugPlaceMimicEffectInstant extends ActiveMagicEffect
 
+GR_MimicPlacer Property lib Auto
+
 Event OnEffectStart(Actor target, Actor caster)
-	(Game.GetFormFromFile( 0x5900, "GR_MimicPlacer.esp" ) as GR_MimicPlacer).PlaceBakaMimicClosestChest(3)
+	lib.PlaceBakaMimicClosestChest(3)
 	Debug.Notification("Created Mimic (Instant)")
 EndEvent

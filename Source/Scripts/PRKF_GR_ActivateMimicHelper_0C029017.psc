@@ -19,5 +19,5 @@ Function OnPerkActivate()
 	(MimicPlacer as GR_MimicBakaObserver).OnActivateMimic(activatorRef)
 EndFunction
 
-FormList Property Mimics Auto ; Unused, check via perk
+FormList Property Mimics Auto ; Unused, checked via perk
 Quest Property MimicPlacer Auto

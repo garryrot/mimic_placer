@@ -151,7 +151,7 @@ Function FixMimicsOnGameLoad()
 	ObjectReference[] mimics = PO3_SKSEFunctions.FindAllReferencesOfType(PlayerRef, lib.MimicActivatorForms, ScanRadiusInterior)
 	Int i = 0
 	While i < mimics.Length
-		GR_BakaMimicAddon addon = Game.FindClosestReferenceOfTypeFromRef(Game.GetFormFromFile(0x4C725, "GR_MimicPlacer.esp"), mimics[i], 10.0) as GR_BakaMimicAddon
+		GR_BakaMimicAddon addon = Game.FindClosestReferenceOfTypeFromRef(Game.GetFormFromFile(0x816, "GR_MimicPlacer.esp"), mimics[i], 10.0) as GR_BakaMimicAddon
 		If addon && addon.LinkRefsIfRequired()
 			fixed += 1
 		EndIf
@@ -161,11 +161,11 @@ Function FixMimicsOnGameLoad()
 EndFunction
 
 Function DumpMimics()
-	Debug("Placed Mimics")
+	Debug("Dumping places mimics...")
 	Int i = 0
 	While i < 128
 		If PlacedMimics[ i ] != None
-			Debug(i + ": " + PlacedMimics[ i ] as Form + " in " + PlacedMimics[ i ].GetCell())
+			Debug(i + ": " + PlacedMimics[ i ] as Form + " in " + PlacedMimics[ i ].GetCell() + " MimicType=" + PlacedMimics[ i ].GetMimicType())
 		EndIf
 		i += 1
 	EndWhile
