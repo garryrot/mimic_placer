@@ -60,11 +60,9 @@ Bool Function LinkRefsIfRequired()
 EndFunction
 
 Function DestroyMimicAndRestoreChest()
-    ; Just for good measure
  	PO3_SKSEFunctions.SetLinkedRef(MimicRef, None)
  	PO3_SKSEFunctions.SetLinkedRef(MimicRef, None, lib.BakaMimicDispenseKeyword)
  	PO3_SKSEFunctions.SetLinkedRef(MimicRef, None, lib.BakaMimicPosKeyword)
-
     MimicRef.Delete()
     PairedContainer.Enable()
     TriggerBox.Delete()
@@ -100,23 +98,3 @@ Bool Function SanityCheckPreAttach(ObjectReference mimic)
 	EndIf
     return True
 EndFunction
-
-; TODO Debugging/Removable 
-; Bool Function SanityCheckPreLink()
-; 	BakaTrapTriggerBox box = Game.FindClosestReferenceOfTypeFromRef(lib.BakaTrapTriggerBoxForm, MimicRef, 10.0) as BakaTrapTriggerBox
-; 	If box == None
-; 		Debug.MessageBox("Link failed sanity check: TRIGGER BOX LINKED" + box)
-;         return False
-; 	EndIf
-; 	ObjectReference dispenseXmarker = Game.FindClosestReferenceOfTypeFromRef(Game.GetForm(0x3B), MimicRef, 80.0)
-; 	If dispenseXmarker == None
-; 		Debug.MessageBox("Link failed sanity check: DISPENSE MARKER EXISTS" + (dispenseXmarker as Form))
-;         return False
-; 	EndIf
-; 	ObjectReference posXmarkerHeading = Game.FindClosestReferenceOfTypeFromRef(Game.GetForm(0x34), MimicRef, 80.0)
-; 	If posXmarkerHeading == None
-; 		Debug.MessageBox("No PositionXMarker SHOULD NEVER BE CALLED" + (posXmarkerHeading as Form))
-;         return False
-; 	EndIf
-;     return True
-; EndFunction

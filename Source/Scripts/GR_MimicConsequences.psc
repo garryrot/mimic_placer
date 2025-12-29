@@ -11,8 +11,9 @@ Int ConfigMimicLootMaxItemCount = 2
 Int ConfigMimicLootMaxGoldCount = 20
 Int ConfigMimicLootChanceAccumulates = 1
 Float ConfigMimicLootChancePerTick = 0.5
-Int ConfigMimicVoreKills = 1
-Int ConfigMimicVoreKillsAfterTicks = 11
+Int ConfigMimicVoreBadEnd = 1
+Int ConfigVoreBadEndMinTicks = 11
+Int ConfigVoreBadEndSimpleSlavery = 1
 
 ; State
 BakaTrapMimic currentMimic
@@ -50,13 +51,15 @@ Event OnUpdate()
         ConfigMimicLootMaxGoldCount = JsonUtil.GetIntValue(ConfigConsequences, "mimic-loot-max-gold-count")
         ConfigMimicLootChanceAccumulates = JsonUtil.GetIntValue(ConfigConsequences, "mimic-loot-chance-accumulates")
         ConfigMimicLootChancePerTick = JsonUtil.GetFloatValue(ConfigConsequences, "mimic-loot-chance-per-tick")
-        ConfigMimicVoreKills = JsonUtil.GetIntValue(ConfigConsequences, "mimic-vore-kills")
-        ConfigMimicVoreKillsAfterTicks = JsonUtil.GetIntValue(ConfigConsequences, "mimic-vore-kills-after-ticks")
+
+        ConfigMimicVoreBadEnd = JsonUtil.GetIntValue(ConfigConsequences, "mimic-vore-bad-end")
+        ConfigVoreBadEndMinTicks = JsonUtil.GetIntValue(ConfigConsequences, "mimic-vore-bad-end-min-ticks")
+        ConfigVoreBadEndSimpleSlavery = JsonUtil.GetIntValue(ConfigConsequences, "mimic-vore-bad-end-simple-slavery")
 
         Debug("Init settings MimicLoot=" + ConfigMimicLoot + " MimicLootMaxItemCount=" + ConfigMimicLootMaxItemCount + \ 
              " MimicLootMaxGoldCount=" + ConfigMimicLootMaxGoldCount  + " MimicLootChanceAccumulates=" + \
              ConfigMimicLootChanceAccumulates + " MimicLootChancePerTick=" + ConfigMimicLootChancePerTick  + \
-             " MimicVoreKills=" + ConfigMimicVoreKills + " MimicVoreKillsAfterTicks=" + ConfigMimicVoreKillsAfterTicks )
+             " MimicVoreKills=" + ConfigMimicVoreBadEnd + " MimicVoreKillsAfterTicks=" + ConfigVoreBadEndMinTicks )
         return
     EndIf
 
@@ -74,7 +77,7 @@ Event OnUpdate()
                 FoundLoot += 1
             EndIf
         EndIf
-        If MimicType == 1 && ConfigMimicVoreKills && VoreTicks > ConfigMimicVoreKillsAfterTicks
+        If MimicType == 1 && ConfigMimicVoreBadEnd && VoreTicks > ConfigVoreBadEndMinTicks
             Debug("Vore killed the player VoreTicks=" + VoreTicks)
             ConsFadeOutAndDeath() 
         EndIf
@@ -104,6 +107,7 @@ EndEvent
 Function StopVore(string eventName, string strArg, float numArg, form mimic)
     Debug("Vore stopped")
     WrapupFindLoot()
+    RegisterForSingleUpdate(8.0)
     InVore = False
     FoundLoot = 0
 EndFunction
@@ -137,7 +141,7 @@ Function FindLootMessage()
     If roll == 1
         Debug.Notification("Desperately probing for an escape, you held on to some items in the chest")
     ElseIf roll == 2
-        Debug.Notification("While being ravaged by tentacles in the chest you found some valuables")
+        Debug.Notification("While being ravaged by the tentacles you found some valuables")
     ElseIf roll == 3
         Debug.Notification("You found some valuables in the chest")
     ElseIf roll == 4
@@ -164,8 +168,9 @@ EndFunction
 
 Function ConsFadeOutAndDeath()
     currentMimic.MimicShake()
-    ; This doesn't work
-    Game.FadeOutGame(true, true, 0.0, 50.0)
+    InVore = False
+    FoundLoot = 0
+    Game.FadeOutGame(true, true, 0.0, 60.0)
     Utility.Wait(1.5)
     currentMimic.MimicShake()
     Utility.Wait(2.5)
@@ -179,11 +184,22 @@ Function ConsFadeOutAndDeath()
     Utility.Wait(12)
     currentMimic.MimicShake()
     Utility.Wait(9)
-    Debug.MessageBox("Worn down by the endless assault of the tentacles, you no longer have the strength to fight back. " + \
-                    "You are helplessly trapped, slowly being digested as your sanity and consiousness fades away...")
-    Utility.Wait(3)
-    currentMimic.MimicShake()
-    Game.GetPlayer().Kill()
+
+    If ConfigVoreBadEndSimpleSlavery == 1
+        Debug.MessageBox("Too weak for any more attempts to fight back, you simply give in to the abuse. " + \
+                        "As the tendrils explore every part of your body, your mind breaks and " + \
+                        "you eventually pass out. You only awake as some strangers pull open the lid of the chest" + \ 
+                        " and start dragging your helpless body away...")
+        Utility.Wait(8.0)
+        currentMimic.ResetTrap() ; Frees player
+        SendModEvent("SSLV Entry")
+    Else
+        Debug.MessageBox("Worn down by the endless assault of the tentacles, you no longer have the strength to fight back. " + \
+                        "You are helplessly trapped, slowly being digested as your sanity and consiousness fades away...")
+        Utility.Wait(3)
+        currentMimic.MimicShake()
+        Game.GetPlayer().Kill()
+    EndIf
 EndFunction
 
 Function Debug(String msg)

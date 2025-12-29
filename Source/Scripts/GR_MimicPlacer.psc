@@ -27,6 +27,7 @@ Bool Init = True
 
 Event OnInit()
 	Maintenance()
+	Debug.Notification("OMNOM: Mimics N' Outcomes for Mimics is starting...")
 EndEvent
 
 Function Maintenance()

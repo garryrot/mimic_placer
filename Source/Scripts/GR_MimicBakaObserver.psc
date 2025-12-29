@@ -43,13 +43,15 @@ EndEvent
 
 ; Called by perk
 Function OnActivateMimic(ObjectReference mimic)
-	Debug("OnActivateMimic(" + mimic as Form + ")")
     currentMimic = mimic as BakaTrapMimic
 
-    ; ; This might create a small stutter
-	; if CreateLinkedRefsAndTriggersIfRequired(mimic)
-    ;     mimicHasSoftRefs = true
-    ; EndIf
+    ; This might create a small stutter
+	if !(mimic.GetNthLinkedRef(1) as BakaTrapTriggerBox)
+        Error("Mimic is not referenced, SHOULD NOT HAPPEN " + mimic as Form)
+        GR_BakaMimicAddon addon = mimic.PlaceAtMe(Game.GetFormFromFile(0x4C725, "GR_MimicPlacer.esp"), 1, true) as GR_BakaMimicAddon
+		addon.lib = lib
+		addon.AttachToMimic(mimic, None)
+    EndIf
     
     ; Just estimate the duration of the struggle and intro 
     ; animations based on the mimic type worst case the 
@@ -91,7 +93,10 @@ Function OnAnimationEvent(ObjectReference source, String eventName)
     EndIf
 EndFunction
 
+Function Error(String msg)
+    lib.Error("OBSV: " + msg)
+EndFunction
 
 Function Debug(String msg)
-	lib.Debug("OBSR: " + msg)
+	lib.Debug("OBSV: " + msg)
 EndFunction

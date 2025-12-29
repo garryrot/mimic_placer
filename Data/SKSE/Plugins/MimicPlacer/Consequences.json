@@ -5,8 +5,9 @@
         "mimic-loot-max-gold-count": 20,
         "mimic-loot-chance-accumulates": 1,
 
-        "mimic-vore-kills": 1,
-        "mimic-vore-kills-after-ticks": 11
+        "mimic-vore-bad-end": 1,
+        "mimic-vore-bad-end-min-ticks": 11,
+        "mimic-vore-bad-end-simple-slavery": 1
     },
     "float": {
         "mimic-loot-chance-per-tick": 0.05
