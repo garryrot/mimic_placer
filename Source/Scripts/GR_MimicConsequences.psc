@@ -153,7 +153,7 @@ EndFunction
 
 Function ConsFindLoot()
     Form[] allItems = originalChest.GetContainerForms()
-    lib.Debug("ConsFindLoot() " + allItems)
+    Debug("ConsFindLoot() " + allItems)
     Form retrieved = allItems[Utility.RandomInt(0, allItems.Length - 1)]
     Int count = 1
     If retrieved.GetFormID() == 0xf
@@ -161,7 +161,7 @@ Function ConsFindLoot()
     EndIf
     originalChest.RemoveItem(retrieved, count)
     Game.GetPlayer().AddItem(retrieved, count)
-    lib.Debug("Retrieved " + retrieved + " x" + count)
+    Debug("Retrieved " + retrieved + " x" + count)
 EndFunction
 
 ; ~~~   Death   ~~~
@@ -203,5 +203,5 @@ Function ConsFadeOutAndDeath()
 EndFunction
 
 Function Debug(String msg)
-	lib.Debug("CONS: " + msg)
+	Debug.Trace("[omnom] CONS: " + msg)
 EndFunction

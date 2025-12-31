@@ -14,6 +14,7 @@ Float Weight1Vore = 20.0 ; Vore
 Float Weight2Vore = 80.0 ; Sex
 Float Weight3Vore = 20.0 ; Instant-Vore
 int cheatNotifyMimics = 0
+int dumpMimics = 0
 
 ; Keep track of processed chest reference IDs so that each chest is only 
 ; rolled for once, to prevent re-rolling until every chest is a mimic.
@@ -21,10 +22,13 @@ int cheatNotifyMimics = 0
 Int[] KnownChests 
 Int KCI = 0
 Int KnownChestBufferSize = 128
+Int KCI_Overflows = 0
 
-; Keep track of all created mimics for debugging and potential cleanup
+; Keep track of all created mimics, this is exclusively for debugging 
+; and potential cleanup
 GR_BakaMimicAddon[] PlacedMimics ; JContainers?
 Int PMI = 0
+Int PMI_Overflows = 0
 
 Event OnInit()
 	Maintenance()
@@ -46,6 +50,7 @@ Event OnUpdate()
 	If Init
 		Init = False
 		cheatNotifyMimics = JsonUtil.GetIntValue(DistributionConfig, "cheat-notify-mimics")
+		dumpMimics = JsonUtil.GetIntValue(DistributionConfig, "debug-dump-mimics")
 		ScanRadiusInterior = JsonUtil.GetFloatValue(DistributionConfig, "scan-radius")
 		ScanRadiusExterior = JsonUtil.GetFloatValue(DistributionConfig, "scan-radius-outside")
 		ScanInterval = JsonUtil.GetFloatValue(DistributionConfig, "scan-interval")
@@ -95,7 +100,6 @@ Function PlaceMimicsInRadius()
 	Int visited = 0
 	Int skipped = 0
 	Int placed = 0
-
 	ObjectReference[] largeChests = PO3_SKSEFunctions.FindAllReferencesOfType(PlayerRef, lib.LargeChestForms, ScanRadiusInterior)
 	Int i = 0
 	While i < largeChests.Length
@@ -105,6 +109,7 @@ Function PlaceMimicsInRadius()
 			KCI += 1
 			If KCI >= KnownChestBufferSize
 				KCI = 0
+				KCI_Overflows += 1
 			EndIf
 			visited += 1
 			Debug("Processing chest " + largeChest as Form)
@@ -130,11 +135,10 @@ Function PlaceMimicsInRadius()
 				EndIf
 				PlacedMimics[ PMI ] = guard
 				PMI += 1
-				; TODO configurable
-				DumpMimics()
 				If PMI >= 128
 					PMI = 0
-					Error("Resetting placed mimics array")
+					PMI_Overflows += 1
+					Error("Placed mimics ringbuffer restarts")
 				EndIf
 			EndIf
 		Else
@@ -142,6 +146,11 @@ Function PlaceMimicsInRadius()
 		EndIf
 		i += 1
 	EndWhile
+	If placed > 0
+		If dumpMimics > 0
+			DumpMimics()
+		EndIf
+	EndIf
 	Debug("Result - placed=" + placed + " checked=" + visited + " skipped=" + skipped)
 EndFunction
 
@@ -161,14 +170,19 @@ Function FixMimicsOnGameLoad()
 EndFunction
 
 Function DumpMimics()
-	Debug("Dumping places mimics...")
+	Int cntVisit = KCI + (128 * KCI_Overflows)
+	Int cntTurned = PMI + (128 * PMI_Overflows)
+	Debug("Complete List:")
 	Int i = 0
 	While i < 128
 		If PlacedMimics[ i ] != None
-			Debug(i + ": " + PlacedMimics[ i ] as Form + " in " + PlacedMimics[ i ].GetCell() + " MimicType=" + PlacedMimics[ i ].GetMimicType())
+			Debug(i + ": " + PlacedMimics[ i ] as Form + " Type=" + PlacedMimics[ i ].GetMimicType() + " in " + PlacedMimics[ i ].GetCell())
 		EndIf
 		i += 1
 	EndWhile
+	Debug("Stats:")
+	Debug("  Chests visited: " + cntVisit)
+	Debug("  Chests turned mimics: " + cntTurned)
 EndFunction
 
 Function Trace(String msg)
@@ -176,9 +190,9 @@ Function Trace(String msg)
 EndFunction
 
 Function Debug(String msg)
-	lib.Debug("SCAN: " + msg)
+	Debug.Trace("[omnom] SCAN: " + msg)
 EndFunction
 
 Function Error(String msg)
-	lib.Error("SCAN: " + msg)
+	Debug.Trace("[omnom] SCAN error: " + msg)
 EndFunction

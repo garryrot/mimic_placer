@@ -1,15 +1,16 @@
 {
     "int": {
-        "cheat-notify-mimics": 0
+        "cheat-notify-mimics": 0,
+        "debug-dump-mimics": 1
     },
     "float": {
         "scan-radius": 10000.0,
         "scan-radius-outside": 20000.0, 
         "scan-interval": 30.0,
 
-        "mimic-chance": 0.23,      
+        "mimic-chance": 0.28,      
         "mimic-weight-vore": 30.0,
-        "mimic-weight-sex": 50.0,
+        "mimic-weight-sex": 60.0,
         "mimic-weight-instant": 30.0
     }
 }

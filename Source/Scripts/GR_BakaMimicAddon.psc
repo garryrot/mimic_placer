@@ -21,10 +21,6 @@ Event OnCellLoad()
 EndEvent
 
 Function AttachToMimic(ObjectReference mimic, ObjectReference pairedChest)
-    If !SanityCheckPreAttach(mimic)
-        return
-    EndIf
-
 	BakaTrapTriggerBox box = mimic.PlaceAtMe(lib.BakaTrapTriggerBoxForm, 1, true) as BakaTrapTriggerBox
 	box.TrapType = 2
 	box.VoreTrapref = mimic
@@ -40,11 +36,9 @@ Function AttachToMimic(ObjectReference mimic, ObjectReference pairedChest)
 	LinkRefsIfRequired()
 EndFunction
 
+; Debugging functionality
 String Function GetCell()
-	If !GetParentCell()
-		return "World"
-	EndIf
-	return GetParentCell().GetName()
+	return GetParentCell() + " (" + MimicRef.GetPositionX() + "," + MimicRef.GetPositionY() + "," + MimicRef.GetPositionZ() + ")"
 EndFunction
 
 Int Function GetMimicType()
@@ -78,29 +72,5 @@ Function DestroyMimicAndRestoreChest()
 EndFunction
 
 Function Debug(String msg)
-    lib.Debug("ADDN: " + msg)
-EndFunction
-
-; TODO Debugging/Removable 
-Bool Function SanityCheckPreAttach(ObjectReference mimic)
-    If (mimic.GetNthLinkedRef(1) as BakaTrapTriggerBox)
-        Debug.MessageBox("Sanity check failed: Mimic " + mimic as Form + " has linked trigger box " + mimic.GetNthLinkedRef(1) as Form)
-		return False
-	EndIf
-	BakaTrapTriggerBox box = Game.FindClosestReferenceOfTypeFromRef(lib.BakaTrapTriggerBoxForm, mimic, 10.0) as BakaTrapTriggerBox
-	If box
-        Debug.MessageBox("Sanity check failed: Mimic " + mimic as Form + " has existing trigger box " + box as Form)
-		return False
-	EndIf
-	ObjectReference dispenseXmarker = Game.FindClosestReferenceOfTypeFromRef(Game.GetForm(0x3B), mimic, 10.0) 
-	If dispenseXmarker
-        Debug.MessageBox("Sanity check failed: Mimic " + mimic as Form + " has existing dispense marker " + dispenseXmarker as Form)
-		return False
-	EndIf
-	ObjectReference posXmarkerHeading = Game.FindClosestReferenceOfTypeFromRef(Game.GetForm(0x34), mimic, 10.0)
-	If posXmarkerHeading
-        Debug.MessageBox("Sanity check failed: Mimic " + mimic as Form + " has existing position marker " + posXmarkerHeading as Form)
-		return False
-	EndIf
-    return True
+    Debug.Trace("[omnom] ADDN: " + msg)
 EndFunction

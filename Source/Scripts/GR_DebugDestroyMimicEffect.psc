@@ -4,5 +4,4 @@ GR_MimicPlacer Property lib Auto
 
 Event OnEffectStart(Actor target, Actor caster)
 	lib.RemoveBakaMimicClosest()
-	Debug.Notification("Removed Mimic")
 EndEvent

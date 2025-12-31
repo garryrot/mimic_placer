@@ -24,6 +24,7 @@ Form Property BakaTrapTriggerBoxForm Auto
 Perk Property ActivateMimicPerk Auto
 
 Bool Init = True
+Int Version = 1 ; 0.0.1
 
 Event OnInit()
 	Maintenance()
@@ -31,7 +32,7 @@ Event OnInit()
 EndEvent
 
 Function Maintenance()
-	Debug("Maintenace()")
+	Debug("Maintenace() v" + Version)
 	If !PlayerRef
 		PlayerRef = Game.GetPlayer() ; Just cause I'm paranoid
 	EndIf
@@ -109,7 +110,6 @@ GR_BakaMimicAddon Function PlaceBakaMimic(ObjectReference chest, Int mimicType)
 	return None
 EndFunction
 
-; Used by debugging functions
 ObjectReference Function PlaceBakaMimicClosestChest(Int mimicType)
 	ObjectReference result = Game.FindClosestReferenceOfAnyTypeInListFromRef(LargeChestForms, Game.GetPlayer(), 500.0)
 	If !result.IsDisabled()
@@ -119,25 +119,17 @@ ObjectReference Function PlaceBakaMimicClosestChest(Int mimicType)
 	EndIf
 EndFunction
 
-; User by debugging functions
 ObjectReference Function RemoveBakaMimicClosest()
-	ObjectReference result = Game.FindClosestReferenceOfAnyTypeInListFromRef(Game.GetFormFromFile(0x810, "GR_MimicPlacer.esp") As FormList, Game.GetPlayer(), 500.0)
-	If !result.IsDeleted()
-		RemoveBakaMimic(result)
+	GR_BakaMimicAddon addon = Game.FindClosestReferenceOfTypeFromRef(Game.GetFormFromFile(0x816, "GR_MimicPlacer.esp"), Game.GetPlayer(), 400.0) as GR_BakaMimicAddon
+	If !addon
+		Debug.Notification("No viable mimic found")
 	Else
-		Debug.Notification("Mimic already deleted " + result as Form)
+		; This will not remove chests from turned mimic list
+		addon.DestroyMimicAndRestoreChest()
+		Debug.Notification("Mimic turned back to chest")
 	EndIf
 EndFunction
 
-Bool Function RemoveBakaMimic(ObjectReference mimic)
-	ObjectReference pairedChest = FindPairedChest(mimic)
-	If pairedChest
-		mimic.Delete()
-		pairedChest.Enable()
-		return True
-	EndIf
-	return False
-EndFunction
 
 ObjectReference Function FindPairedChest(ObjectReference mimic)
     ObjectReference originalChest = Game.FindClosestReferenceOfAnyTypeInListFromRef(LargeChestForms, mimic, 10.0)
@@ -154,10 +146,9 @@ Function Trace(String msg)
 EndFunction
 
 Function Debug(String msg)
-	Debug.Trace("[omnom] " + msg)
-	; Debug.Notification("[GRMP] " + msg)
+	Debug.Trace("[omnom] MAIN: " + msg)
 EndFunction
 
 Function Error(String err)
-	Debug.Trace("[omnom] error " + err)
+	Debug.Trace("[omnom] MAIN error: " + err)
 EndFunction

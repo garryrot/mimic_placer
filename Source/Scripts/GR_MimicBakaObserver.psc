@@ -78,21 +78,21 @@ EndFunction
 
 Function OnAnimationEvent(ObjectReference source, String eventName)
 	If eventName == "MimicVoreSpitLoop"
-        lib.Debug("Player escaped from mimic")
+        Debug("Player escaped from mimic")
         currentMimic.SendModEvent("Mimic_VoreEnd")
         StopObserving()
 	EndIf
     If eventName == "FootLeft" || eventName == "FootRight" || eventName == "IdleStop" 
-        lib.Debug("Player won struggle")
+        Debug("Player won struggle")
         currentMimic.SendModEvent("Mimic_VoreEnd")
         StopObserving()
     EndIf
 EndFunction
 
 Function Error(String msg)
-    lib.Error("OBSV: " + msg)
+    Debug.Trace("[omnom] OBSV error: " + msg)
 EndFunction
 
 Function Debug(String msg)
-	lib.Debug("OBSV: " + msg)
+	Debug.Trace("[omnom] OBSV: " + msg)
 EndFunction
