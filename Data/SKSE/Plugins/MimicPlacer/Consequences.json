@@ -7,7 +7,7 @@
 
         "mimic-vore-bad-end": 1,
         "mimic-vore-bad-end-min-ticks": 11,
-        "mimic-vore-bad-end-simple-slavery": 1
+        "mimic-vore-bad-end-simple-slavery": 0
     },
     "float": {
         "mimic-loot-chance-per-tick": 0.05

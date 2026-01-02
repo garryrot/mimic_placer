@@ -112,24 +112,22 @@ EndFunction
 
 ObjectReference Function PlaceBakaMimicClosestChest(Int mimicType)
 	ObjectReference result = Game.FindClosestReferenceOfAnyTypeInListFromRef(LargeChestForms, Game.GetPlayer(), 500.0)
-	If !result.IsDisabled()
-		ObjectReference mimic = PlaceBakaMimic(result, mimicType)
-	Else
-		Debug.Notification("Chest already disabled " + result as Form)
+	If result && !result.IsDisabled()
+		return PlaceBakaMimic(result, mimicType)
 	EndIf
 EndFunction
 
-ObjectReference Function RemoveBakaMimicClosest()
+bool Function RemoveBakaMimicClosest()
 	GR_BakaMimicAddon addon = Game.FindClosestReferenceOfTypeFromRef(Game.GetFormFromFile(0x816, "GR_MimicPlacer.esp"), Game.GetPlayer(), 400.0) as GR_BakaMimicAddon
-	If !addon
-		Debug.Notification("No viable mimic found")
-	Else
+	If addon
 		; This will not remove chests from turned mimic list
 		addon.DestroyMimicAndRestoreChest()
-		Debug.Notification("Mimic turned back to chest")
+		return True
 	EndIf
+	return False
 EndFunction
 
+; 342EF -> Smaller chest that cannot be disabled
 
 ObjectReference Function FindPairedChest(ObjectReference mimic)
     ObjectReference originalChest = Game.FindClosestReferenceOfAnyTypeInListFromRef(LargeChestForms, mimic, 10.0)

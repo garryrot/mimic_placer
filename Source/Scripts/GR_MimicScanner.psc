@@ -13,6 +13,7 @@ Float MimicChance = 0.5
 Float Weight1Vore = 20.0 ; Vore
 Float Weight2Vore = 80.0 ; Sex
 Float Weight3Vore = 20.0 ; Instant-Vore
+Float ChestsMaxAllowedRescale = 0.1
 int cheatNotifyMimics = 0
 int dumpMimics = 0
 
@@ -49,6 +50,9 @@ Event OnUpdate()
 	Debug("OnUpdate()")
 	If Init
 		Init = False
+		If !JsonUtil.JsonExists(DistributionConfig)
+			Debug.MessageBox("OMNOM config '" + DistributionConfig + "' not found or 'PapyrusUtil' not installed. Mod will be dysfunct.")
+		EndIf
 		cheatNotifyMimics = JsonUtil.GetIntValue(DistributionConfig, "cheat-notify-mimics")
 		dumpMimics = JsonUtil.GetIntValue(DistributionConfig, "debug-dump-mimics")
 		ScanRadiusInterior = JsonUtil.GetFloatValue(DistributionConfig, "scan-radius")
@@ -58,6 +62,7 @@ Event OnUpdate()
 		Weight1Vore = JsonUtil.GetFloatValue(DistributionConfig, "mimic-weight-vore")
 		Weight2Vore = JsonUtil.GetFloatValue(DistributionConfig, "mimic-weight-sex")
 		Weight3Vore = JsonUtil.GetFloatValue(DistributionConfig, "mimic-weight-instant")
+		ChestsMaxAllowedRescale = JsonUtil.GetFloatValue(DistributionConfig, "chests-max-allowed-rescale")
 		Debug("Init settings ScanInterval=" + ScanInterval + " ScanRadiusInterior=" + ScanRadiusInterior + " MimicChance=" + MimicChance)
 	Else
 		If Utility.GetCurrentRealTime() - lastProcessCells > ScanInterval
@@ -99,6 +104,7 @@ Function PlaceMimicsInRadius()
 	Debug("PlaceMimicsInRadius(): scan-radius=" + ScanRadiusInterior + " mimic-chance=" + MimicChance)
 	Int visited = 0
 	Int skipped = 0
+	Int unusable = 0
 	Int placed = 0
 	ObjectReference[] largeChests = PO3_SKSEFunctions.FindAllReferencesOfType(PlayerRef, lib.LargeChestForms, ScanRadiusInterior)
 	Int i = 0
@@ -113,7 +119,19 @@ Function PlaceMimicsInRadius()
 			EndIf
 			visited += 1
 			Debug("Processing chest " + largeChest as Form)
-			If Utility.RandomFloat() < MimicChance
+
+			Bool viable = true
+			If largeChest.GetEnableParent()
+				Debug("Chest " + largeChest as Form + " controlled by enable-parent and cannot be disabled, will be ignored...")
+				viable = false
+				unusable += 1
+			ElseIf largeChest.GetScale() < (1.0 - ChestsMaxAllowedRescale) || largeChest.GetScale() > (1.0 + ChestsMaxAllowedRescale)
+				Debug("Ignoring rescaled chest, scale=" + largeChest.GetScale())
+				viable = false
+				unusable += 1
+			EndIf
+			
+			If viable && Utility.RandomFloat() < MimicChance
 				placed += 1
 				Float rollType = Utility.RandomFloat(0.0, Weight1Vore + Weight2Vore + Weight3Vore)
 				GR_BakaMimicAddon guard
@@ -151,7 +169,7 @@ Function PlaceMimicsInRadius()
 			DumpMimics()
 		EndIf
 	EndIf
-	Debug("Result - placed=" + placed + " checked=" + visited + " skipped=" + skipped)
+	Debug("Result - placed=" + placed + " checked=" + visited + " skipped=" + skipped + " unusable=" + unusable)
 EndFunction
 
 Function FixMimicsOnGameLoad()
