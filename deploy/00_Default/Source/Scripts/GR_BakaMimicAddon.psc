@@ -53,6 +53,8 @@ Bool Function LinkRefsIfRequired()
 		return False
 	EndIf
 
+	(MimicRef as BakaTrapMimic).MimicHealth = 0 ; 0.73: this makes sure the mimic doesn't die
+
     Debug("Linking mimic " + MimicRef as Form)
 	PO3_SKSEFunctions.SetLinkedRef(MimicRef, TriggerBox)
 	PO3_SKSEFunctions.SetLinkedRef(MimicRef, XMarkerDispense, lib.BakaMimicDispenseKeyword)
