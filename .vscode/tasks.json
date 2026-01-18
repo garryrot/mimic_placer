@@ -5,7 +5,7 @@
 		{
 			"label": "Build Papyrus (Release)",
 			"type": "pyro",
-			"projectFile": "skyrimse.ppj",
+			"projectFile": ".\\deploy\\00_Default\\skyrimse.ppj",
 			"gamePath": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Skyrim Special Edition\\",
 			"problemMatcher": [
 				"$PapyrusCompiler"
