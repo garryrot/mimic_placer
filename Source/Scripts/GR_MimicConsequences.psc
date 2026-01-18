@@ -10,10 +10,10 @@ Int ConfigMimicLoot = 1
 Int ConfigMimicLootMaxItemCount = 2
 Int ConfigMimicLootMaxGoldCount = 20
 Int ConfigMimicLootChanceAccumulates = 1
-Float ConfigMimicLootChancePerTick = 0.5
+Float ConfigMimicLootChancePerTick = 0.05
 Int ConfigMimicVoreBadEnd = 1
 Int ConfigVoreBadEndMinTicks = 11
-Int ConfigVoreBadEndSimpleSlavery = 1
+Int ConfigVoreBadEndSimpleSlavery = 0
 
 ; State
 BakaTrapMimic currentMimic
@@ -68,19 +68,21 @@ Event OnUpdate()
     If InVore
         FindChest()
         VoreTicks += 1
-        If originalChest != None
+        If originalChest != None && ConfigMimicLoot
             Float lootChance = ConfigMimicLootChancePerTick
             If ConfigMimicLootChanceAccumulates
                 lootChance = VoreTicks * ConfigMimicLootChancePerTick
             EndIf
-            If VoreTicks > 2 && FoundLoot < 2 && Utility.RandomFloat() < lootChance
+            If VoreTicks > 2 && FoundLoot < ConfigMimicLootMaxItemCount && Utility.RandomFloat() < lootChance
                 FoundLoot += 1
             EndIf
         EndIf
+
         If MimicType == 1 && ConfigMimicVoreBadEnd && VoreTicks > ConfigVoreBadEndMinTicks
             Debug("Vore killed the player VoreTicks=" + VoreTicks)
             ConsFadeOutAndDeath() 
         EndIf
+
         RegisterForSingleUpdate(8.0)
     EndIf
 EndEvent
@@ -157,11 +159,10 @@ Function ConsFindLoot()
     Form retrieved = allItems[Utility.RandomInt(0, allItems.Length - 1)]
     Int count = 1
     If retrieved.GetFormID() == 0xf
-        count = Utility.RandomInt(1,20)
+        count = Utility.RandomInt(1, ConfigMimicLootMaxGoldCount)
     EndIf
-    originalChest.RemoveItem(retrieved, count)
-    Game.GetPlayer().AddItem(retrieved, count)
-    Debug("Retrieved " + retrieved + " x" + count)
+    originalChest.RemoveItem(retrieved, count, false, PlayerRef)
+    Debug("Moved " + retrieved + " (" + count + ") to player")
 EndFunction
 
 ; ~~~   Death   ~~~

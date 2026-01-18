@@ -1,8 +1,8 @@
 {
     "int": {
         "mimic-loot": 1,
-        "mimic-loot-max-item-count": 2,
-        "mimic-loot-max-gold-count": 20,
+        "mimic-loot-max-item-count": 3,
+        "mimic-loot-max-gold-count": 40,
         "mimic-loot-chance-accumulates": 1,
 
         "mimic-vore-bad-end": 1,
@@ -10,6 +10,6 @@
         "mimic-vore-bad-end-simple-slavery": 0
     },
     "float": {
-        "mimic-loot-chance-per-tick": 0.05
+        "mimic-loot-chance-per-tick": 0.08
     }
 }

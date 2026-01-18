@@ -24,19 +24,22 @@ Form Property BakaTrapTriggerBoxForm Auto
 Perk Property ActivateMimicPerk Auto
 
 Bool Init = True
-Int Version = 1 ; 0.0.1
+Int Version = 3 ; 0.0.2
 
 Event OnInit()
 	Maintenance()
-	Debug.Notification("OMNOM: Mimics N' Outcomes for Mimics is starting...")
+	Debug.Notification("OMNOMS: Not so Obvious Mimics for Skyrim is starting...")
 EndEvent
 
 Function Maintenance()
 	Debug("Maintenace() v" + Version)
+	If Version < 3
+		Debug.Notification("OMNOMS: Upgrading to v0.0.3")
+		Version = 3
+	EndIf
 	If !PlayerRef
 		PlayerRef = Game.GetPlayer() ; Just cause I'm paranoid
 	EndIf
-
 	If JsonUtil.GetIntValue(Config, "add-debug-spell") == 1
 	    If !PlayerRef.HasSpell(DebugSpellMimic)
 			PlayerRef.AddSpell(DebugSpellMimic)
@@ -126,8 +129,6 @@ bool Function RemoveBakaMimicClosest()
 	EndIf
 	return False
 EndFunction
-
-; 342EF -> Smaller chest that cannot be disabled
 
 ObjectReference Function FindPairedChest(ObjectReference mimic)
     ObjectReference originalChest = Game.FindClosestReferenceOfAnyTypeInListFromRef(LargeChestForms, mimic, 10.0)
