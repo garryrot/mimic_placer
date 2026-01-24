@@ -50,13 +50,12 @@ EndFunction
 Function FadeAndPlaceEnemies(Actor e1, Actor e2, Actor e3, Actor e4, Actor e5)
     Debug("FadeAndPlaceEnemies")
     Game.FadeOutGame(true, true, 0.0, 3.0)
-    Utility.Wait(3.0)
+    Utility.Wait(2.9)
     e1.MoveTo(PlayerRef, 75.0, 50)
     e2.MoveTo(PlayerRef, 75.0, -50)    
     e3.MoveTo(PlayerRef, 100.0, 50)
-    ; e4.MoveTo(PlayerRef, 250.0, 50)
-    ; e5.MoveTo(PlayerRef, 183.0, 102)
-    Utility.Wait(3.0)
+    e4.MoveTo(PlayerRef, 250.0, 50)
+    e5.MoveTo(PlayerRef, 183.0, 102)
     Game.FadeOutGame(false, true, 0.0, 3.0)
 EndFunction
 
