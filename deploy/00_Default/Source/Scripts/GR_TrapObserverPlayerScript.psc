@@ -16,7 +16,6 @@ Event OnCombatStateChanged(Actor akTarget, int aeCombatState)
 endEvent
 
 Function Debug(string msg)
-    Game.FadeOutGame(true, true, 0.0, 60.0)
-    Debug.Trace("[omnom] DEFT.OBSV.PLAY " + msg)
+    Debug.Trace("[omnom] DEFT.OBSV " + msg)
 EndFunction
 

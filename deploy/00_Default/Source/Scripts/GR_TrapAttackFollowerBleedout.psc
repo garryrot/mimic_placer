@@ -26,5 +26,5 @@ EndEvent
 ; ==================================================
 
 Function Debug(string msg)
-    Debug.Trace("[omnom] DEFT.ATTC.BLED " + msg)
+    Debug.Trace("[omnom] TRAP.ATTC (FollowerAlias) " + msg)
 EndFunction

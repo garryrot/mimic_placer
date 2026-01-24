@@ -5,7 +5,7 @@ Scriptname SF_GR_TrapAttackTeammateDefe_09033DB3 Extends Scene Hidden
 ;BEGIN FRAGMENT Fragment_2
 Function Fragment_2()
 ;BEGIN CODE
-Debug.Trace("[omnom] DEFT.ATTC Defeates short scene done")
+Debug.Trace("[omnom] TRAP.ATTC (S)TrapAttackTeammateDefe p1 complete")
 ;END CODE
 EndFunction
 ;END FRAGMENT
@@ -13,7 +13,7 @@ EndFunction
 ;BEGIN FRAGMENT Fragment_0
 Function Fragment_0()
 ;BEGIN CODE
-Debug.Trace("[omnom] DEFT.ATTC Defeates short scene start")
+Debug.Trace("[omnom] TRAP.ATTC (S)TrapAttackTeammateDefe p1 start")
 ;END CODE
 EndFunction
 ;END FRAGMENT

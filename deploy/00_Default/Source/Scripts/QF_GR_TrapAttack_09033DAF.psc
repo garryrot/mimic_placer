@@ -50,7 +50,7 @@ GR_TrapAttack kmyQuest = __temp as GR_TrapAttack
 ;END AUTOCAST
 ;BEGIN CODE
 ; Follower is defeated
-Debug.Trace("[OMNOM] DEFT.ATTC Stage 30")
+Debug.Trace("[OMNOM] TRAP.ATTC Stage 30")
 kmyQuest.FollowerDefeated()
 ;END CODE
 EndFunction
@@ -64,7 +64,7 @@ GR_TrapAttack kmyQuest = __temp as GR_TrapAttack
 ;END AUTOCAST
 ;BEGIN CODE
 ;
-Debug.Trace("[OMNOM] DEFT.ATTC Stage 0")
+Debug.Trace("[OMNOM] TRAP.ATTC Stage 0")
 kmyQuest.TestProperties();
 ;END CODE
 EndFunction
@@ -78,7 +78,7 @@ GR_TrapAttack kmyQuest = __temp as GR_TrapAttack
 ;END AUTOCAST
 ;BEGIN CODE
 ;
-Debug.Trace("[OMNOM] DEFT.ATTC Stage 10")
+Debug.Trace("[OMNOM] TRAP.ATTC Stage 10")
 ;END CODE
 EndFunction
 ;END FRAGMENT
@@ -91,7 +91,7 @@ GR_TrapAttack kmyQuest = __temp as GR_TrapAttack
 ;END AUTOCAST
 ;BEGIN CODE
 ; Follower is attacked
-Debug.Trace("[OMNOM] DEFT.ATTC Stage 20")
+Debug.Trace("[OMNOM] TRAP.ATTC Stage 20")
 kmyQuest.FollowerAttacked()
 ;END CODE
 EndFunction

@@ -39,6 +39,7 @@ Quest __temp = self as Quest
 GR_TrapDefeat kmyQuest = __temp as GR_TrapDefeat
 ;END AUTOCAST
 ;BEGIN CODE
+Debug.Trace("[OMNOM] TRAP.DEFT Fragment -> StartPreApproach")
 kmyQuest.StartPreApproach()
 ;END CODE
 EndFunction
@@ -51,6 +52,7 @@ Quest __temp = self as Quest
 GR_TrapDefeat kmyQuest = __temp as GR_TrapDefeat
 ;END AUTOCAST
 ;BEGIN CODE
+Debug.Trace("[OMNOM] TRAP.DEFT Fragment -> StartApproach")
 kmyQuest.StartApproach()
 ;END CODE
 EndFunction
@@ -63,6 +65,7 @@ Quest __temp = self as Quest
 GR_TrapDefeat kmyQuest = __temp as GR_TrapDefeat
 ;END AUTOCAST
 ;BEGIN CODE
+Debug.Trace("[OMNOM] TRAP.DEFT Fragment -> DamagePlayer")
 kmyQuest.DamagePlayer()
 ;END CODE
 EndFunction
@@ -75,6 +78,7 @@ Quest __temp = self as Quest
 GR_TrapDefeat kmyQuest = __temp as GR_TrapDefeat
 ;END AUTOCAST
 ;BEGIN CODE
+Debug.Trace("[OMNOM] TRAP.DEFT Fragment -> StartObserve")
 kmyQuest.StartObserve()
 ;END CODE
 EndFunction
@@ -87,6 +91,7 @@ Quest __temp = self as Quest
 GR_TrapDefeat kmyQuest = __temp as GR_TrapDefeat
 ;END AUTOCAST
 ;BEGIN CODE
+Debug.Trace("[OMNOM] TRAP.DEFT Fragment -> RestartCombat")
 kmyQuest.RestartCombat()
 ;END CODE
 EndFunction
@@ -99,6 +104,7 @@ Quest __temp = self as Quest
 GR_TrapDefeat kmyQuest = __temp as GR_TrapDefeat
 ;END AUTOCAST
 ;BEGIN CODE
+Debug.Trace("[OMNOM] TRAP.DEFT Fragment -> PreEscaped")
 kmyQuest.PreEscaped()
 ;END CODE
 EndFunction

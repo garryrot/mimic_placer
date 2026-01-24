@@ -281,5 +281,5 @@ EndFunction
 ; ==================================================
 
 Function Debug(string msg)
-    Debug.Trace("[omnom] DEFT.TRAP " + msg)
+    Debug.Trace("[omnom] DEFT.OBSV " + msg)
 EndFunction

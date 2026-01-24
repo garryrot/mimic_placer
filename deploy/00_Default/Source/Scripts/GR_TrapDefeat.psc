@@ -165,5 +165,5 @@ EndFunction
 ; ==================================================
 
 Function Debug(string msg)
-    Debug.Trace("[omnom] DEFT " + msg)
+    Debug.Trace("[omnom] TRAP.DEFT " + msg)
 EndFunction
