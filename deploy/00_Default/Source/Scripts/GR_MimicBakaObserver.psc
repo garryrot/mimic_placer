@@ -9,8 +9,9 @@ Perk Property ActivateMimicPerk Auto
 
 BakaTrapMimic currentMimic
 Bool maintenance = true
-Bool activate = false
-Bool mimicHasSoftRefs = false
+
+Bool startVore = false
+Bool voreStarted = false
 
 Event OnInit()
     Maintenance()
@@ -26,19 +27,28 @@ Function Maintenance()
 EndFunction
 
 Event OnUpdate()
+    Debug("OnUpdate")
     If maintenance
         If !PlayerRef.HasPerk(ActivateMimicPerk)
             PlayerRef.AddPerk(ActivateMimicPerk)
             Debug("Added activate mimic perk to player: " + PlayerRef.HasPerk(ActivateMimicPerk))
         EndIf
-        maintenance = False
-    Else
+        maintenance = false
+    ElseIf voreStarted
+        RegisterForSingleUpdate(8.0)
+        Debug("Sending progress...")
+        currentMimic.SendModEvent("Mimic_VoreProgress")
+    ElseIf startVore
+        startVore = false
+        voreStarted = true
         Debug("observing vore " + currentMimic + " type=" + currentMimic.MimicType)
+
         currentMimic.SendModEvent("Mimic_VoreStart")
         RegisterForAnimationEvent(PlayerRef, "MimicVoreSpitLoop")			
         RegisterForAnimationEvent(PlayerRef, "FootLeft")
         RegisterForAnimationEvent(PlayerRef, "FootRight")
         RegisterForAnimationEvent(PlayerRef, "IdleForceDefaultState")
+        RegisterForSingleUpdate(8.0)
     EndIf
 EndEvent
 
@@ -57,6 +67,7 @@ Function OnActivateMimic(ObjectReference mimic)
     ; Just estimate the duration of the struggle and intro 
     ; animations based on the mimic type worst case the 
     ; calculation of consequences is just not accurate
+    startVore = True
     If currentMimic.MimicType == 3
         ; Instant Mimic
         RegisterForSingleUpdate(1.0)
@@ -79,11 +90,13 @@ EndFunction
 Function OnAnimationEvent(ObjectReference source, String eventName)
 	If eventName == "MimicVoreSpitLoop"
         Debug("Player escaped from mimic")
+        voreStarted = false
         currentMimic.SendModEvent("Mimic_VoreEnd")
         StopObserving()
 	EndIf
     If eventName == "FootLeft" || eventName == "FootRight" || eventName == "IdleStop" 
         Debug("Player won struggle")
+        voreStarted = false
         currentMimic.SendModEvent("Mimic_VoreEnd")
         StopObserving()
     EndIf
