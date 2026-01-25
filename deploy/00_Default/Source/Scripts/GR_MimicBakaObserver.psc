@@ -34,6 +34,8 @@ Event OnUpdate()
             Debug("Added activate mimic perk to player: " + PlayerRef.HasPerk(ActivateMimicPerk))
         EndIf
         maintenance = false
+        RegisterForAnimationEvent(PlayerRef, "DeathWormVoreSuccessLoop")
+        RegisterForAnimationEvent(PlayerRef, "SnareRopeUndoSelfFailEvent") 
     ElseIf voreStarted
         RegisterForSingleUpdate(8.0)
         Debug("Sending progress...")
@@ -48,6 +50,7 @@ Event OnUpdate()
         RegisterForAnimationEvent(PlayerRef, "FootLeft")
         RegisterForAnimationEvent(PlayerRef, "FootRight")
         RegisterForAnimationEvent(PlayerRef, "IdleForceDefaultState")
+            
         RegisterForSingleUpdate(8.0)
     EndIf
 EndEvent
@@ -93,12 +96,15 @@ Function OnAnimationEvent(ObjectReference source, String eventName)
         voreStarted = false
         currentMimic.SendModEvent("Mimic_VoreEnd")
         StopObserving()
-	EndIf
-    If eventName == "FootLeft" || eventName == "FootRight" || eventName == "IdleStop" 
+    ElseIf eventName == "FootLeft" || eventName == "FootRight" || eventName == "IdleStop" 
         Debug("Player won struggle")
         voreStarted = false
         currentMimic.SendModEvent("Mimic_VoreEnd")
         StopObserving()
+    ElseIf eventName == "DeathWormVoreSuccessLoop"
+        Debug("Death worm failed - Anim Event")
+    ElseIf eventName == "SnareRopeUndoSelfFailEvent"
+        Debug("Snare loop failed - Anim Event")
     EndIf
 EndFunction
 

@@ -19,11 +19,11 @@ ReferenceAlias Property NearbyAlly Auto
 
 ReferenceAlias[] Property EnemyAliases Auto
 
-GlobalVariable Property GR_TrapDefeatTimeout Auto
+GlobalVariable Property GR_TrapDefeatTimeout Auto ; Unused?
 
 GR_TrapDefeatObserver Property TrapDefeatObserver Auto
 
-Int TrapTypeMimic = 1
+Float ApproachTimeout = 60.0
 
 ; ==================================================
 ; QUEST START
@@ -39,7 +39,6 @@ EndEvent
 
 ; Stage 0
 Function StartPreApproach()
-    ; TODO this is called again on approach, for some reason
     Debug("Stage 0 - PreApproach Enemies: " + Enemy01.GetActorRef() + " " + Enemy02.GetActorRef() + " " + Enemy03.GetActorRef() + " " + Enemy04.GetActorRef() + " ")
 
     Int i = 0
@@ -71,14 +70,31 @@ EndFunction
 ; Stage 10
 Function StartApproach()
     Debug("Stage 10 - Approach")
-    TrapApproachScene.Start()
-    ; RegisterForSingleUpdate(30.0)
+    TrapObserveScene.ForceStart()
+    RegisterForSingleUpdate(ApproachTimeout)
 EndFunction
 
-; Stage 15
+; Stage 10 -> 15 Timeout
+Function ApproachTimeout()
+    Debug("ApproachTimeout")
+    Actor e1 = Enemy01.GetActorRef()
+    Actor e2 = Enemy02.GetActorRef()
+    Actor e3 = Enemy03.GetActorRef()
+    Actor e4 = Enemy04.GetActorRef()
+    Actor e5 = Enemy05.GetActorRef()
+    TrapDefeatObserver.FadeAndPlaceEnemies(PlayerRef, e1, e2, e3, e4, e5)
+    SetStage(15)
+EndFunction
+
+; Stage 15 - Player Discovered and Observed
 Function StartObserve()
+    UnregisterForUpdate()
     Debug("Stage 15 - Observe")
-    TrapObserveScene.Start()
+    ; TrapApproachScene.Stop()
+    Utility.Wait(0.3)
+    ; TrapObserveScene.ForceStart()
+    Utility.Wait(0.3)
+    Debug("TrapObserveScene Started: " + TrapObserveScene)
 EndFunction
 
 ; Stage 20 - Called by external trigger
@@ -114,8 +130,7 @@ Event OnUpdate()
     If GetStage() == 0
         SetStage(10)
     ElseIf GetStage() == 10
-        ; Debug("Approach Timeout")
-        ; Observe?
+        ApproachTimeout()
     ElseIf GetStage() == 20
         SetStage(30)
     ElseIf GetStage() == 30

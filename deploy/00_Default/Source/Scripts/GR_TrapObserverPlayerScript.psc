@@ -6,8 +6,10 @@ EndEvent
 
 Event OnCombatStateChanged(Actor akTarget, int aeCombatState)
     Debug("OnCombatStateChanged " + aeCombatState)
+    GR_TrapDefeatObserver trapObserver = GetOwningQuest() as GR_TrapDefeatObserver
     if (aeCombatState == 0)
-        Debug("Left combat")
+        trapObserver.CombatStart()
+        Debug("Left combat") 
     elseif (aeCombatState == 1)
         Debug("Player in combat")
     elseif (aeCombatState == 2)
@@ -18,4 +20,3 @@ endEvent
 Function Debug(string msg)
     Debug.Trace("[omnom] DEFT.OBSV " + msg)
 EndFunction
-

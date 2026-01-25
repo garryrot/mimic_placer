@@ -19,6 +19,8 @@ ReferenceAlias Property Enemy05 Auto
 GR_TrapDefeat Property TrapDefeatQuest Auto
 GR_TrapDefeatObserver Property TrapDefeatObserver Auto
 
+Float AttackTimeout = 40.0
+
 ; ==================================================
 ; INIT
 ; ==================================================
@@ -31,52 +33,60 @@ EndEvent
 ; MAIN
 ; ==================================================
 
+; Stage 0
+; noop
+
+; Stage 0 (called actively)
 Function StartTrapAttack()
     Actor follower = GetCurrentFollower()
     Debug("StartTrapAttack Teammate01=" + Teammate01 + " Follower=" + FollowerAlias)
-    Debug("Enemies:" + Enemy01.GetActorRef() + " " + Enemy02.GetActorRef() + " " + Enemy03.GetActorRef() + " " + Enemy04.GetActorRef() + " " )
+    Debug("Enemies - e1:" + Enemy01.GetActorRef() + " e2:" + Enemy02.GetActorRef() + " e3:" + Enemy03.GetActorRef() + \
+            " e4:" + Enemy04.GetActorRef() + " e5:" + Enemy05.GetActorRef())
     If follower
-        SetStage(10)
         RegisterForSingleUpdate(0.5)
     EndIf
 EndFunction
 
-; Stage 10 - Follower is approached for attack
-; ^^^^^^^^
-; Timeout can happen here
+; Stage 10 (Follower is attacked)
+
+; Stage 10 -> 20 Timeout (called actively)
+Function TrapAttackTimeout()
+    Debug("TrapAttackTimeout")
+    Actor e1 = Enemy01.GetActorRef()
+    Actor e2 = Enemy02.GetActorRef()
+    Actor e3 = Enemy03.GetActorRef()
+    Actor e4 = Enemy04.GetActorRef()
+    Actor e5 = Enemy05.GetActorRef()
+    TrapDefeatObserver.FadeAndPlaceEnemies(Teammate01.GetActorRef(), e1, e2, e3, e4, e5)
+    ; Happens automatically
+    ; SetStage(20) 
+EndFunction
 
 ; Stage 20 - Follower is attacked
 Function FollowerAttacked()
-    Debug("FollowerAttacked")
-
-
-    ; Teammate01.GetActorRef().StartCombat(Enemy01.GetActorRef())
-    ; Enemy01.GetActorRef().StartCombat(Teammate01.GetActorRef())
-    ; Enemy02.GetActorRef().StartCombat(Teammate01.GetActorRef())
-    ; Enemy03.GetActorRef().StartCombat(Teammate01.GetActorRef())
-    ; Enemy04.GetActorRef().StartCombat(Teammate01.GetActorRef())
-    ; Enemy05.GetActorRef().StartCombat(Teammate01.GetActorRef())
+    Debug("FollowerAttacked - Cancelling Timeout")
+    UnregisterForUpdate()
 EndFunction
 
-; Stage 30
+; Stage 30 - Follower Bleeds out
 Function FollowerDefeated()
     Debug("FollowerDefeated")
-    TrapAttackTeammateDefeatScene.ForceStart()
-    RegisterForSingleUpdate(6.0)
+    RegisterForSingleUpdate(8.0)
+    Teammate01.GetActorRef().SetNoBleedoutRecovery(true)
+    Teammate01.GetActorRef().Kill()
 EndFunction
 
 Event OnUpdate()
     Debug("OnUpdate")
-    If GetStage() == 10
+    If GetStage() == 0
         Debug("Attacking Teammate")
+        SetStage(10)
         TrapAttackTeammateScene.ForceStart()
-
-        ; This doesn't work?
-        Teammate01.GetActorRef().SetAttackActorOnSight()
-        Utility.Wait(0.2)
-    EndIf
-
-    If GetStage() == 30
+        RegisterForSingleUpdate(AttackTimeout)
+    ElseIf GetStage() == 10
+        Debug("Attacking Timeout")
+        TrapAttackTimeout()
+    ElseIf GetStage() == 30
         TrapDefeatObserver.AttackSuccess()
         Stop()
     EndIf
@@ -94,17 +104,6 @@ Actor Function GetCurrentFollower()
         return Teammate01.GetActorRef()
     EndIf
     return None
-EndFunction
-
-Function TestProperties()
-    ; Debug("FollowerAlias " + FollowerAlias)
-    ; If (FollowerAlias)
-    ;     Debug("GetRef " + FollowerAlias.GetRef())
-    ; EndIf
-    ; Debug("Teammate01 " + Teammate01)
-    ; If (Teammate01)
-    ;     Debug("GetRef " + Teammate01.GetRef())
-    ; EndIf
 EndFunction
 
 ; ==================================================

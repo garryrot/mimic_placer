@@ -6,7 +6,6 @@ Scriptname SF_GR_TrapApproachScene_0901A7F1 Extends Scene Hidden
 Function Fragment_12()
 ;BEGIN CODE
 Debug.Trace("[OMNOM] TRAP.DEFT (S)TrapApproachScene P2 Comp")
-GetOwningQuest().SetStage(15)
 ;END CODE
 EndFunction
 ;END FRAGMENT
@@ -14,7 +13,9 @@ EndFunction
 ;BEGIN FRAGMENT Fragment_16
 Function Fragment_16()
 ;BEGIN CODE
-Debug.Trace("[OMNOM] TRAP.DEFT (S)TrapApproachScene P2 Start")
+Debug.Trace("[OMNOM] TRAP.DEFT (S)TrapApproachScene PEH 2 Start #2")
+GetOwningQuest().SetStage(11)
+GetOwningQuest().RegisterForSingleUpdate(2)
 ;END CODE
 EndFunction
 ;END FRAGMENT
