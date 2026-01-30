@@ -5,7 +5,6 @@ Scriptname GR_TrapDefeat extends Quest
 ; ==================================================
 
 Actor Property PlayerRef Auto
-Scene Property TrapApproachScene Auto
 Scene Property TrapObserveScene Auto
 
 ReferenceAlias Property PlayerAlias Auto
@@ -19,7 +18,7 @@ ReferenceAlias Property NearbyAlly Auto
 
 ReferenceAlias[] Property EnemyAliases Auto
 
-GlobalVariable Property GR_TrapDefeatTimeout Auto ; Unused?
+GlobalVariable Property GR_TrapDefeatTimeout Auto
 
 GR_TrapDefeatObserver Property TrapDefeatObserver Auto
 
@@ -59,7 +58,6 @@ Function StartPreApproach()
     EndWhile
     
     If validEnemies > 0
-        Debug("Starting scene " + TrapApproachScene)
         RegisterForSingleUpdate(0.5)
     Else
         Debug("Aborting approach, no viable enemies")
@@ -90,9 +88,7 @@ EndFunction
 Function StartObserve()
     UnregisterForUpdate()
     Debug("Stage 15 - Observe")
-    ; TrapApproachScene.Stop()
     Utility.Wait(0.3)
-    ; TrapObserveScene.ForceStart()
     Utility.Wait(0.3)
     Debug("TrapObserveScene Started: " + TrapObserveScene)
 EndFunction
@@ -101,20 +97,12 @@ EndFunction
 Function PreEscaped()
     Debug("Stage 20 - PreEscaped")
     ; Wait for animation to finish
-    Float maxStamina = Game.GetPlayer().GetActorValueMax("Stamina")
-    Float maxHealth = Game.GetPlayer().GetActorValueMax("Health")
-    Float maxMagicka = Game.GetPlayer().GetActorValueMax("Health")
-    Game.GetPlayer().DamageAV("Magicka", maxMagicka* 0.5)
-    Game.GetPlayer().DamageAV("Stamina", maxStamina * 1.0)
-    Game.GetPlayer().DamageAV("Health", maxHealth * 0.3)
     RegisterForSingleUpdate(4.0)
 EndFunction
 
 ; Stage 30
 Function DamagePlayer()
     Debug("Stage 30 - Damage Stamina")
-    Float maxStamina = Game.GetPlayer().GetActorValueMax("Stamina")
-    Game.GetPlayer().DamageAV("Stamina", maxStamina * 0.3)
     RegisterForSingleUpdate(1.0)
 EndFunction
 
@@ -165,13 +153,8 @@ EndFunction
 
 Function StopActorCombat(Actor akActor)
     Debug("Stopping combat: " + akActor)
-    ; Teleport safely
-
-    ; Hard stop combat
     akActor.StopCombat()
     akActor.StopCombatAlarm()
-
-    ; Small delay to let AI settle
     Utility.Wait(0.2)
 EndFunction
 

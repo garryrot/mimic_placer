@@ -71,9 +71,9 @@ EndFunction
 ; Stage 30 - Follower Bleeds out
 Function FollowerDefeated()
     Debug("FollowerDefeated")
-    RegisterForSingleUpdate(8.0)
     Teammate01.GetActorRef().SetNoBleedoutRecovery(true)
     Teammate01.GetActorRef().Kill()
+    RegisterForSingleUpdate(1.0)
 EndFunction
 
 Event OnUpdate()

@@ -2,6 +2,7 @@ Scriptname GR_TrapObserverPlayerScript extends ReferenceAlias
 
 Event OnPlayerLoadGame()
     Debug("OnPlayerLoadGame")
+    (GetOwningQuest() as GR_TrapDefeatObserver).Maintenance()
 EndEvent
 
 Event OnCombatStateChanged(Actor akTarget, int aeCombatState)
