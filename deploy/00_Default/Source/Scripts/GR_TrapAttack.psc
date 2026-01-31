@@ -9,17 +9,22 @@ Scene Property TrapAttackTeammateDefeatScene Auto
 
 ReferenceAlias Property FollowerAlias Auto
 ReferenceAlias Property Teammate01 Auto
-
 ReferenceAlias Property Enemy01 Auto
 ReferenceAlias Property Enemy02 Auto
 ReferenceAlias Property Enemy03 Auto
 ReferenceAlias Property Enemy04 Auto
 ReferenceAlias Property Enemy05 Auto
 
+ReferenceAlias[] Property EnemyAliases Auto
+
 GR_TrapDefeat Property TrapDefeatQuest Auto
 GR_TrapDefeatObserver Property TrapDefeatObserver Auto
 
-Float AttackTimeout = 40.0
+Idle Property SurrenderIdle Auto
+
+Bool Property NotifyPlayer Auto
+
+Float AttackTimeout = 120.0
 
 ; ==================================================
 ; INIT
@@ -42,9 +47,34 @@ Function StartTrapAttack()
     Debug("StartTrapAttack Teammate01=" + Teammate01 + " Follower=" + FollowerAlias)
     Debug("Enemies - e1:" + Enemy01.GetActorRef() + " e2:" + Enemy02.GetActorRef() + " e3:" + Enemy03.GetActorRef() + \
             " e4:" + Enemy04.GetActorRef() + " e5:" + Enemy05.GetActorRef())
+
+    If !HasValidEnemies()
+        Debug("Aborting attack, no viable follower or enemies")
+        TrapDefeatObserver.FailAndReset()
+        return
+    EndIf
+
     If follower
         RegisterForSingleUpdate(0.5)
+        If (TrapDefeatObserver.AlertPlayer)
+            TrapDefeatObserver.AlertPlayer = False
+            Debug.Notification("The noise has alerted nearby enemies...")
+        Else
+            Debug("Skipping alert: " + TrapDefeatObserver.AlertPlayer)
+        EndIf
     EndIf
+EndFunction
+
+Bool Function HasValidEnemies()
+    Int i = 0
+    While i < EnemyAliases.Length
+        Actor akActor = EnemyAliases[i].GetRef() as Actor
+        If IsValidEnemy(akActor)
+            return True
+        EndIf
+        i += 1
+    EndWhile
+    return False
 EndFunction
 
 ; Stage 10 (Follower is attacked)
@@ -71,8 +101,6 @@ EndFunction
 ; Stage 30 - Follower Bleeds out
 Function FollowerDefeated()
     Debug("FollowerDefeated")
-    Teammate01.GetActorRef().SetNoBleedoutRecovery(true)
-    Teammate01.GetActorRef().Kill()
     RegisterForSingleUpdate(1.0)
 EndFunction
 
@@ -87,6 +115,10 @@ Event OnUpdate()
         Debug("Attacking Timeout")
         TrapAttackTimeout()
     ElseIf GetStage() == 30
+        Debug.Notification("Your follower surrenders...")
+        ; Teammate01.GetActorRef().SetUnconscious(true)
+        ; Teammate01.GetActorRef().SetRestrained(true)    
+        ; Teammate01.GetActorRef().PlayIdle(SurrenderIdle)    
         TrapDefeatObserver.AttackSuccess()
         Stop()
     EndIf
@@ -104,6 +136,20 @@ Actor Function GetCurrentFollower()
         return Teammate01.GetActorRef()
     EndIf
     return None
+EndFunction
+
+Bool Function IsValidEnemy(Actor akActor)
+    If !akActor
+        Debug("Object not found")
+        Return False
+    EndIf
+
+    If akActor.IsDead() || akActor.IsDisabled()
+        Debug("Not valid enemy or dead")
+        Return False
+    EndIf
+
+    Return True
 EndFunction
 
 ; ==================================================

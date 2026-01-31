@@ -12,12 +12,14 @@ EndEvent
 Event OnHit(ObjectReference akAggressor, Form akSource, Projectile akProjectile, bool abPowerAttack, \
     bool abSneakAttack, bool abBashAttack, bool abHitBlocked)
     Float followerHealth = GetActorRef().GetAVPercentage("Health")
-    If followerHealth < 0.2
-        GR_TrapAttack trapAttack = GetOwningQuest() as GR_TrapAttack
-        If trapAttack.GetStage() == 10 || trapAttack.GetStage() == 20 
+    GR_TrapAttack trapAttack = GetOwningQuest() as GR_TrapAttack
+    If trapAttack.GetStage() == 10 || trapAttack.GetStage() == 20 
+        If followerHealth < 0.2
             Debug("Follower entered bleedout by health %" + followerHealth)
             trapAttack.SetStage(30)
-        EndIf 
+        ElseIf trapAttack.GetStage() == 10
+            trapAttack.SetStage(20)
+        EndIf
     EndIf
 EndEvent
 

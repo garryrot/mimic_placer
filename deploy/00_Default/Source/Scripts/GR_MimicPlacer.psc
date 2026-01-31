@@ -7,6 +7,8 @@ Actor Property PlayerRef Auto
 
 ; Boss Chests (Any form with Clutter\Ruins\Ruins_LargeChest)
 FormList Property LargeChestForms Auto
+
+; No longer used
 FormList Property MimicActivatorForms Auto
 
 Spell Property DebugSpellMimic Auto
@@ -24,7 +26,7 @@ Form Property BakaTrapTriggerBoxForm Auto
 Perk Property ActivateMimicPerk Auto
 
 Bool Init = True
-Int Version = 3 ; 0.0.2
+Int Version = 4 ; 0.1.0
 
 Event OnInit()
 	Maintenance()
@@ -33,9 +35,13 @@ EndEvent
 
 Function Maintenance()
 	Debug("Maintenace() v" + Version)
-	If Version < 3
-		Debug.Notification("OMNOMS: Upgrading to v0.0.3")
-		Version = 3
+	If Version < 4
+		Debug.Notification("OMNOMS: Upgrading to v0.1.0")
+		Version = 4
+		If PlayerRef.HasPerk(ActivateMimicPerk)
+			PlayerRef.RemovePerk(ActivateMimicPerk)
+			Debug.Notification("OMNOMS: Removing legacy perk")
+		EndIf
 	EndIf
 	If !PlayerRef
 		PlayerRef = Game.GetPlayer() ; Just cause I'm paranoid
@@ -86,6 +92,7 @@ Event OnUpdate()
 	EndIf
 	Init = False
 
+	; TODO Remove
 	int extraMimicCount = JsonUtil.GetIntValue(ConfigBakaMimics, "extra-mimic-form-count");
 	int i = 0
 	While i < extraMimicCount

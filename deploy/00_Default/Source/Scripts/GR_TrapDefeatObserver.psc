@@ -1,14 +1,16 @@
 Scriptname GR_TrapDefeatObserver extends Quest
 
-Actor Property PlayerRef Auto
-
 GR_TrapDefeat Property TrapDefeatQuest Auto
 GR_TrapAttack Property TrapAttackQuest Auto
+GR_TrapMimicObserver Property TrapMimicObserverQuest Auto
 
-ImageSpaceModifier Property FadeToBlack Auto
+Actor Property PlayerRef Auto
 
-String notifyMessage = "The noise has alerted nearby enemies..."
-Int trapType = 0 ; 0 -> Mimic, 1 -> SnareLoop, 2 -> DeathWorm
+; 0 -> Mimic, 1 -> SnareLoop, 2 -> DeathWorm
+GlobalVariable Property GR_TrapType Auto
+
+; False if player was discovered via line of sight
+Bool Property AlertPlayer Auto
 
 ; ==================================================
 ; INIT
@@ -34,28 +36,10 @@ Function ResetEvents()
     RegisterForModEvent("Mimic_VoreStart", "TrapEvent")
     RegisterForModEvent("Mimic_VoreProgress", "TrapEvent")
     RegisterForModEvent("Mimic_VoreEnd", "TrapEvent")
-    ; RegisterForModEvent("SnareLoop_Progress", "TrapEvent")
 
+    RegisterForAnimationEvent(PlayerRef, "staggerStart") ; Escape SnareRope
     RegisterForAnimationEvent(PlayerRef, "SnareRopeUndoSelfFailEnd") ; Start Alert
     RegisterForAnimationEvent(PlayerRef, "SnareRopeUndoSelfLoop") ; Dmg stam/health
-    UnregisterForAnimationEvent(PlayerRef, "staggerStart") ; Release
-EndFunction
-
-Function TransitionToApproach(bool showNotification = false)
-    If (showNotification)
-        Debug.Notification(notifyMessage)
-    EndIf
-    TrapAttackQuest.Start()
-    Utility.Wait(0.5)
-
-    If TrapAttackQuest.GetCurrentFollower()
-        Debug("Has follower, starting attack...")
-        GoToState("Attack")
-    Else
-        TrapAttackQuest.Stop()
-        Debug("Doesn't have follower, starting deafeat...")
-        GoToState("Approach")
-    EndIf
 EndFunction
 
 ; ==================================================
@@ -66,6 +50,7 @@ State Default
     Event OnBeginState()
         Debug("State: Default")
         ResetEvents()
+        AlertPlayer = True
         If TrapDefeatQuest.IsRunning()
             Debug("Defeat quest did not terminate, stopping...")
             TrapDefeatQuest.Stop()
@@ -79,76 +64,86 @@ State Default
     Event TrapEvent(string eventName, string strArg, float numArg, form mimic)
         Debug("Event " + eventName)
         If eventName == "Mimic_VoreStart"
-            trapType = 0 ; Mimic
+            GR_TrapType.SetValueInt(0) ; Mimic
             GoToState("Trapped")
         EndIf
     EndEvent
 
     Function OnAnimationEvent(ObjectReference source, String eventName)
-        ; There's no way to detect the "trapped" state for death worm
-        ; or snare rope right now, so just roll and transition right 
-        ; to the approach or attack state
+        Debug("OnAnimationEvent (Default) Evt=" + eventName)
         If eventName == "DeathWormVoreSuccessLoop"
-            Debug("Worm Vore Struggle Failed")
-            trapType = 2 ; Deathworm
-            TransitionToApproach(true)
+            GR_TrapType.SetValueInt(2) ; Deathworm
+            If !ApproachIfDetected()
+                GoToState("Trapped")
+            EndIf
             return
-
-        ElseIf eventName == "SnareRopeUndoSelfFailEnd"
-            Debug("Snare Rope Struggle - TrapDefeatObserver!")
-            RegisterForAnimationEvent(PlayerRef, "staggerStart")
-
-            trapType = 1 ; SnareRope
-            TransitionToApproach(true)
         ElseIf eventName == "SnareRopeUndoSelfLoop"
+            GR_TrapType.SetValueInt(1) ; SnareRope
             DamageAV("Stamina", 1.0, 0)
             DamageAV("Health", 0.2, 0.5)
+            GoToState("Trapped")
         Else
-            Debug("UNKNOWN ANIM EVENT " + eventName + " src " + source)
+            Debug("Unhandled Evt=" + eventName)
         EndIf
     EndFunction
 EndState
 
+; Trapped: Player is currently trapped but not detected by enemies
+;          - If combat starts, transition to appraoch with pacified attackers
+;          - If player escapes, transition to default
 State Trapped
     Event OnBeginState()
         Debug("State: Trapped")
         If PlayerRef.GetCombatState() == 1
             Debug("Player already in combat")
-            TransitionToApproach(false)
+            StartApproach()
         Else
-            RollForNotify()
+            ApproachIfDetected()
         EndIf
     EndEvent
 
     Event TrapEvent(string eventName, string strArg, float numArg, Form trap)
         Debug("Event (Trapped): " + eventName)
         If eventName == "Mimic_VoreProgress"
-            RollForNotify()
+            DamageAV("Stamina", 1.0, 0)
+            DamageAV("Magicka", 0.5, 0)
+            DamageAV("Health", 0.2, 0.5)
+            ApproachIfDetected()
         ElseIf eventName == "Mimic_VoreEnd"
             Debug("Escaped before player was noticed")
-            GoToState("Default")
+            GoToState("PostEscape")
         EndIf
     EndEvent
-    
-    Function RollForNotify()
-        If Utility.RandomFloat() < 1.0
-            TransitionToApproach(true)
+
+    Function OnAnimationEvent(ObjectReference source, String eventName)
+        Debug("OnAnimationEvent (Trapped) Evt=" + eventName)
+        If eventName == "DeathWormVoreSuccessLoop" ; Will probably never happen
+            ApproachIfDetected()
+        ElseIf eventName == "SnareRopeUndoSelfFailEnd"
+            ApproachIfDetected()
+        ElseIf eventName == "staggerStart"
+            GoToState("PostEscape")
+        ElseIf eventName == "SnareRopeUndoSelfLoop"
+            DamageAV("Stamina", 1.0, 0)
         Else
-            Debug("Roll Failed")
+            Debug("Unhandled Evt=" + eventName)
         EndIf
     EndFunction
 
     Function CombatStart()
         Debug("Player entered combat, goto approach")
-        TransitionToApproach(false)
+        AlertPlayer = False
+        StartApproach()
     EndFunction
 EndState
 
+; Attack: Player is detected by enemies but defended by follower
+;         - Enemies are hostile and attack the follower
+;         - OnEscape Transitions to Post-Approach
 State Attack
     Event OnBeginState()
         Debug("State: Attack")
         RegisterForSingleUpdate(0.5)
-        PlayerRef.SetGhost(true)
     EndEvent
 
     Event OnUpdate()
@@ -158,26 +153,38 @@ State Attack
 
     Function AttackSuccess()
         Debug("State: Attack Success")
-        ; Follower defeated 
-        GoToState("Approach")
-        PlayerRef.SetGhost(false)
+        GoToState("Approach") ; Follower defeated 
     EndFunction
 
     Event TrapEvent(string eventName, string strArg, float numArg, form mimic)
-        Debug("Event (Attack): " + eventName)
+        Debug("TrapEvent (Attack) Evt=" + eventName)
         If eventName == "Mimic_VoreEnd"
-            ; Escaped before attack was succesfull
-            GoToState("Default")
-            PlayerRef.SetGhost(false)
+            GoToState("PostEscape")
+        ElseIf eventName == "Mimic_VoreProgress"
+            DamageAV("Stamina", 1.0, 0)
+            DamageAV("Magicka", 0.5, 0)
+            DamageAV("Health", 0.2, 0.5)
         EndIf
     EndEvent
 
+    Function OnAnimationEvent(ObjectReference source, String eventName)
+        Debug("OnAnimationEvent (Attack) Evt=" + eventName)
+        If eventName == "staggerStart"
+            GoToState("PostEscape")
+        ElseIf eventName == "SnareRopeUndoSelfLoop"
+            DamageAV("Stamina", 1, 0)
+            DamageAV("Health", 0.1, 0.5)
+        EndIf
+    EndFunction
+    
     Event OnEndState()
         Debug("State: EndState Attack")
         UnregisterForUpdate()
     EndEvent
 EndState
 
+; Approach: Player is detected and follower is either defeated or doesn't exist
+; Enemies are pacified and the defeat scene plays
 State Approach
     Event OnBeginState()
         Debug("State: Approach")
@@ -187,26 +194,28 @@ State Approach
             Utility.Wait(0.1)
         EndIf
         Debug("Starting Quest " + trapDefeatQuest)
+        ; TODO TrapDefeatQuest.NotifyPlayer = True
         trapDefeatQuest.Start()
     EndEvent
 
     Event TrapEvent(string eventName, string strArg, float numArg, form trap)
         Debug("Event (Approach): " + eventName)
         If eventName == "Mimic_VoreEnd"
-            GoToState("PostApproach")
+            GoToState("PostEscape")
         ElseIf eventName == "Mimic_VoreProgress"
+            DamageAV("Stamina", 1, 0)
+            DamageAV("Magicka", 0.5, 0)
+            DamageAV("Health", 0.2, 0.5)
         EndIf
     EndEvent
 
     Function OnAnimationEvent(ObjectReference source, String eventName)
         Debug("OnAnimationEvent Approach Evt=" + eventName + " Src=" + source)
         If eventName == "staggerStart"
-            Debug("Ending...")
-            UnregisterForAnimationEvent(PlayerRef, "staggerStart")
-            GoToState("PostApproach")
+            GoToState("PostEscape")
         ElseIf eventName == "SnareRopeUndoSelfLoop"
             DamageAV("Stamina", 1, 0)
-            DamageAV("Health", 0.2, 0.5)
+            DamageAV("Health", 0.1, 0.5)
         EndIf
     EndFunction
 
@@ -215,15 +224,21 @@ State Approach
     EndEvent
 EndState
 
-State PostApproach
+; PostEscape: Player has escaped the trap
+;   - Damage player stamina and returns to default
+;   - If pacified, enemies remain pacified until stagger/get-up animation finishes
+State PostEscape
     Event OnBeginState()
-        Debug("State: PostApproach")
-        trapDefeatQuest.SetStage(20)
-        If trapType == 1
+        Debug("State: PostEscape")
+        If TrapDefeatQuest.IsRunning()
+            trapDefeatQuest.SetStage(20)
+        EndIf
+        DamageAV("Stamina", 1, 0)
+        If GR_TrapType.GetValueInt() == 1 ; Snare Rope
             RegisterForSingleUpdate(1.0)
         Else
-            ; Long Get-Up Animation for Vore
-            RegisterForSingleUpdate(10.0)
+            ; Mimic/VoreWorm has a longer get-up animation
+            RegisterForSingleUpdate(8.0)
         EndIf
     EndEvent
 
@@ -234,8 +249,43 @@ State PostApproach
 EndState
 
 ; ==================================================
+; TRANSITIONS
+; ==================================================
+
+Function StartApproach()
+    Debug("StartApproach TrapType=" + GR_TrapType.GetValueInt())
+    TrapAttackQuest.Start()
+    Utility.Wait(0.5)
+
+    If TrapAttackQuest.GetCurrentFollower()
+        Debug("Has follower, starting attack...")
+        GoToState("Attack")
+    Else
+        TrapAttackQuest.Stop()
+        Debug("Doesn't have follower, starting deafeat...")
+        GoToState("Approach")
+    EndIf
+EndFunction
+
+Function FailAndReset()
+    ; Called by TrapDefat on missing enemies
+    Debug("FailApproach")
+    GoToState("Default")
+EndFunction
+
+; ==================================================
 ; UTILITY
 ; ==================================================
+
+Bool Function ApproachIfDetected()
+    If Utility.RandomFloat() < 1.0
+        StartApproach()
+        return true
+    Else
+        Debug("Roll Failed")
+        return false
+    EndIf
+EndFunction
 
 Function DamageAV(String avName, float percentage, float floor)
     Float value = Game.GetPlayer().GetActorValue(avName)
@@ -292,8 +342,8 @@ Event OnUpdate()
     Debug("OnUpdate noop")
 EndEvent
 
-Function RollForNotify()
-    Debug("RollForNotify noop")
+Function RollIfDetected()
+    Debug("RollIfDetected noop")
 EndFunction
 
 Function AttackSuccess()

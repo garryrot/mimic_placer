@@ -1,13 +1,9 @@
 Scriptname GR_TrapDefeat extends Quest
 
-; ==================================================
-; PROPERTIES
-; ==================================================
-
-Actor Property PlayerRef Auto
-Scene Property TrapObserveScene Auto
+GR_TrapDefeatObserver Property TrapDefeatObserver Auto
 
 ReferenceAlias Property PlayerAlias Auto
+Actor Property PlayerRef Auto
 
 ReferenceAlias Property Enemy01 Auto
 ReferenceAlias Property Enemy02 Auto
@@ -18,9 +14,11 @@ ReferenceAlias Property NearbyAlly Auto
 
 ReferenceAlias[] Property EnemyAliases Auto
 
-GlobalVariable Property GR_TrapDefeatTimeout Auto
+GlobalVariable Property GR_TrapType Auto
 
-GR_TrapDefeatObserver Property TrapDefeatObserver Auto
+Scene Property TrapObserveScene Auto
+
+Bool Property NotifyPlayer Auto
 
 Float ApproachTimeout = 60.0
 
@@ -40,29 +38,46 @@ EndEvent
 Function StartPreApproach()
     Debug("Stage 0 - PreApproach Enemies: " + Enemy01.GetActorRef() + " " + Enemy02.GetActorRef() + " " + Enemy03.GetActorRef() + " " + Enemy04.GetActorRef() + " ")
 
+    PrintEnemies()
+
+    If ! PrepareEnemies()
+        Debug("Aborting approach, no viable enemies")
+        TrapDefeatObserver.FailAndReset()
+        Stop()
+        return
+    EndIf
+
+    If TrapDefeatObserver.AlertPlayer
+        TrapDefeatObserver.AlertPlayer = False
+        Debug.Notification("The noise has alerted nearby enemies...")
+    Else 
+        Debug("Skipping alert: " + TrapDefeatObserver.AlertPlayer)
+    EndIf
+
+    RegisterForSingleUpdate(0.5)
+EndFunction
+
+Function PrintEnemies()
     Int i = 0
     While i < EnemyAliases.Length
         Actor akActor = EnemyAliases[i].GetRef() as Actor
         Debug("Handling enemy i=" + i + " actor: " + akActor)
         i += 1
     EndWhile
-    Int validEnemies = 0
-    i = 0
+EndFunction
+
+Bool Function PrepareEnemies()
+    Bool valid = False
+    Int i = 0
     While i < EnemyAliases.Length
         Actor akActor = EnemyAliases[i].GetRef() as Actor
         If IsValidEnemy(akActor)
+            valid = True
             StopActorCombat(akActor)
-            validEnemies += 1
         EndIf
         i += 1
     EndWhile
-    
-    If validEnemies > 0
-        RegisterForSingleUpdate(0.5)
-    Else
-        Debug("Aborting approach, no viable enemies")
-        Stop()
-    EndIf
+    return valid
 EndFunction
 
 ; Stage 10
