@@ -65,7 +65,6 @@ GR_TrapAttack kmyQuest = __temp as GR_TrapAttack
 ;BEGIN CODE
 ;
 Debug.Trace("[OMNOM] TRAP.ATTC Stage 0")
-kmyQuest.TestProperties();
 ;END CODE
 EndFunction
 ;END FRAGMENT

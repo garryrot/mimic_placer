@@ -1,4 +1,3 @@
-Scriptname StandaloneBakaTrapMimic extends BakaMovingTrap ; extends ObjectReference
 
 import debug
 import utility
