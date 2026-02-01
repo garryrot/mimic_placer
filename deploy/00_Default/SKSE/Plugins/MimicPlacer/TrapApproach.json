@@ -1,0 +1,11 @@
+{
+    "int": {
+        "approach-enabled": 1,
+        "damage-player": 1,
+        "sexualised-dialogue": 1
+    },
+    "float": {
+        "approach-chance": 0.55,
+        "approach-max-distance": 20000
+    }
+}

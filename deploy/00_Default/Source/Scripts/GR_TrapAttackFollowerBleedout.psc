@@ -23,10 +23,6 @@ Event OnHit(ObjectReference akAggressor, Form akSource, Projectile akProjectile,
     EndIf
 EndEvent
 
-; ==================================================
-; DEBUG
-; ==================================================
-
 Function Debug(string msg)
     Debug.Trace("[omnom] TRAP.ATTC (FollowerAlias) " + msg)
 EndFunction

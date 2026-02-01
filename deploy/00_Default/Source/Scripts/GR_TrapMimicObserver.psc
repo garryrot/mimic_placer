@@ -1,6 +1,5 @@
 ScriptName GR_TrapMimicObserver extends Quest Hidden 
 
-String Config = "../MimicPlacer/Settings.json"
 String ConfigBakaMimics = "../MimicPlacer/BakaMimics.json"
 
 Actor Property PlayerRef Auto

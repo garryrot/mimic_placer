@@ -22,17 +22,9 @@ Bool Property NotifyPlayer Auto
 
 Float ApproachTimeout = 60.0
 
-; ==================================================
-; QUEST START
-; ==================================================
-
 Event OnInit()
     Debug("OnInit")
 EndEvent
-
-; ==================================================
-; MAIN LOGIC
-; ==================================================
 
 ; Stage 0
 Function StartPreApproach()
@@ -144,10 +136,6 @@ Event OnUpdate()
     EndIf
 EndEvent
 
-; ==================================================
-; VALIDATION
-; ==================================================
-
 Bool Function IsValidEnemy(Actor akActor)
     If !akActor
         Debug("Object not found")
@@ -162,20 +150,12 @@ Bool Function IsValidEnemy(Actor akActor)
     Return True
 EndFunction
 
-; ==================================================
-; ACTOR HANDLING
-; ==================================================
-
 Function StopActorCombat(Actor akActor)
     Debug("Stopping combat: " + akActor)
     akActor.StopCombat()
     akActor.StopCombatAlarm()
     Utility.Wait(0.2)
 EndFunction
-
-; ==================================================
-; DEBUG
-; ==================================================
 
 Function Debug(string msg)
     Debug.Trace("[omnom] TRAP.DEFT " + msg)

@@ -9,42 +9,54 @@ Actor Property PlayerRef Auto
 ; 0 -> Mimic, 1 -> SnareLoop, 2 -> DeathWorm
 GlobalVariable Property GR_TrapType Auto
 
+; Default 10_000
+GlobalVariable Property GR_TrapDefeatMaxDistance Auto
+
+; Default 0
+GlobalVariable Property GR_TrapSexDialogue Auto
+
+String ConfigTrapApproach = "../MimicPlacer/TrapApproach.json"
+Int ConfigApproachEnabled = 1
+Int ConfigDamagePlayer = 1
+Float ConfigApproachChance = 0.55
+
 ; False if player was discovered via line of sight
 Bool Property AlertPlayer Auto
 
-; ==================================================
-; INIT
-; ==================================================
-
 Event OnInit()
     Debug("OnInit")
-    ResetEvents()
+    Maintenance()
     GoToState("Default")
 EndEvent
 
 Function Maintenance()
     Debug("Maintenance")
     ResetEvents()
+    ReloadConfig()
 EndFunction
 
-; ==================================================
-; EVENT REGISTRATION
-; ==================================================
+Function ReloadConfig()
+    ConfigApproachEnabled = JsonUtil.GetIntValue(ConfigTrapApproach, "approach-enabled")
+    ConfigDamagePlayer = JsonUtil.GetIntValue(ConfigTrapApproach, "damage-player")
+    GR_TrapSexDialogue.SetValueInt(JsonUtil.GetIntValue(ConfigTrapApproach, "sexualised-dialogue"))
+
+    ConfigApproachChance = JsonUtil.GetFloatValue(ConfigTrapApproach, "approach-chance")
+    GR_TrapDefeatMaxDistance.SetValue(JsonUtil.GetFloatValue(ConfigTrapApproach, "approach-max-distance"))
+
+    Debug("Config Enabled=" + ConfigApproachEnabled + " DamagePlayer=" + ConfigDamagePlayer + \ 
+         " ApproachChance=" + ConfigApproachChance + " SexDialogue=" +  GR_TrapSexDialogue.GetValueInt() + \ 
+         " MaxDistance=" + GR_TrapDefeatMaxDistance.GetValue())
+EndFunction
 
 Function ResetEvents()
     UnregisterForAllModEvents()
     RegisterForModEvent("Mimic_VoreStart", "TrapEvent")
     RegisterForModEvent("Mimic_VoreProgress", "TrapEvent")
     RegisterForModEvent("Mimic_VoreEnd", "TrapEvent")
-
     RegisterForAnimationEvent(PlayerRef, "staggerStart") ; Escape SnareRope
     RegisterForAnimationEvent(PlayerRef, "SnareRopeUndoSelfFailEnd") ; Start Alert
     RegisterForAnimationEvent(PlayerRef, "SnareRopeUndoSelfLoop") ; Dmg stam/health
 EndFunction
-
-; ==================================================
-; STATES
-; ==================================================
 
 State Default
     Event OnBeginState()
@@ -63,6 +75,10 @@ State Default
 
     Event TrapEvent(string eventName, string strArg, float numArg, form mimic)
         Debug("Event " + eventName)
+        If !ConfigApproachEnabled
+            Debug("Approach disabled")
+            return
+        EndIf
         If eventName == "Mimic_VoreStart"
             GR_TrapType.SetValueInt(0) ; Mimic
             GoToState("Trapped")
@@ -71,6 +87,11 @@ State Default
 
     Function OnAnimationEvent(ObjectReference source, String eventName)
         Debug("OnAnimationEvent (Default) Evt=" + eventName)
+        If !ConfigApproachEnabled
+            Debug("Approach disabled")
+            return
+        EndIf
+
         If eventName == "DeathWormVoreSuccessLoop"
             GR_TrapType.SetValueInt(2) ; Deathworm
             If !ApproachIfDetected()
@@ -194,7 +215,6 @@ State Approach
             Utility.Wait(0.1)
         EndIf
         Debug("Starting Quest " + trapDefeatQuest)
-        ; TODO TrapDefeatQuest.NotifyPlayer = True
         trapDefeatQuest.Start()
     EndEvent
 
@@ -278,7 +298,7 @@ EndFunction
 ; ==================================================
 
 Bool Function ApproachIfDetected()
-    If Utility.RandomFloat() < 1.0
+    If Utility.RandomFloat() < ConfigApproachChance
         StartApproach()
         return true
     Else
@@ -288,6 +308,10 @@ Bool Function ApproachIfDetected()
 EndFunction
 
 Function DamageAV(String avName, float percentage, float floor)
+    If (!ConfigDamagePlayer)
+        return
+    EndIf
+
     Float value = Game.GetPlayer().GetActorValue(avName)
     Float maxValue = Game.GetPlayer().GetActorValueMax(avName)
     Float floorValue = maxValue * floor
@@ -324,11 +348,6 @@ Function FadeAndPlaceEnemies(Actor target, Actor e1, Actor e2, Actor e3, Actor e
         angle += angleStep
         i += 1
     EndWhile
-    ; e1.MoveTo(target, 75.0, 50)
-    ; e2.MoveTo(target, 75.0, -50)    
-    ; e3.MoveTo(target, 100.0, 50)
-    ; e4.MoveTo(target, 250.0, 50)
-    ; e5.MoveTo(target, 183.0, 102)
 
     Utility.Wait(3.0)
     BlackFade(false)
@@ -341,10 +360,6 @@ EndFunction
 Event OnUpdate()
     Debug("OnUpdate noop")
 EndEvent
-
-Function RollIfDetected()
-    Debug("RollIfDetected noop")
-EndFunction
 
 Function AttackSuccess()
     Debug("AttackSuccess noop")
@@ -378,7 +393,7 @@ Function Debug(string msg)
     Debug.Trace("[omnom] TRAP.OBSV " + msg)
 EndFunction
 
-Function BlackFade(bool fadeOut = true)
+Function BlackFade(bool fadeOut)
     if FadeOut
         Game.FadeOutGame(false, true, 60.0, 0.0)
     else
