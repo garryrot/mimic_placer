@@ -14,7 +14,6 @@ ReferenceAlias Property Enemy02 Auto
 ReferenceAlias Property Enemy03 Auto
 ReferenceAlias Property Enemy04 Auto
 ReferenceAlias Property Enemy05 Auto
-
 ReferenceAlias[] Property EnemyAliases Auto
 
 GR_TrapDefeat Property TrapDefeatQuest Auto
@@ -42,7 +41,7 @@ Function StartTrapAttack()
 
     If !HasValidEnemies()
         Debug("Aborting attack, no viable follower or enemies")
-        TrapDefeatObserver.FailAndReset()
+        TrapDefeatObserver.FailAndResetToTrapped()
         return
     EndIf
 

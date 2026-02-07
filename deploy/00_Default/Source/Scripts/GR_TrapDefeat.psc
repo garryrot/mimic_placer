@@ -34,7 +34,7 @@ Function StartPreApproach()
 
     If ! PrepareEnemies()
         Debug("Aborting approach, no viable enemies")
-        TrapDefeatObserver.FailAndReset()
+        TrapDefeatObserver.FailAndResetToTrapped()
         Stop()
         return
     EndIf

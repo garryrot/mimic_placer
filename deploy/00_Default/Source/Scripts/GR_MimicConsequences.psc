@@ -5,6 +5,41 @@ Actor Property PlayerRef Auto
 
 String ConfigConsequences = "../MimicPlacer/Consequences.json"
 
+; Constants
+Int SLOT_RIGHTHAND = 0
+Int SLOT_LEFTHAND = 1
+Int SLOT_SHIELD = 0x200
+Int SLOT_HEAD = 0x00000001
+Int SLOT_BODY = 0x00000004
+Int SLOT_HANDS = 0x00000008
+Int SLOT_FEET = 0x00000080
+int SLOT_FOREARMS = 0x00000010
+int SLOT_AMULET = 0x00000020
+int SLOT_CIRCLET = 0x00001000
+int SLOT_RING = 0x00000040
+; int SLOT_CALVES = 0x00000100
+; int SLOT_TAIL = 0x00000400 
+; int SLOT_LONGHAIR = 0x00000800
+; int SLOT_EARS = 0x00002000
+; int SLOT_44 = 0x00004000
+; int SLOT_45 = 0x00008000
+; int SLOT_46 = 0x00010000
+; int SLOT_47 = 0x00020000
+; int SLOT_48 = 0x00040000
+; int SLOT_49 = 0x00080000
+; int SLOT_50 = 0x00100000 ; DecapitateHead
+; int SLOT_51 = 0x00200000 ; Decapitate
+; int SLOT_52 = 0x00400000
+; int SLOT_53 = 0x00800000
+; int SLOT_54 = 0x01000000
+; int SLOT_55 = 0x02000000
+; int SLOT_56 = 0x04000000
+; int SLOT_57 = 0x08000000
+; int SLOT_58 = 0x10000000
+; int SLOT_59 = 0x20000000
+; int SLOT_60 = 0x40000000
+; int SLOT_61 = 0x80000000 ; FX01
+
 ; Config
 Int ConfigMimicLoot = 1
 Int ConfigMimicLootMaxItemCount = 2
@@ -15,15 +50,29 @@ Int ConfigMimicVoreBadEnd = 1
 Int ConfigVoreBadEndMinTicks = 11
 Int ConfigVoreBadEndSimpleSlavery = 0
 
+Int ConfigMimicLoseGold = 1
+Int ConfigMimicLoseGoldMin = 50
+Int ConfigMimicLoseGoldMax = 300
+Float ConfigMimicLoseGoldLvlScale = 1.08
+Float ConfigMimicLoseGoldChance = 0.3
+
+Int ConfigMimicLoseArmor = 1
+Float ConfigMimicLoseArmorChancePerTick = 0.10
+
 ; State
 BakaTrapMimic currentMimic
 BakaTrapTriggerBox currentTriggerBox
 ObjectReference originalChest
-Bool InVore = False
 Int MimicType = 0
+
 ; The more ticks, the longer the player was in the belly of the mimic
 Int VoreTicks = 0
+
 Int FoundLoot = 0
+Int LostGear = 0
+Int LostGold = 0
+
+Int ConsequenceCnt = 0
 
 Event OnInit()
 	Maintenance()
@@ -36,6 +85,7 @@ Function Maintenance()
     EndIf
     UnregisterForAllModEvents()
     RegisterForModEvent("Mimic_VoreStart", "StartVore")
+    RegisterForModEvent("Mimic_VoreProgress", "ProgressVore")
     RegisterForModEvent("Mimic_VoreEnd", "StopVore")
 
     Init = True
@@ -56,36 +106,34 @@ Event OnUpdate()
         ConfigVoreBadEndMinTicks = JsonUtil.GetIntValue(ConfigConsequences, "mimic-vore-bad-end-min-ticks")
         ConfigVoreBadEndSimpleSlavery = JsonUtil.GetIntValue(ConfigConsequences, "mimic-vore-bad-end-simple-slavery")
 
-        Debug("Init settings MimicLoot=" + ConfigMimicLoot + " MimicLootMaxItemCount=" + ConfigMimicLootMaxItemCount + \ 
-             " MimicLootMaxGoldCount=" + ConfigMimicLootMaxGoldCount  + " MimicLootChanceAccumulates=" + \
-             ConfigMimicLootChanceAccumulates + " MimicLootChancePerTick=" + ConfigMimicLootChancePerTick  + \
-             " MimicVoreKills=" + ConfigMimicVoreBadEnd + " MimicVoreKillsAfterTicks=" + ConfigVoreBadEndMinTicks )
+        ConfigMimicLoseArmor = JsonUtil.GetIntValue(ConfigConsequences, "mimic-lose-armor")
+        ConfigMimicLoseArmorChancePerTick = JsonUtil.GetFloatValue(ConfigConsequences, "mimic-lose-armor-chance-per-tick")
+        
+        ConfigMimicLoseGold = JsonUtil.GetIntValue(ConfigConsequences, "mimic-lose-gold")
+        ConfigMimicLoseGoldMin = JsonUtil.GetIntValue(ConfigConsequences, "mimic-lose-gold-min")
+        ConfigMimicLoseGoldMax = JsonUtil.GetIntValue(ConfigConsequences, "mimic-lose-gold-max")
+        ConfigMimicLoseGoldLvlScale = JsonUtil.GetFloatValue(ConfigConsequences, "mimic-lose-gold-scale-per-lvl")
+        ConfigMimicLoseGoldChance = JsonUtil.GetFloatValue(ConfigConsequences, "mimic-lose-gold-chance")
+
+        Debug("Init settings MimicLoot=" + ConfigMimicLoot + \ 
+            " MimicLootMaxItemCount=" + ConfigMimicLootMaxItemCount + \ 
+            " MimicLootMaxGoldCount=" + ConfigMimicLootMaxGoldCount + \
+            " MimicLootChanceAccumulates=" + ConfigMimicLootChanceAccumulates + \
+            " MimicLootChancePerTick=" + ConfigMimicLootChancePerTick + \ 
+            " MimicVoreKills=" + ConfigMimicVoreBadEnd + \
+            " MimicVoreKillsAfterTicks=" + ConfigVoreBadEndMinTicks + \
+            " MimicLoseArmor=" + ConfigMimicLoseArmor + \
+            " MimicLoseArmorChancePerTick=" + ConfigMimicLoseArmorChancePerTick + \
+            " MimicLoseGold=" + ConfigMimicLoseGold + \
+            " MimicLoseGoldMin=" + ConfigMimicLoseGoldMin + \
+            " MimicLoseGoldMax=" + ConfigMimicLoseGoldMax + \
+            " MimicLoseGoldLvlScale=" + ConfigMimicLoseGoldLvlScale + \
+            " MimicLoseGoldChance=" + ConfigMimicLoseGoldChance )
         return
     EndIf
-
-    Debug("OnUpdate() MimicType=" + MimicType + " Ticks=" + VoreTicks + \
-            " InVore=" + InVore + " FoundLoot=" + FoundLoot + " PairedLootChest=" + originalChest)
-    If InVore
-        FindChest()
-        VoreTicks += 1
-        If originalChest != None && ConfigMimicLoot
-            Float lootChance = ConfigMimicLootChancePerTick
-            If ConfigMimicLootChanceAccumulates
-                lootChance = VoreTicks * ConfigMimicLootChancePerTick
-            EndIf
-            If VoreTicks > 2 && FoundLoot < ConfigMimicLootMaxItemCount && Utility.RandomFloat() < lootChance
-                FoundLoot += 1
-            EndIf
-        EndIf
-
-        If MimicType == 1 && ConfigMimicVoreBadEnd && VoreTicks > ConfigVoreBadEndMinTicks
-            Debug("Vore killed the player VoreTicks=" + VoreTicks)
-            ConsFadeOutAndDeath() 
-        EndIf
-
-        RegisterForSingleUpdate(8.0)
-    EndIf
 EndEvent
+
+; Events
 
 Event StartVore(string eventName, string strArg, float numArg, form mimic)
     Debug("Vore started" + mimic)
@@ -95,26 +143,69 @@ Event StartVore(string eventName, string strArg, float numArg, form mimic)
         return
     EndIf
 
-    InVore = True
+    LostGold = 0
+    LostGear = 0
     VoreTicks = 0
     FoundLoot = 0
+    ConsequenceCnt = 0
+
     MimicType = currentMimic.MimicType
     originalChest = None
+    StoreEquippedGear()
 
     RegisterForSingleUpdate(8.0)
-    ; DeathWormVoreSuccessLoop -> Worm Vore Failed
-    ; SnareRopeUndoSelfFailEvent -> Snare Rope Failed
+EndEvent
+
+Event ProgressVore(string eventName, string strArg, float numArg, form mimic)
+    Debug("ProgressVore MimicType=" + MimicType + " Ticks=" + VoreTicks + \
+            " FoundLoot=" + FoundLoot + " PairedLootChest=" + originalChest)
+
+    FindChest()
+    VoreTicks += 1
+
+    If originalChest != None
+        If ConfigMimicLoot == 1
+            Float lootChance = ConfigMimicLootChancePerTick
+            If ConfigMimicLootChanceAccumulates
+                lootChance = VoreTicks * ConfigMimicLootChancePerTick
+            EndIf
+            If VoreTicks > 2 && FoundLoot < ConfigMimicLootMaxItemCount && Utility.RandomFloat() < lootChance
+                FoundLoot += 1
+                ConsequenceCnt += 1
+            EndIf
+        EndIf
+
+        If ConfigMimicLoseGold && LostGold == 0
+            If Utility.RandomFloat() < ConfigMimicLoseGoldChance
+                LoseRandomGold()
+                LostGold = 0 
+                ConsequenceCnt += 1
+            EndIf
+        EndIf
+
+        If ConfigMimicLoseArmor == 1 && LostGear == 0
+            If Utility.RandomFloat() < ConfigMimicLoseArmorChancePerTick
+                DropStoredGear()
+                LostGear = 1
+                ConsequenceCnt += 1
+            EndIf
+        EndIf
+    EndIf
+
+    If MimicType == 1 && ConfigMimicVoreBadEnd && VoreTicks > ConfigVoreBadEndMinTicks
+        Debug("Vore killed the player VoreTicks=" + VoreTicks)
+        ConsFadeOutAndDeath() 
+    EndIf
 EndEvent
 
 Function StopVore(string eventName, string strArg, float numArg, form mimic)
     Debug("Vore stopped")
-    WrapupFindLoot()
+    FindLootWrapup()
     RegisterForSingleUpdate(8.0)
-    InVore = False
     FoundLoot = 0
 EndFunction
 
-; ~~~   Loot   ~~~
+; Utility
 
 Function FindChest()
     If !originalChest
@@ -127,13 +218,17 @@ Function FindChest()
     EndIf
 EndFunction
 
-Function WrapupFindLoot()
+; Consequences
+
+; Consequences - FindLoot
+
+Function FindLootWrapup()
     int i = 0
     If FoundLoot > 0
         FindLootMessage()
     EndIf
     While i < FoundLoot
-        ConsFindLoot()
+        FindLootMoveToPlayer()
         i += 1
     EndWhile
 EndFunction
@@ -153,9 +248,9 @@ Function FindLootMessage()
     EndIf
 EndFunction
 
-Function ConsFindLoot()
+Function FindLootMoveToPlayer()
     Form[] allItems = originalChest.GetContainerForms()
-    Debug("ConsFindLoot() " + allItems)
+    Debug("FindLootMoveToPlayer() " + allItems)
     Form retrieved = allItems[Utility.RandomInt(0, allItems.Length - 1)]
     Int count = 1
     If retrieved.GetFormID() == 0xf
@@ -165,11 +260,88 @@ Function ConsFindLoot()
     Debug("Moved " + retrieved + " (" + count + ") to player")
 EndFunction
 
-; ~~~   Death   ~~~
+; Consequences - Lose Weapon
+
+Form HeadGear
+Form BodyGear
+Form HandsGear
+Form FeetGear
+Form ForeArm
+Form AmuletGear
+Form CircletGear
+Form RingGear
+Form ShieldGear
+Form WeaponRight
+Form WeaponLeft
+
+Function StoreEquippedGear()
+    HeadGear = PlayerRef.GetWornForm(SLOT_HEAD)
+    BodyGear = PlayerRef.GetWornForm(SLOT_BODY)
+    HandsGear = PlayerRef.GetWornForm(SLOT_HANDS)
+    FeetGear = PlayerRef.GetWornForm(SLOT_FEET)
+    ForeArm = PlayerRef.GetWornForm(SLOT_FOREARMS)
+    AmuletGear = PlayerRef.GetWornForm(SLOT_AMULET)
+    CircletGear = PlayerRef.GetWornForm(SLOT_CIRCLET)
+    RingGear = PlayerRef.GetWornForm(SLOT_RING)
+    ShieldGear = PlayerRef.GetWornForm(SLOT_SHIELD)
+    WeaponRight = PlayerRef.GetEquippedWeapon(False)
+    WeaponLeft = PlayerRef.GetEquippedWeapon(True)
+EndFunction
+
+Function DropStoredGear()
+    DropIfRandom(1.0, HeadGear)
+    DropIfRandom(1.0, BodyGear)
+    DropIfRandom(1.0, HandsGear)
+    DropIfRandom(1.0, FeetGear)
+    DropIfRandom(0.7, ForeArm)
+    DropIfRandom(0.6, AmuletGear)
+    DropIfRandom(0.6, CircletGear)
+    DropIfRandom(0.6, RingGear)
+    DropIfRandom(1.0, ShieldGear)
+    DropIfRandom(1.0, WeaponRight)
+    DropIfRandom(1.0, WeaponLeft)
+    Debug.Notification("The trap swallowed your clothes...")
+EndFunction
+
+Bool Function DropIfRandom(Float chance, Form item)
+    If item
+        If Utility.RandomFloat() < chance
+            PlayerRef.RemoveItem(item, 1, false, originalChest)
+            return true
+        EndIf
+    EndIf
+    return false
+EndFunction
+
+; Consequences - Lose Gold
+
+MiscObject Property Septims Auto
+
+Function LoseRandomGold()
+    If !Septims
+        Septims = Game.GetForm(0xF) as MiscObject
+    EndIf
+    int playerGold = PlayerRef.GetItemCount(Septims)
+    if playerGold <= 0
+        return
+    endif
+
+    Float scaleFactor = Math.pow(ConfigMimicLoseGoldLvlScale, PlayerRef.GetLevel() as Float)
+    int amount = Utility.RandomInt(ConfigMimicLoseGoldMin, ConfigMimicLoseGoldMax)
+    if amount > playerGold
+        amount = playerGold
+    endif
+    amount = (amount * scaleFactor) as int
+    PlayerRef.RemoveItem(Septims, amount, false, originalChest)
+
+    Debug("Lost " + amount + " gold, scaleFactor=" + scaleFactor)
+    Debug.Notification("Gold slips out of your bags...")
+EndFunction
+
+; Consequence - Vore Death
 
 Function ConsFadeOutAndDeath()
     currentMimic.MimicShake()
-    InVore = False
     FoundLoot = 0
     Game.FadeOutGame(true, true, 0.0, 60.0)
     Utility.Wait(1.5)

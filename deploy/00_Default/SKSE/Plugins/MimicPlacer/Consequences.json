@@ -7,9 +7,20 @@
 
         "mimic-vore-bad-end": 1,
         "mimic-vore-bad-end-min-ticks": 11,
-        "mimic-vore-bad-end-simple-slavery": 0
+        "mimic-vore-bad-end-simple-slavery": 0,
+
+        "mimic-lose-gold": 1,
+        "mimic-lose-gold-min": 10,
+        "mimic-lose-gold-max": 350,
+
+        "mimic-lose-armor": 1
     },
     "float": {
-        "mimic-loot-chance-per-tick": 0.08
+        "mimic-loot-chance-per-tick": 0.08,
+
+        "mimic-lose-armor-chance-per-tick": 0.05,
+
+        "mimic-lose-gold-chance": 0.05,
+        "mimic-lose-gold-scale-per-lvl": 1.05
     }
 }

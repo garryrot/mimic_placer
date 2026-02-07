@@ -15,10 +15,20 @@ GlobalVariable Property GR_TrapDefeatMaxDistance Auto
 ; Default 0
 GlobalVariable Property GR_TrapSexDialogue Auto
 
-String ConfigTrapApproach = "../MimicPlacer/TrapApproach.json"
+String ConfigTrapApproach = "../TrapDefeat/TrapApproach.json"
+String ConfigTrapConseqence = "../TrapDefeat/TrapConsequence.json"
+
 Int ConfigApproachEnabled = 1
 Int ConfigDamagePlayer = 1
 Float ConfigApproachChance = 0.55
+
+Float ConfigDropGoldChance = 0.7
+Int ConfigDropGoldSnare = 1
+Int ConfigDropGoldSnareMin = 5
+Int ConfigDropGoldSnareMax = 12
+
+Float ConfigDropWeaponChance = 0.7
+Int ConfigDropWeaponSnare = 0
 
 ; False if player was discovered via line of sight
 Bool Property AlertPlayer Auto
@@ -43,9 +53,26 @@ Function ReloadConfig()
     ConfigApproachChance = JsonUtil.GetFloatValue(ConfigTrapApproach, "approach-chance")
     GR_TrapDefeatMaxDistance.SetValue(JsonUtil.GetFloatValue(ConfigTrapApproach, "approach-max-distance"))
 
-    Debug("Config Enabled=" + ConfigApproachEnabled + " DamagePlayer=" + ConfigDamagePlayer + \ 
-         " ApproachChance=" + ConfigApproachChance + " SexDialogue=" +  GR_TrapSexDialogue.GetValueInt() + \ 
-         " MaxDistance=" + GR_TrapDefeatMaxDistance.GetValue())
+    ConfigDropGoldSnare = JsonUtil.GetIntValue(ConfigTrapConseqence, "snare-drop-gold")
+    ConfigDropGoldSnareMin = JsonUtil.GetIntValue(ConfigTrapConseqence, "snare-drop-gold-min")
+    ConfigDropGoldSnareMax = JsonUtil.GetIntValue(ConfigTrapConseqence, "snare-drop-gold-max")
+    ConfigDropWeaponSnare = JsonUtil.GetIntValue(ConfigTrapConseqence, "snare-drop-weapon")
+
+    ConfigDropGoldChance = JsonUtil.GetFloatValue(ConfigTrapConseqence, "snare-drop-gold-chance")
+    ConfigDropWeaponChance = JsonUtil.GetFloatValue(ConfigTrapConseqence, "snare-drop-weapon-chance")
+
+
+    Debug("Config Enabled=" + ConfigApproachEnabled \
+          + " DamagePlayer=" + ConfigDamagePlayer \ 
+          + " ApproachChance=" + ConfigApproachChance \
+          + " SexDialogue=" +  GR_TrapSexDialogue.GetValueInt() \ 
+          + " MaxDistance=" + GR_TrapDefeatMaxDistance.GetValue() \
+          + " DropGoldSnare=" + ConfigDropGoldSnare \
+          + " DropGoldSnare=" + ConfigDropGoldSnareMin \
+          + " DropGoldSnare=" + ConfigDropGoldSnareMax \
+          + " DropGoldSnare=" + ConfigDropWeaponSnare \
+          + " DropGoldChance=" + ConfigDropGoldChance \
+          + " DropWeaponChance=" + ConfigDropWeaponChance )
 EndFunction
 
 Function ResetEvents()
@@ -53,6 +80,7 @@ Function ResetEvents()
     RegisterForModEvent("Mimic_VoreStart", "TrapEvent")
     RegisterForModEvent("Mimic_VoreProgress", "TrapEvent")
     RegisterForModEvent("Mimic_VoreEnd", "TrapEvent")
+
     RegisterForAnimationEvent(PlayerRef, "staggerStart") ; Escape SnareRope
     RegisterForAnimationEvent(PlayerRef, "SnareRopeUndoSelfFailEnd") ; Start Alert
     RegisterForAnimationEvent(PlayerRef, "SnareRopeUndoSelfLoop") ; Dmg stam/health
@@ -99,9 +127,8 @@ State Default
             EndIf
             return
         ElseIf eventName == "SnareRopeUndoSelfLoop"
-            GR_TrapType.SetValueInt(1) ; SnareRope
-            DamageAV("Stamina", 1.0, 0)
-            DamageAV("Health", 0.2, 0.5)
+            GR_TrapType.SetValueInt(1) ; Snare
+            SnareProgress()
             GoToState("Trapped")
         Else
             Debug("Unhandled Evt=" + eventName)
@@ -126,9 +153,7 @@ State Trapped
     Event TrapEvent(string eventName, string strArg, float numArg, Form trap)
         Debug("Event (Trapped): " + eventName)
         If eventName == "Mimic_VoreProgress"
-            DamageAV("Stamina", 1.0, 0)
-            DamageAV("Magicka", 0.5, 0)
-            DamageAV("Health", 0.2, 0.5)
+            MimicProgress()
             ApproachIfDetected()
         ElseIf eventName == "Mimic_VoreEnd"
             Debug("Escaped before player was noticed")
@@ -145,7 +170,7 @@ State Trapped
         ElseIf eventName == "staggerStart"
             GoToState("PostEscape")
         ElseIf eventName == "SnareRopeUndoSelfLoop"
-            DamageAV("Stamina", 1.0, 0)
+            SnareProgress()
         Else
             Debug("Unhandled Evt=" + eventName)
         EndIf
@@ -182,9 +207,7 @@ State Attack
         If eventName == "Mimic_VoreEnd"
             GoToState("PostEscape")
         ElseIf eventName == "Mimic_VoreProgress"
-            DamageAV("Stamina", 1.0, 0)
-            DamageAV("Magicka", 0.5, 0)
-            DamageAV("Health", 0.2, 0.5)
+            MimicProgress()
         EndIf
     EndEvent
 
@@ -193,8 +216,7 @@ State Attack
         If eventName == "staggerStart"
             GoToState("PostEscape")
         ElseIf eventName == "SnareRopeUndoSelfLoop"
-            DamageAV("Stamina", 1, 0)
-            DamageAV("Health", 0.1, 0.5)
+            SnareProgress()
         EndIf
     EndFunction
     
@@ -223,9 +245,7 @@ State Approach
         If eventName == "Mimic_VoreEnd"
             GoToState("PostEscape")
         ElseIf eventName == "Mimic_VoreProgress"
-            DamageAV("Stamina", 1, 0)
-            DamageAV("Magicka", 0.5, 0)
-            DamageAV("Health", 0.2, 0.5)
+            MimicProgress()
         EndIf
     EndEvent
 
@@ -234,8 +254,7 @@ State Approach
         If eventName == "staggerStart"
             GoToState("PostEscape")
         ElseIf eventName == "SnareRopeUndoSelfLoop"
-            DamageAV("Stamina", 1, 0)
-            DamageAV("Health", 0.1, 0.5)
+            SnareProgress()
         EndIf
     EndFunction
 
@@ -253,17 +272,24 @@ State PostEscape
         If TrapDefeatQuest.IsRunning()
             trapDefeatQuest.SetStage(20)
         EndIf
-        DamageAV("Stamina", 1, 0)
         If GR_TrapType.GetValueInt() == 1 ; Snare Rope
+            SnareProgress()
             RegisterForSingleUpdate(1.0)
         Else
             ; Mimic/VoreWorm has a longer get-up animation
+            MimicProgress()
             RegisterForSingleUpdate(8.0)
         EndIf
     EndEvent
 
     Event OnUpdate()
         Debug("OnUpdate Back to default" )
+        If GR_TrapType.GetValueInt() == 1 ; Snare Rope
+            SnareEscape()
+        Else
+            ; Mimic/VoreWorm
+            MimicEscape()
+        EndIf
         GoToState("Default")
     EndEvent
 EndState
@@ -287,10 +313,10 @@ Function StartApproach()
     EndIf
 EndFunction
 
-Function FailAndReset()
+Function FailAndResetToTrapped()
     ; Called by TrapDefat on missing enemies
     Debug("FailApproach")
-    GoToState("Default")
+    GoToState("Trapped")
 EndFunction
 
 ; ==================================================
@@ -307,19 +333,6 @@ Bool Function ApproachIfDetected()
     EndIf
 EndFunction
 
-Function DamageAV(String avName, float percentage, float floor)
-    If (!ConfigDamagePlayer)
-        return
-    EndIf
-
-    Float value = Game.GetPlayer().GetActorValue(avName)
-    Float maxValue = Game.GetPlayer().GetActorValueMax(avName)
-    Float floorValue = maxValue * floor
-    If value >= floorValue
-        Game.GetPlayer().DamageAV(avName, maxValue * percentage)
-    EndIf
-    Debug("DamageAV " + value + " "  + maxValue + " " + floor + " " + floorValue)
-EndFunction
 
 Function FadeAndPlaceEnemies(Actor target, Actor e1, Actor e2, Actor e3, Actor e4, Actor e5)
     Debug("FadeAndPlaceEnemies FadeToBlackImod")
@@ -386,11 +399,110 @@ Function PlayerEnterCombat()
 EndFunction
 
 ; ==================================================
+; SNARE
+; ==================================================
+
+Function SnareProgress()
+    DamageAV("Stamina", 1.0, 0)
+    If ConfigDamagePlayer
+        DamageAV("Health", 0.2, 0.5)
+    EndIf
+
+    If ConfigDropGoldSnare && Utility.RandomFloat() < ConfigDropGoldChance
+        DropRandomGoldScatter()
+    EndIf
+    If ConfigDropWeaponSnare && Utility.RandomFloat() < ConfigDropWeaponChance
+        DropEquippedWeapons()
+    EndIf
+EndFunction
+
+Function SnareEscape()
+    DamageAV("Stamina", 1.0, 0)
+EndFunction
+
+; ==================================================
+; MIMIC
+; ==================================================
+
+Function MimicProgress()
+    DamageAV("Stamina", 1.0, 0)
+    If ConfigDamagePlayer
+        DamageAV("Magicka", 0.5, 0)
+        DamageAV("Health", 0.2, 0.5)
+    EndIf
+
+EndFunction
+
+Function MimicEscape()
+    DamageAV("Stamina", 1.0, 0)
+EndFunction
+
+; ==================================================
 ; DEBUG
 ; ==================================================
 
-Function Debug(string msg)
-    Debug.Trace("[omnom] TRAP.OBSV " + msg)
+MiscObject Property Septims Auto
+Keyword Property MagicBoundWeapon Auto
+
+Function DropRandomGoldScatter()
+    If !Septims
+        Septims = Game.GetForm(0xF) as MiscObject
+    EndIf
+    int playerGold = PlayerRef.GetItemCount(Septims)
+    if playerGold <= 0
+        return
+    endif
+    int totalGold = Utility.RandomInt(ConfigDropGoldSnareMin, ConfigDropGoldSnareMax)
+    if totalGold > playerGold
+        totalGold = playerGold
+    endif
+    PlayerRef.RemoveItem(Septims, totalGold, false)
+    int remaining = totalGold
+    Debug.Notification("Gold drops out of your bag and scatters across the floor...")
+    while remaining > 0
+        int stackSize = Utility.RandomInt(1, 3)
+        if stackSize > remaining
+            stackSize = remaining
+        endif
+        ObjectReference goldRef = PlayerRef.PlaceAtMe(Septims, stackSize)
+        goldRef.MoveTo(PlayerRef, Utility.RandomFloat(-30.0, 30.0), Utility.RandomFloat(-30.0, 30.0), 80.0)
+        ; goldRef.ApplyHavokImpulse(Utility.RandomFloat(-0.3, 0.4), Utility.RandomFloat(-0.3, 0.3), Utility.RandomFloat(0.4, 1.7), Utility.RandomFloat(2.0, 5.0))
+        remaining -= stackSize
+    endwhile
+EndFunction
+
+Function DropEquippedWeapons()
+    Weapon rightWeapon = PlayerRef.GetEquippedWeapon(false)
+    Weapon leftWeapon  = PlayerRef.GetEquippedWeapon(true)
+
+    Bool dropped = False
+    if rightWeapon ;   !rightWeapon.HasKeyword(MagicBoundWeapon)
+        PlayerRef.UnequipItem(rightWeapon)
+        PlayerRef.RemoveItem(rightWeapon, 1, true)
+        PlayerRef.PlaceAtMe(rightWeapon, 1).MoveTo(PlayerRef, 5, 7, 100)
+        dropped = True
+    endif
+
+    if leftWeapon && leftWeapon != rightWeapon
+        PlayerRef.UnequipItem(leftWeapon)
+        PlayerRef.RemoveItem(leftWeapon, 1, true)
+        PlayerRef.PlaceAtMe(leftWeapon, 1).MoveTo(PlayerRef, 5, 7, 100)
+        dropped = True
+    endif
+
+    If dropped
+        Debug.Notification("Your weapon drops to the ground...")
+    EndIf
+EndFunction
+
+Function DamageAV(String avName, float percentage, float floor)
+    Float value = Game.GetPlayer().GetActorValue(avName)
+    Float maxValue = Game.GetPlayer().GetActorValueMax(avName)
+    Float floorValue = maxValue * floor
+    If value >= floorValue
+        Game.GetPlayer().DamageAV(avName, maxValue * percentage)
+    EndIf
+    Debug("DamageAV " + value + " "  + maxValue + " " + floor + " " + floorValue)
 EndFunction
 
 Function BlackFade(bool fadeOut)
@@ -399,4 +511,8 @@ Function BlackFade(bool fadeOut)
     else
         Game.FadeOutGame(false, true, 0.2, 3.0)
     endIf
+EndFunction
+
+Function Debug(string msg)
+    Debug.Trace("[omnom] TRAP.OBSV " + msg)
 EndFunction

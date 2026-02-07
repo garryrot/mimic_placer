@@ -1,0 +1,12 @@
+{
+    "int": {
+        "snare-drop-gold": 1,
+        "snare-drop-gold-min": 7,
+        "snare-drop-gold-max": 30,
+        "snare-drop-weapon": 1,
+    },
+    "float": {
+        "snare-drop-gold-chance": 0.7,
+        "snare-drop-weapon-chance": 1.0
+    }
+}
