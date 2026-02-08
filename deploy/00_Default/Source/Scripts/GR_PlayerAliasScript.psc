@@ -2,7 +2,6 @@ Scriptname GR_PlayerAliasScript extends ReferenceAlias
 
 GR_MimicPlacer Property lib Auto
 GR_MimicScanner Property scanner Auto 
-GR_MimicBakaObserver Property observer Auto
 GR_MimicConsequences Property consequences Auto
 
 Bool GameLoad = True
@@ -13,7 +12,6 @@ Event OnPlayerLoadGame()
     lib.Debug("OnPlayerLoadGame()")
     lib.Maintenance()
     scanner.Maintenance()
-    observer.Maintenance()
     consequences.Maintenance()
     GameLoad = True
     RegisterForSingleUpdate(2.0)

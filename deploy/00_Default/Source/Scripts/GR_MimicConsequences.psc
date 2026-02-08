@@ -6,6 +6,197 @@ GR_MimicStolenQuest Property MimicStolenQuest Auto
 
 String CONFIG_FILE_CONS = "../MimicPlacer/Consequences.json"
 
+; Config
+
+; State
+BakaTrapMimic currentMimic
+BakaTrapTriggerBox currentTriggerBox
+ObjectReference originalChest
+Int MimicType = 0
+Int VoreTicks = 0
+
+Int ConsequenceCnt = 0
+
+Event OnInit()
+	Maintenance()
+EndEvent
+
+Function Maintenance()
+    Debug("Maintenance()")
+    If !PlayerRef
+        PlayerRef = Game.GetPlayer()
+    EndIf
+    UnregisterForAllModEvents()
+    RegisterForModEvent("Mimic_VoreStart", "StartVore")
+    RegisterForModEvent("Mimic_VoreProgress", "ProgressVore")
+    RegisterForModEvent("Mimic_VoreEnd", "StopVore")
+
+    Init = True
+    RegisterForSingleUpdate(2.0)
+
+EndFunction
+
+Bool Init = True
+Event OnUpdate()
+    If Init
+        Init = False
+
+        ConfigFindLoot()
+        ConfigBadEnd()
+        ConfigLoseArmor()
+        ConfigLoseGold()
+
+        Debug("Init settings MimicLoot=" + ConfigMimicLoot + \ 
+            " MimicLootMaxItemCount=" + ConfigMimicLootMaxItemCount + \ 
+            " MimicLootMaxGoldCount=" + ConfigMimicLootMaxGoldCount + \
+            " MimicLootChanceAccumulates=" + ConfigMimicLootChanceAccumulates + \
+            " MimicLootChancePerTick=" + ConfigMimicLootChancePerTick + \ 
+            " MimicVoreKills=" + ConfigMimicVoreBadEnd + \
+            " MimicVoreKillsAfterTicks=" + ConfigVoreBadEndMinTicks + \
+            " MimicLoseArmor=" + ConfigMimicLoseArmor + \
+            " MimicLoseArmorChancePerTick=" + ConfigMimicLoseArmorChancePerTick + \
+            " MimicLoseGold=" + ConfigMimicLoseGold + \
+            " MimicLoseGoldMin=" + ConfigMimicLoseGoldMin + \
+            " MimicLoseGoldMax=" + ConfigMimicLoseGoldMax + \
+            " MimicLoseGoldLvlScale=" + ConfigMimicLoseGoldLvlScale + \
+            " MimicLoseGoldChance=" + ConfigMimicLoseGoldChance )
+        return
+    EndIf
+EndEvent
+
+; ==================================================
+; EVENTS
+; ==================================================
+
+Event StartVore(string eventName, string strArg, float numArg, form mimic)
+    Debug("StartVore " + mimic)
+    currentMimic = mimic as BakaTrapMimic
+    If !currentMimic
+        lib.Error("Not a mimic" + mimic)
+        return
+    EndIf
+
+    LostGold = 0
+    LostGear = 0
+    VoreTicks = 0
+    FoundLoot = 0
+    ConsequenceCnt = 0
+
+    MimicType = currentMimic.MimicType
+    originalChest = None
+
+    StartLoseArmor()
+EndEvent
+
+Event ProgressVore(string eventName, string strArg, float numArg, form mimic)
+    Debug("ProgressVore MimicType=" + MimicType + " Ticks=" + VoreTicks + " PairedLootChest=" + originalChest)
+    
+    FindChest()
+
+    VoreTicks += 1
+
+    Debug("1")
+    If originalChest != None
+        Debug("2")
+        ProgressFindLoot()
+        ProgressLoseGold()
+        ProgressLoseArmor()
+    EndIf
+
+    ProgressBadEnd()
+EndEvent
+
+Function StopVore(string eventName, string strArg, float numArg, form mimic)
+    Debug("StopVore")
+    StopFindLoot()
+EndFunction
+
+; ==================================================
+; UTILITY
+; ==================================================
+
+Function FindChest()
+    If !originalChest
+        originalChest = Game.FindClosestReferenceOfAnyTypeInListFromRef( lib.LargeChestForms, currentMimic, 10.0 )
+        If originalChest
+            If !originalChest.IsDisabled()
+                originalChest = None
+            EndIf
+        EndIf
+    EndIf
+EndFunction
+
+; ==================================================
+; CONSEQUENCE - FIND LOOT
+; ==================================================
+
+Int FoundLoot = 0
+Int ConfigMimicLoot = 1
+Int ConfigMimicLootMaxItemCount = 2
+Int ConfigMimicLootMaxGoldCount = 20
+Int ConfigMimicLootChanceAccumulates = 1
+Float ConfigMimicLootChancePerTick = 0.05
+
+Function ConfigFindLoot()
+    ConfigMimicLoot = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-loot")
+    ConfigMimicLootMaxItemCount = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-loot-max-item-count")
+    ConfigMimicLootMaxGoldCount = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-loot-max-gold-count")
+    ConfigMimicLootChanceAccumulates = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-loot-chance-accumulates")
+    ConfigMimicLootChancePerTick = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-loot-chance-per-tick")
+EndFunction
+
+Function ProgressFindLoot()
+    If ConfigMimicLoot == 1
+        Float lootChance = ConfigMimicLootChancePerTick
+        If ConfigMimicLootChanceAccumulates
+            lootChance = VoreTicks * ConfigMimicLootChancePerTick
+        EndIf
+        If VoreTicks > 2 && FoundLoot < ConfigMimicLootMaxItemCount && Utility.RandomFloat() < lootChance
+            FoundLoot += 1
+            ConsequenceCnt += 1
+        EndIf
+    EndIf
+EndFunction
+
+Function StopFindLoot()
+    int i = 0
+    If FoundLoot > 0
+        int roll = Utility.RandomInt(1, 5)
+        If roll == 1
+            Debug.Notification("Desperately probing for an escape, you held on to some items in the chest")
+        ElseIf roll == 2
+            Debug.Notification("While being ravaged by the tentacles you found some valuables")
+        ElseIf roll == 3
+            Debug.Notification("You found some valuables in the chest")
+        ElseIf roll == 4
+            Debug.Notification("Desperately probing for an escape, you held on to some items in the chest")
+        ElseIf roll == 5
+            Debug.Notification("You collected enough presence of mind to take some things from the chest")
+        EndIf
+    EndIf
+    While i < FoundLoot
+        FindLootMoveToPlayer()
+        i += 1
+    EndWhile
+    FoundLoot = 0
+EndFunction
+
+Function FindLootMoveToPlayer()
+    Form[] allItems = originalChest.GetContainerForms()
+    Debug("FindLootMoveToPlayer() " + allItems)
+    Form retrieved = allItems[Utility.RandomInt(0, allItems.Length - 1)]
+    Int count = 1
+    If retrieved.GetFormID() == 0xf
+        count = Utility.RandomInt(1, ConfigMimicLootMaxGoldCount)
+    EndIf
+    originalChest.RemoveItem(retrieved, count, false, PlayerRef)
+    Debug("Moved " + retrieved + " (" + count + ") to player")
+EndFunction
+
+; ==================================================
+; CONSEQUENCE - STEAL ARMOR
+; ==================================================
+
 Int SLOT_RIGHTHAND = 0
 Int SLOT_LEFTHAND = 1
 Int SLOT_SHIELD = 0x200
@@ -40,31 +231,10 @@ int SLOT_RING = 0x00000040
 ; int SLOT_60 = 0x40000000
 ; int SLOT_61 = 0x80000000 ; FX01
 
-; Config
-Int ConfigMimicLoot = 1
-Int ConfigMimicLootMaxItemCount = 2
-Int ConfigMimicLootMaxGoldCount = 20
-Int ConfigMimicLootChanceAccumulates = 1
-Float ConfigMimicLootChancePerTick = 0.05
-Int ConfigMimicVoreBadEnd = 1
-Int ConfigVoreBadEndMinTicks = 11
-Int ConfigVoreBadEndSimpleSlavery = 0
-
-Int ConfigMimicLoseGold = 1
-Int ConfigMimicLoseGoldMin = 50
-Int ConfigMimicLoseGoldMax = 300
-Float ConfigMimicLoseGoldLvlScale = 1.08
-Float ConfigMimicLoseGoldChance = 0.3
-
 Int ConfigMimicLoseArmor = 1
 Float ConfigMimicLoseArmorChancePerTick = 0.10
 
-; State
-BakaTrapMimic currentMimic
-BakaTrapTriggerBox currentTriggerBox
-ObjectReference originalChest
-Int MimicType = 0
-
+Int LostGear = 0
 Form HeadGear
 Form BodyGear
 Form HandsGear
@@ -77,204 +247,23 @@ Form ShieldGear
 Form WeaponRight
 Form WeaponLeft
 
-; The more ticks, the longer the player was in the belly of the mimic
-Int VoreTicks = 0
-
-Int FoundLoot = 0
-Int LostGear = 0
-Int LostGold = 0
-
-Int ConsequenceCnt = 0
-
-Event OnInit()
-	Maintenance()
-EndEvent
-
-Function Maintenance()
-    Debug("Maintenance()")
-    If !PlayerRef
-        PlayerRef = Game.GetPlayer()
-    EndIf
-    UnregisterForAllModEvents()
-    RegisterForModEvent("Mimic_VoreStart", "StartVore")
-    RegisterForModEvent("Mimic_VoreProgress", "ProgressVore")
-    RegisterForModEvent("Mimic_VoreEnd", "StopVore")
-
-    Init = True
-    RegisterForSingleUpdate(2.0)
+Function ConfigLoseArmor()
+    ConfigMimicLoseArmor = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-lose-armor")
+    ConfigMimicLoseArmorChancePerTick = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-lose-armor-chance-per-tick")
 EndFunction
 
-Bool Init = True
-Event OnUpdate()
-    If Init
-        Init = False
-        ConfigMimicLoot = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-loot")
-        ConfigMimicLootMaxItemCount = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-loot-max-item-count")
-        ConfigMimicLootMaxGoldCount = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-loot-max-gold-count")
-        ConfigMimicLootChanceAccumulates = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-loot-chance-accumulates")
-        ConfigMimicLootChancePerTick = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-loot-chance-per-tick")
-
-        ConfigMimicVoreBadEnd = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-vore-bad-end")
-        ConfigVoreBadEndMinTicks = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-vore-bad-end-min-ticks")
-        ConfigVoreBadEndSimpleSlavery = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-vore-bad-end-simple-slavery")
-
-        ConfigMimicLoseArmor = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-lose-armor")
-        ConfigMimicLoseArmorChancePerTick = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-lose-armor-chance-per-tick")
-        
-        ConfigMimicLoseGold = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-lose-gold")
-        ConfigMimicLoseGoldMin = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-lose-gold-min")
-        ConfigMimicLoseGoldMax = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-lose-gold-max")
-        ConfigMimicLoseGoldLvlScale = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-lose-gold-scale-per-lvl")
-        ConfigMimicLoseGoldChance = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-lose-gold-chance")
-
-        Debug("Init settings MimicLoot=" + ConfigMimicLoot + \ 
-            " MimicLootMaxItemCount=" + ConfigMimicLootMaxItemCount + \ 
-            " MimicLootMaxGoldCount=" + ConfigMimicLootMaxGoldCount + \
-            " MimicLootChanceAccumulates=" + ConfigMimicLootChanceAccumulates + \
-            " MimicLootChancePerTick=" + ConfigMimicLootChancePerTick + \ 
-            " MimicVoreKills=" + ConfigMimicVoreBadEnd + \
-            " MimicVoreKillsAfterTicks=" + ConfigVoreBadEndMinTicks + \
-            " MimicLoseArmor=" + ConfigMimicLoseArmor + \
-            " MimicLoseArmorChancePerTick=" + ConfigMimicLoseArmorChancePerTick + \
-            " MimicLoseGold=" + ConfigMimicLoseGold + \
-            " MimicLoseGoldMin=" + ConfigMimicLoseGoldMin + \
-            " MimicLoseGoldMax=" + ConfigMimicLoseGoldMax + \
-            " MimicLoseGoldLvlScale=" + ConfigMimicLoseGoldLvlScale + \
-            " MimicLoseGoldChance=" + ConfigMimicLoseGoldChance )
-        return
-    EndIf
-EndEvent
-
-; Events
-
-Event StartVore(string eventName, string strArg, float numArg, form mimic)
-    Debug("Vore started" + mimic)
-    currentMimic = mimic as BakaTrapMimic
-    If !currentMimic
-        lib.Error("Not a mimic" + mimic)
-        return
-    EndIf
-
-    LostGold = 0
-    LostGear = 0
-    VoreTicks = 0
-    FoundLoot = 0
-    ConsequenceCnt = 0
-
-    MimicType = currentMimic.MimicType
-    originalChest = None
-    StoreEquippedGear()
-
-    RegisterForSingleUpdate(8.0)
-EndEvent
-
-Event ProgressVore(string eventName, string strArg, float numArg, form mimic)
-    Debug("ProgressVore MimicType=" + MimicType + " Ticks=" + VoreTicks + \
-            " FoundLoot=" + FoundLoot + " PairedLootChest=" + originalChest)
-
-    FindChest()
-    VoreTicks += 1
-
-    If originalChest != None
-        If ConfigMimicLoot == 1
-            Float lootChance = ConfigMimicLootChancePerTick
-            If ConfigMimicLootChanceAccumulates
-                lootChance = VoreTicks * ConfigMimicLootChancePerTick
-            EndIf
-            If VoreTicks > 2 && FoundLoot < ConfigMimicLootMaxItemCount && Utility.RandomFloat() < lootChance
-                FoundLoot += 1
-                ConsequenceCnt += 1
-            EndIf
-        EndIf
-
-        If ConfigMimicLoseGold && LostGold == 0
-            If Utility.RandomFloat() < ConfigMimicLoseGoldChance
-                LoseRandomGold()
-                LostGold = 0 
-                ConsequenceCnt += 1
-            EndIf
-        EndIf
-
-        If ConfigMimicLoseArmor == 1 && LostGear == 0
-            If Utility.RandomFloat() < ConfigMimicLoseArmorChancePerTick
-                StealWornGear()
-                LostGear = 1
-                ConsequenceCnt += 1
-            EndIf
-        EndIf
-    EndIf
-
-    If MimicType == 1 && ConfigMimicVoreBadEnd && VoreTicks > ConfigVoreBadEndMinTicks
-        Debug("Vore killed the player VoreTicks=" + VoreTicks)
-        ConsFadeOutAndDeath() 
-    EndIf
-EndEvent
-
-Function StopVore(string eventName, string strArg, float numArg, form mimic)
-    Debug("Vore stopped")
-    FindLootWrapup()
-    RegisterForSingleUpdate(8.0)
-    FoundLoot = 0
-EndFunction
-
-; Utility
-
-Function FindChest()
-    If !originalChest
-        originalChest = Game.FindClosestReferenceOfAnyTypeInListFromRef( lib.LargeChestForms, currentMimic, 10.0 )
-        If originalChest
-            If !originalChest.IsDisabled()
-                originalChest = None
-            EndIf
+Function ProgressLoseArmor()  
+    Debug("ProgressLoseArmor " + ConfigMimicLoseArmor + " LostGEar=" + LostGear)   
+    If ConfigMimicLoseArmor == 1 && LostGear == 0
+        If Utility.RandomFloat() < ConfigMimicLoseArmorChancePerTick
+            StealWornGear()
+            LostGear = 1
+            ConsequenceCnt += 1
         EndIf
     EndIf
 EndFunction
 
-; Consequences
-
-; Consequences - FindLoot
-
-Function FindLootWrapup()
-    int i = 0
-    If FoundLoot > 0
-        FindLootMessage()
-    EndIf
-    While i < FoundLoot
-        FindLootMoveToPlayer()
-        i += 1
-    EndWhile
-EndFunction
-
-Function FindLootMessage()
-    int roll = Utility.RandomInt(1, 5)
-    If roll == 1
-        Debug.Notification("Desperately probing for an escape, you held on to some items in the chest")
-    ElseIf roll == 2
-        Debug.Notification("While being ravaged by the tentacles you found some valuables")
-    ElseIf roll == 3
-        Debug.Notification("You found some valuables in the chest")
-    ElseIf roll == 4
-        Debug.Notification("Desperately probing for an escape, you held on to some items in the chest")
-    ElseIf roll == 5
-        Debug.Notification("You collected enough presence of mind to take some things from the chest")
-    EndIf
-EndFunction
-
-Function FindLootMoveToPlayer()
-    Form[] allItems = originalChest.GetContainerForms()
-    Debug("FindLootMoveToPlayer() " + allItems)
-    Form retrieved = allItems[Utility.RandomInt(0, allItems.Length - 1)]
-    Int count = 1
-    If retrieved.GetFormID() == 0xf
-        count = Utility.RandomInt(1, ConfigMimicLootMaxGoldCount)
-    EndIf
-    originalChest.RemoveItem(retrieved, count, false, PlayerRef)
-    Debug("Moved " + retrieved + " (" + count + ") to player")
-EndFunction
-
-; Consequences - Lose Weapon
-
-Function StoreEquippedGear()
+Function StartLoseArmor()
     HeadGear = PlayerRef.GetWornForm(SLOT_HEAD)
     BodyGear = PlayerRef.GetWornForm(SLOT_BODY)
     HandsGear = PlayerRef.GetWornForm(SLOT_HANDS)
@@ -321,9 +310,37 @@ Bool Function DropIfRandom(Float chance, Form item)
     return false
 EndFunction
 
-; Consequences - Lose Gold
+; ==================================================
+; CONSEQUENCE - LOSE GOLD
+; ==================================================
 
 MiscObject Property Septims Auto
+
+Int LostGold = 0
+
+Int ConfigMimicLoseGold = 1
+Int ConfigMimicLoseGoldMin = 50
+Int ConfigMimicLoseGoldMax = 300
+Float ConfigMimicLoseGoldLvlScale = 1.08
+Float ConfigMimicLoseGoldChance = 0.3
+
+Function ConfigLoseGold()
+    ConfigMimicLoseGold = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-lose-gold")
+    ConfigMimicLoseGoldMin = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-lose-gold-min")
+    ConfigMimicLoseGoldMax = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-lose-gold-max")
+    ConfigMimicLoseGoldLvlScale = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-lose-gold-scale-per-lvl")
+    ConfigMimicLoseGoldChance = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-lose-gold-chance")
+EndFunction
+
+Function ProgressLoseGold()
+    If ConfigMimicLoseGold && LostGold == 0
+        If Utility.RandomFloat() < ConfigMimicLoseGoldChance
+            LoseRandomGold()
+            LostGold = 0 
+            ConsequenceCnt += 1
+        EndIf
+    EndIf
+EndFunction
 
 Function LoseRandomGold()
     If !Septims
@@ -346,7 +363,26 @@ Function LoseRandomGold()
     Debug.Notification("Gold slips out of your bags...")
 EndFunction
 
-; Consequence - Vore Death
+; ==================================================
+; CONSEQUENCE - BAD END
+; ==================================================
+
+Int ConfigMimicVoreBadEnd = 1
+Int ConfigVoreBadEndMinTicks = 11
+Int ConfigVoreBadEndSimpleSlavery = 0
+
+Function ConfigBadEnd()        
+    ConfigMimicVoreBadEnd = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-vore-bad-end")
+    ConfigVoreBadEndMinTicks = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-vore-bad-end-min-ticks")
+    ConfigVoreBadEndSimpleSlavery = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-vore-bad-end-simple-slavery")
+EndFunction
+
+Function ProgressBadEnd()
+    If MimicType == 1 && ConfigMimicVoreBadEnd && VoreTicks > ConfigVoreBadEndMinTicks
+        Debug("Vore killed the player VoreTicks=" + VoreTicks)
+        ConsFadeOutAndDeath() 
+    EndIf
+EndFunction
 
 Function ConsFadeOutAndDeath()
     currentMimic.MimicShake()
