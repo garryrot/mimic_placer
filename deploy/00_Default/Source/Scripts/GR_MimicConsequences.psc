@@ -2,10 +2,10 @@ Scriptname GR_MimicConsequences extends Quest
 
 GR_MimicPlacer Property lib Auto
 Actor Property PlayerRef Auto
+GR_MimicStolenQuest Property MimicStolenQuest Auto
 
-String ConfigConsequences = "../MimicPlacer/Consequences.json"
+String CONFIG_FILE_CONS = "../MimicPlacer/Consequences.json"
 
-; Constants
 Int SLOT_RIGHTHAND = 0
 Int SLOT_LEFTHAND = 1
 Int SLOT_SHIELD = 0x200
@@ -65,6 +65,18 @@ BakaTrapTriggerBox currentTriggerBox
 ObjectReference originalChest
 Int MimicType = 0
 
+Form HeadGear
+Form BodyGear
+Form HandsGear
+Form FeetGear
+Form ForeArm
+Form AmuletGear
+Form CircletGear
+Form RingGear
+Form ShieldGear
+Form WeaponRight
+Form WeaponLeft
+
 ; The more ticks, the longer the player was in the belly of the mimic
 Int VoreTicks = 0
 
@@ -96,24 +108,24 @@ Bool Init = True
 Event OnUpdate()
     If Init
         Init = False
-        ConfigMimicLoot = JsonUtil.GetIntValue(ConfigConsequences, "mimic-loot")
-        ConfigMimicLootMaxItemCount = JsonUtil.GetIntValue(ConfigConsequences, "mimic-loot-max-item-count")
-        ConfigMimicLootMaxGoldCount = JsonUtil.GetIntValue(ConfigConsequences, "mimic-loot-max-gold-count")
-        ConfigMimicLootChanceAccumulates = JsonUtil.GetIntValue(ConfigConsequences, "mimic-loot-chance-accumulates")
-        ConfigMimicLootChancePerTick = JsonUtil.GetFloatValue(ConfigConsequences, "mimic-loot-chance-per-tick")
+        ConfigMimicLoot = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-loot")
+        ConfigMimicLootMaxItemCount = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-loot-max-item-count")
+        ConfigMimicLootMaxGoldCount = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-loot-max-gold-count")
+        ConfigMimicLootChanceAccumulates = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-loot-chance-accumulates")
+        ConfigMimicLootChancePerTick = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-loot-chance-per-tick")
 
-        ConfigMimicVoreBadEnd = JsonUtil.GetIntValue(ConfigConsequences, "mimic-vore-bad-end")
-        ConfigVoreBadEndMinTicks = JsonUtil.GetIntValue(ConfigConsequences, "mimic-vore-bad-end-min-ticks")
-        ConfigVoreBadEndSimpleSlavery = JsonUtil.GetIntValue(ConfigConsequences, "mimic-vore-bad-end-simple-slavery")
+        ConfigMimicVoreBadEnd = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-vore-bad-end")
+        ConfigVoreBadEndMinTicks = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-vore-bad-end-min-ticks")
+        ConfigVoreBadEndSimpleSlavery = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-vore-bad-end-simple-slavery")
 
-        ConfigMimicLoseArmor = JsonUtil.GetIntValue(ConfigConsequences, "mimic-lose-armor")
-        ConfigMimicLoseArmorChancePerTick = JsonUtil.GetFloatValue(ConfigConsequences, "mimic-lose-armor-chance-per-tick")
+        ConfigMimicLoseArmor = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-lose-armor")
+        ConfigMimicLoseArmorChancePerTick = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-lose-armor-chance-per-tick")
         
-        ConfigMimicLoseGold = JsonUtil.GetIntValue(ConfigConsequences, "mimic-lose-gold")
-        ConfigMimicLoseGoldMin = JsonUtil.GetIntValue(ConfigConsequences, "mimic-lose-gold-min")
-        ConfigMimicLoseGoldMax = JsonUtil.GetIntValue(ConfigConsequences, "mimic-lose-gold-max")
-        ConfigMimicLoseGoldLvlScale = JsonUtil.GetFloatValue(ConfigConsequences, "mimic-lose-gold-scale-per-lvl")
-        ConfigMimicLoseGoldChance = JsonUtil.GetFloatValue(ConfigConsequences, "mimic-lose-gold-chance")
+        ConfigMimicLoseGold = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-lose-gold")
+        ConfigMimicLoseGoldMin = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-lose-gold-min")
+        ConfigMimicLoseGoldMax = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-lose-gold-max")
+        ConfigMimicLoseGoldLvlScale = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-lose-gold-scale-per-lvl")
+        ConfigMimicLoseGoldChance = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-lose-gold-chance")
 
         Debug("Init settings MimicLoot=" + ConfigMimicLoot + \ 
             " MimicLootMaxItemCount=" + ConfigMimicLootMaxItemCount + \ 
@@ -185,7 +197,7 @@ Event ProgressVore(string eventName, string strArg, float numArg, form mimic)
 
         If ConfigMimicLoseArmor == 1 && LostGear == 0
             If Utility.RandomFloat() < ConfigMimicLoseArmorChancePerTick
-                DropStoredGear()
+                StealWornGear()
                 LostGear = 1
                 ConsequenceCnt += 1
             EndIf
@@ -262,18 +274,6 @@ EndFunction
 
 ; Consequences - Lose Weapon
 
-Form HeadGear
-Form BodyGear
-Form HandsGear
-Form FeetGear
-Form ForeArm
-Form AmuletGear
-Form CircletGear
-Form RingGear
-Form ShieldGear
-Form WeaponRight
-Form WeaponLeft
-
 Function StoreEquippedGear()
     HeadGear = PlayerRef.GetWornForm(SLOT_HEAD)
     BodyGear = PlayerRef.GetWornForm(SLOT_BODY)
@@ -288,7 +288,7 @@ Function StoreEquippedGear()
     WeaponLeft = PlayerRef.GetEquippedWeapon(True)
 EndFunction
 
-Function DropStoredGear()
+Function StealWornGear()
     DropIfRandom(1.0, HeadGear)
     DropIfRandom(1.0, BodyGear)
     DropIfRandom(1.0, HandsGear)
@@ -301,6 +301,14 @@ Function DropStoredGear()
     DropIfRandom(1.0, WeaponRight)
     DropIfRandom(1.0, WeaponLeft)
     Debug.Notification("The trap swallowed your clothes...")
+    If !MimicStolenQuest.IsRunning()
+        Debug("Starting quest... " + MimicStolenQuest)
+        MimicStolenQuest.Start()
+        MimicStolenQuest.LootContainer.ForceRefTo(originalChest)
+        Debug("ForcedRef " + MimicStolenQuest.LootContainer.GetRef())
+    Else
+        Debug.Notification("Already running")
+    EndIf
 EndFunction
 
 Bool Function DropIfRandom(Float chance, Form item)
