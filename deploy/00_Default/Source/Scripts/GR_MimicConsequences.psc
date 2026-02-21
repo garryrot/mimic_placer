@@ -6,15 +6,12 @@ GR_MimicStolenQuest Property MimicStolenQuest Auto
 
 String CONFIG_FILE_CONS = "../MimicPlacer/Consequences.json"
 
-; Config
-
 ; State
 BakaTrapMimic currentMimic
 BakaTrapTriggerBox currentTriggerBox
 ObjectReference originalChest
 Int MimicType = 0
 Int VoreTicks = 0
-
 Int ConsequenceCnt = 0
 
 Event OnInit()
@@ -30,38 +27,14 @@ Function Maintenance()
     RegisterForModEvent("Mimic_VoreStart", "StartVore")
     RegisterForModEvent("Mimic_VoreProgress", "ProgressVore")
     RegisterForModEvent("Mimic_VoreEnd", "StopVore")
-
-    Init = True
     RegisterForSingleUpdate(2.0)
-
 EndFunction
 
-Bool Init = True
 Event OnUpdate()
-    If Init
-        Init = False
-
-        ConfigFindLoot()
-        ConfigBadEnd()
-        ConfigLoseArmor()
-        ConfigLoseGold()
-
-        Debug("Init settings MimicLoot=" + ConfigMimicLoot + \ 
-            " MimicLootMaxItemCount=" + ConfigMimicLootMaxItemCount + \ 
-            " MimicLootMaxGoldCount=" + ConfigMimicLootMaxGoldCount + \
-            " MimicLootChanceAccumulates=" + ConfigMimicLootChanceAccumulates + \
-            " MimicLootChancePerTick=" + ConfigMimicLootChancePerTick + \ 
-            " MimicVoreKills=" + ConfigMimicVoreBadEnd + \
-            " MimicVoreKillsAfterTicks=" + ConfigVoreBadEndMinTicks + \
-            " MimicLoseArmor=" + ConfigMimicLoseArmor + \
-            " MimicLoseArmorChancePerTick=" + ConfigMimicLoseArmorChancePerTick + \
-            " MimicLoseGold=" + ConfigMimicLoseGold + \
-            " MimicLoseGoldMin=" + ConfigMimicLoseGoldMin + \
-            " MimicLoseGoldMax=" + ConfigMimicLoseGoldMax + \
-            " MimicLoseGoldLvlScale=" + ConfigMimicLoseGoldLvlScale + \
-            " MimicLoseGoldChance=" + ConfigMimicLoseGoldChance )
-        return
-    EndIf
+    ConfigFindLoot()
+    ConfigBadEnd()
+    ConfigLoseArmor()
+    ConfigLoseGold()
 EndEvent
 
 ; ==================================================
@@ -77,7 +50,6 @@ Event StartVore(string eventName, string strArg, float numArg, form mimic)
     EndIf
 
     LostGold = 0
-    LostGear = 0
     VoreTicks = 0
     FoundLoot = 0
     ConsequenceCnt = 0
@@ -89,15 +61,11 @@ Event StartVore(string eventName, string strArg, float numArg, form mimic)
 EndEvent
 
 Event ProgressVore(string eventName, string strArg, float numArg, form mimic)
-    Debug("ProgressVore MimicType=" + MimicType + " Ticks=" + VoreTicks + " PairedLootChest=" + originalChest)
-    
     FindChest()
+    Debug("ProgressVore MimicType=" + MimicType + " Ticks=" + VoreTicks + " PairedLootChest=" + originalChest)
 
     VoreTicks += 1
-
-    Debug("1")
     If originalChest != None
-        Debug("2")
         ProgressFindLoot()
         ProgressLoseGold()
         ProgressLoseArmor()
@@ -143,6 +111,12 @@ Function ConfigFindLoot()
     ConfigMimicLootMaxGoldCount = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-loot-max-gold-count")
     ConfigMimicLootChanceAccumulates = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-loot-chance-accumulates")
     ConfigMimicLootChancePerTick = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-loot-chance-per-tick")
+
+    Debug("Init settings MimicLoot=" + ConfigMimicLoot + \ 
+            " MaxItemCount=" + ConfigMimicLootMaxItemCount + \ 
+            " MaxGoldCount=" + ConfigMimicLootMaxGoldCount + \
+            " ChanceAccumulates=" + ConfigMimicLootChanceAccumulates + \
+            " ChancePerTick=" + ConfigMimicLootChancePerTick )
 EndFunction
 
 Function ProgressFindLoot()
@@ -208,7 +182,10 @@ int SLOT_FOREARMS = 0x00000010
 int SLOT_AMULET = 0x00000020
 int SLOT_CIRCLET = 0x00001000
 int SLOT_RING = 0x00000040
-; int SLOT_CALVES = 0x00000100
+int SLOT_CALVES = 0x00000100
+int SLOT_49 = 0x00080000      ; Skirt
+int SLOT_52 = 0x00400000      ; Panties
+
 ; int SLOT_TAIL = 0x00000400 
 ; int SLOT_LONGHAIR = 0x00000800
 ; int SLOT_EARS = 0x00002000
@@ -217,10 +194,8 @@ int SLOT_RING = 0x00000040
 ; int SLOT_46 = 0x00010000
 ; int SLOT_47 = 0x00020000
 ; int SLOT_48 = 0x00040000
-; int SLOT_49 = 0x00080000
 ; int SLOT_50 = 0x00100000 ; DecapitateHead
 ; int SLOT_51 = 0x00200000 ; Decapitate
-; int SLOT_52 = 0x00400000
 ; int SLOT_53 = 0x00800000
 ; int SLOT_54 = 0x01000000
 ; int SLOT_55 = 0x02000000
@@ -232,6 +207,7 @@ int SLOT_RING = 0x00000040
 ; int SLOT_61 = 0x80000000 ; FX01
 
 Int ConfigMimicLoseArmor = 1
+Int ConfigMimicLoseArmorMinTicks = 5 ; At least wait until the player is swalloed
 Float ConfigMimicLoseArmorChancePerTick = 0.10
 
 Int LostGear = 0
@@ -243,6 +219,10 @@ Form ForeArm
 Form AmuletGear
 Form CircletGear
 Form RingGear
+Form Calves
+Form Slot49
+Form Slot52
+
 Form ShieldGear
 Form WeaponRight
 Form WeaponLeft
@@ -250,20 +230,11 @@ Form WeaponLeft
 Function ConfigLoseArmor()
     ConfigMimicLoseArmor = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-lose-armor")
     ConfigMimicLoseArmorChancePerTick = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-lose-armor-chance-per-tick")
-EndFunction
-
-Function ProgressLoseArmor()  
-    Debug("ProgressLoseArmor " + ConfigMimicLoseArmor + " LostGEar=" + LostGear)   
-    If ConfigMimicLoseArmor == 1 && LostGear == 0
-        If Utility.RandomFloat() < ConfigMimicLoseArmorChancePerTick
-            StealWornGear()
-            LostGear = 1
-            ConsequenceCnt += 1
-        EndIf
-    EndIf
+    Debug("ConfigLoseArmor=" + ConfigMimicLoseArmor + " ChancePerTick=" + ConfigMimicLoseArmorChancePerTick + " MinTicks=" + ConfigMimicLoseArmorMinTicks)
 EndFunction
 
 Function StartLoseArmor()
+    LostGear = 0
     HeadGear = PlayerRef.GetWornForm(SLOT_HEAD)
     BodyGear = PlayerRef.GetWornForm(SLOT_BODY)
     HandsGear = PlayerRef.GetWornForm(SLOT_HANDS)
@@ -272,9 +243,24 @@ Function StartLoseArmor()
     AmuletGear = PlayerRef.GetWornForm(SLOT_AMULET)
     CircletGear = PlayerRef.GetWornForm(SLOT_CIRCLET)
     RingGear = PlayerRef.GetWornForm(SLOT_RING)
+    Calves = PlayerRef.GetWornForm(SLOT_CALVES)
+    Slot49 = PlayerRef.GetWornForm(SLOT_49) ; Skirt
+    Slot52 = PlayerRef.GetWornForm(SLOT_52) ; Panties
+
     ShieldGear = PlayerRef.GetWornForm(SLOT_SHIELD)
     WeaponRight = PlayerRef.GetEquippedWeapon(False)
     WeaponLeft = PlayerRef.GetEquippedWeapon(True)
+EndFunction
+
+Function ProgressLoseArmor()  
+    Debug("ProgressLoseArmor " + ConfigMimicLoseArmor + " LostGear=" + LostGear)   
+    If ConfigMimicLoseArmor == 1 && LostGear == 0 && VoreTicks >= ConfigMimicLoseArmorMinTicks
+        If Utility.RandomFloat() < ConfigMimicLoseArmorChancePerTick
+            StealWornGear()
+            LostGear = 1
+            ConsequenceCnt += 1
+        EndIf
+    EndIf
 EndFunction
 
 Function StealWornGear()
@@ -286,6 +272,9 @@ Function StealWornGear()
     DropIfRandom(0.6, AmuletGear)
     DropIfRandom(0.6, CircletGear)
     DropIfRandom(0.6, RingGear)
+    DropIfRandom(0.7, Calves)
+    DropIfRandom(0.8, Slot49)
+    DropIfRandom(0.8, Slot52)
     DropIfRandom(1.0, ShieldGear)
     DropIfRandom(1.0, WeaponRight)
     DropIfRandom(1.0, WeaponLeft)
@@ -319,6 +308,7 @@ MiscObject Property Septims Auto
 Int LostGold = 0
 
 Int ConfigMimicLoseGold = 1
+Int ConfigMimicLoseGoldMinTicks = 5
 Int ConfigMimicLoseGoldMin = 50
 Int ConfigMimicLoseGoldMax = 300
 Float ConfigMimicLoseGoldLvlScale = 1.08
@@ -330,10 +320,17 @@ Function ConfigLoseGold()
     ConfigMimicLoseGoldMax = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-lose-gold-max")
     ConfigMimicLoseGoldLvlScale = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-lose-gold-scale-per-lvl")
     ConfigMimicLoseGoldChance = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-lose-gold-chance")
+
+    Debug("ConfigLoseGold=" + ConfigMimicLoseGold + \
+            " Min=" + ConfigMimicLoseGoldMin + \
+            " Max=" + ConfigMimicLoseGoldMax + \
+            " LvlScale=" + ConfigMimicLoseGoldLvlScale + \
+            " Chance=" + ConfigMimicLoseGoldChance + \
+            " MinTicks=" + ConfigMimicLoseGoldMinTicks )
 EndFunction
 
 Function ProgressLoseGold()
-    If ConfigMimicLoseGold && LostGold == 0
+    If ConfigMimicLoseGold && LostGold == 0 && VoreTicks >= ConfigMimicLoseGoldMinTicks
         If Utility.RandomFloat() < ConfigMimicLoseGoldChance
             LoseRandomGold()
             LostGold = 0 
@@ -367,6 +364,8 @@ EndFunction
 ; CONSEQUENCE - BAD END
 ; ==================================================
 
+; TODO: Move this to Trap
+
 Int ConfigMimicVoreBadEnd = 1
 Int ConfigVoreBadEndMinTicks = 11
 Int ConfigVoreBadEndSimpleSlavery = 0
@@ -375,6 +374,10 @@ Function ConfigBadEnd()
     ConfigMimicVoreBadEnd = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-vore-bad-end")
     ConfigVoreBadEndMinTicks = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-vore-bad-end-min-ticks")
     ConfigVoreBadEndSimpleSlavery = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-vore-bad-end-simple-slavery")
+
+    Debug(" VoreDeath=" + ConfigMimicVoreBadEnd + \
+          " VoreKillsAfterTicks=" + ConfigVoreBadEndMinTicks + \
+          " VoreBadEndSimpleSlavery=" + ConfigVoreBadEndSimpleSlavery )
 EndFunction
 
 Function ProgressBadEnd()

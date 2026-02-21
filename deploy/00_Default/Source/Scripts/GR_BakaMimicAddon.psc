@@ -36,11 +36,6 @@ Function AttachToMimic(ObjectReference mimic, ObjectReference pairedChest)
 	LinkRefsIfRequired()
 EndFunction
 
-; Debugging functionality
-String Function GetCell()
-	return GetParentCell() + " (" + MimicRef.GetPositionX() + "," + MimicRef.GetPositionY() + "," + MimicRef.GetPositionZ() + ")"
-EndFunction
-
 Int Function GetMimicType()
 	If MimicRef as BakaTrapMimic
 		return (MimicRef as BakaTrapMimic).MimicType
@@ -53,8 +48,7 @@ Bool Function LinkRefsIfRequired()
 		return False
 	EndIf
 
-	(MimicRef as BakaTrapMimic).MimicHealth = 0 ; 0.73: this makes sure the mimic doesn't die
-
+	(MimicRef as BakaTrapMimic).MimicHealth = 0 ; TNTR v0.73: this makes sure the mimic doesn't die
     Debug("Linking mimic " + MimicRef as Form)
 	PO3_SKSEFunctions.SetLinkedRef(MimicRef, TriggerBox)
 	PO3_SKSEFunctions.SetLinkedRef(MimicRef, XMarkerDispense, lib.BakaMimicDispenseKeyword)
@@ -63,6 +57,7 @@ Bool Function LinkRefsIfRequired()
 EndFunction
 
 Function DestroyMimicAndRestoreChest()
+	Debug("DestroyMimicAndRestoreChest()")
  	PO3_SKSEFunctions.SetLinkedRef(MimicRef, None)
  	PO3_SKSEFunctions.SetLinkedRef(MimicRef, None, lib.BakaMimicDispenseKeyword)
  	PO3_SKSEFunctions.SetLinkedRef(MimicRef, None, lib.BakaMimicPosKeyword)
@@ -71,6 +66,10 @@ Function DestroyMimicAndRestoreChest()
     TriggerBox.Delete()
     XMarkerPos.Delete()
     XMarkerDispense.Delete()
+EndFunction
+
+String Function GetCell()
+	return GetParentCell() + " (" + MimicRef.GetPositionX() + "," + MimicRef.GetPositionY() + "," + MimicRef.GetPositionZ() + ")"
 EndFunction
 
 Function Debug(String msg)

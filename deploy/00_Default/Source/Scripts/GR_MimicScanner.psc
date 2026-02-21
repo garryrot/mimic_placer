@@ -1,6 +1,6 @@
 ScriptName GR_MimicScanner extends Quest Hidden 
 
-GR_MimicPlacer Property lib Auto ; GR_MimicPlacer
+GR_MimicPlacer Property lib Auto
 Actor Property PlayerRef Auto
 
 String DistributionConfig = "../MimicPlacer/Distribution.json"
@@ -27,7 +27,7 @@ Int KCI_Overflows = 0
 
 ; Keep track of all created mimics, this is exclusively for debugging 
 ; and potential cleanup
-GR_BakaMimicAddon[] PlacedMimics ; JContainers?
+GR_BakaMimicAddon[] PlacedMimics
 Int PMI = 0
 Int PMI_Overflows = 0
 
@@ -64,6 +64,8 @@ Event OnUpdate()
 		Weight3Vore = JsonUtil.GetFloatValue(DistributionConfig, "mimic-weight-instant")
 		ChestsMaxAllowedRescale = JsonUtil.GetFloatValue(DistributionConfig, "chests-max-allowed-rescale")
 		Debug("Init settings ScanInterval=" + ScanInterval + " ScanRadiusInterior=" + ScanRadiusInterior + " MimicChance=" + MimicChance)
+
+		; DestroyAllMimics()
 	Else
 		If Utility.GetCurrentRealTime() - lastProcessCells > ScanInterval
 			ProcessCell()
@@ -77,6 +79,8 @@ Event OnUpdate()
 	RegisterForSingleUpdate(ScanInterval)
 EndEvent
 
+; This will reset all "visited" vanilla chests making them
+; viable for mimic-fication 
 Function ResetChests()
 	Debug("ResetChests() - resetting known chest...")
 	KCI = 0
@@ -170,6 +174,22 @@ Function PlaceMimicsInRadius()
 		EndIf
 	EndIf
 	Debug("Result - placed=" + placed + " checked=" + visited + " skipped=" + skipped + " unusable=" + unusable)
+EndFunction
+
+; This is for uninstalling the mod completely or for a clean re-install
+; when transitionong during (potentially) breaking version jumps 
+Function DestroyAllMimics()
+	Debug("DestroyAllMimics() " + PlacedMimics.Length)
+	Int j = 0
+	While j < PlacedMimics.Length
+		If PlacedMimics[ j ] != None
+			Cell c = PlacedMimics[ j ].GetParentCell()
+			Debug("Destroying Mimic " + PlacedMimics + " in " + PlacedMimics[ j ].GetCell())
+			PlacedMimics[ j ].DestroyMimicAndRestoreChest()
+		EndIf
+		j += 1
+	EndWhile
+	ResetChests()
 EndFunction
 
 Function FixMimicsOnGameLoad()

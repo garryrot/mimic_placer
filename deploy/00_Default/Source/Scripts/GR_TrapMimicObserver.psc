@@ -33,7 +33,7 @@ Event OnUpdate()
     If maintenance
         If !PlayerRef.HasPerk(ActivateMimicPerk)
             PlayerRef.AddPerk(ActivateMimicPerk)
-            Debug.Notification("Added activate mimic perk to player: " + PlayerRef.HasPerk(ActivateMimicPerk))
+            Debug("Added activate mimic perk to player")
         EndIf
         InitActivatorForms()
         maintenance = false

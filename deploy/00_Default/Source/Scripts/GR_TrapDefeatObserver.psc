@@ -61,7 +61,6 @@ Function ReloadConfig()
     ConfigDropGoldChance = JsonUtil.GetFloatValue(ConfigTrapConseqence, "snare-drop-gold-chance")
     ConfigDropWeaponChance = JsonUtil.GetFloatValue(ConfigTrapConseqence, "snare-drop-weapon-chance")
 
-
     Debug("Config Enabled=" + ConfigApproachEnabled \
           + " DamagePlayer=" + ConfigDamagePlayer \ 
           + " ApproachChance=" + ConfigApproachChance \
@@ -430,7 +429,6 @@ Function MimicProgress()
         DamageAV("Magicka", 0.5, 0)
         DamageAV("Health", 0.2, 0.5)
     EndIf
-
 EndFunction
 
 Function MimicEscape()

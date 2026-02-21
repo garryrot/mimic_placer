@@ -7,8 +7,6 @@ Actor Property PlayerRef Auto
 
 ; Boss Chests (Any form with Clutter\Ruins\Ruins_LargeChest)
 FormList Property LargeChestForms Auto
-
-; No longer used
 FormList Property MimicActivatorForms Auto
 
 Spell Property DebugSpellMimic Auto
@@ -44,7 +42,7 @@ Function Maintenance()
 		EndIf
 	EndIf
 	If !PlayerRef
-		PlayerRef = Game.GetPlayer() ; Just cause I'm paranoid
+		PlayerRef = Game.GetPlayer()
 	EndIf
 	If JsonUtil.GetIntValue(Config, "add-debug-spell") == 1
 	    If !PlayerRef.HasSpell(DebugSpellMimic)
@@ -92,7 +90,6 @@ Event OnUpdate()
 	EndIf
 	Init = False
 
-	; TODO Remove
 	int extraMimicCount = JsonUtil.GetIntValue(ConfigBakaMimics, "extra-mimic-form-count");
 	int i = 0
 	While i < extraMimicCount
@@ -145,10 +142,6 @@ ObjectReference Function FindPairedChest(ObjectReference mimic)
 		EndIf
 	EndIf
 	return originalChest
-EndFunction
-
-Function Trace(String msg)
-	; Debug.Trace("[omnom] " + msg)
 EndFunction
 
 Function Debug(String msg)
