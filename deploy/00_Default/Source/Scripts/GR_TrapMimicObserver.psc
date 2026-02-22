@@ -1,9 +1,8 @@
 ScriptName GR_TrapMimicObserver extends Quest Hidden 
 
-String ConfigBakaMimics = "../MimicPlacer/BakaMimics.json"
-
 Actor Property PlayerRef Auto
 Perk Property ActivateMimicPerk Auto
+GR_TrapConfig Property TrapConfig Auto
 
 ; Used by perk to detect mimic activation
 FormList Property MimicActivatorForms Auto
@@ -57,10 +56,10 @@ EndEvent
 
 Function InitActivatorForms()
     Debug("InitActivatorForms")
-	int extraMimicCount = JsonUtil.GetIntValue(ConfigBakaMimics, "extra-mimic-form-count");
+    int extraMimicCount = TrapConfig.GR_TrapExtraMimicFormCount
 	int i = 0
 	While i < extraMimicCount
-		Form add = JsonUtil.GetFormValue(ConfigBakaMimics, "extra-mimic-" + i)
+        Form add = JsonUtil.GetFormValue(TrapConfig.GR_TrapBakaMimicsJson, "extra-mimic-" + i)
 		If MimicActivatorForms.Find(add) < 0
 			Debug("Adding extra mimic-form " + i + ": " + add)
 			MimicActivatorForms.AddForm(add)

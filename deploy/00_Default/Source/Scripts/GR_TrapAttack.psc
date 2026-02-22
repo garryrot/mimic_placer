@@ -17,9 +17,7 @@ ReferenceAlias Property Enemy05 Auto
 ReferenceAlias[] Property EnemyAliases Auto
 
 GR_TrapDefeat Property TrapDefeatQuest Auto
-GR_TrapDefeatObserver Property TrapDefeatObserver Auto
-
-Idle Property SurrenderIdle Auto
+GR_TrapObserver Property TrapDefeatObserver Auto
 
 Bool Property NotifyPlayer Auto
 
@@ -109,7 +107,6 @@ Event OnUpdate()
         Debug.Notification("Your follower surrenders...")
         ; Teammate01.GetActorRef().SetUnconscious(true)
         ; Teammate01.GetActorRef().SetRestrained(true)    
-        ; Teammate01.GetActorRef().PlayIdle(SurrenderIdle)    
         TrapDefeatObserver.AttackSuccess()
         Stop()
     EndIf

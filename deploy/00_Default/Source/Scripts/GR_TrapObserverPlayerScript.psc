@@ -2,13 +2,14 @@ Scriptname GR_TrapObserverPlayerScript extends ReferenceAlias
 
 Event OnPlayerLoadGame()
     Debug("OnPlayerLoadGame")
-    (GetOwningQuest() as GR_TrapDefeatObserver).Maintenance()
-    (GetOwningQuest() as GR_TrapDefeatObserver).TrapMimicObserverQuest.Maintenance()
+    (GetOwningQuest() as GR_TrapObserver).Maintenance()
+    (GetOwningQuest() as GR_TrapObserver).TrapMimicObserverQuest.Maintenance()
+    (GetOwningQuest() as GR_TrapObserver).TrapConfig.Maintenance()
 EndEvent
 
 Event OnCombatStateChanged(Actor akTarget, int aeCombatState)
     Debug("OnCombatStateChanged " + aeCombatState)
-    GR_TrapDefeatObserver trapObserver = GetOwningQuest() as GR_TrapDefeatObserver
+    GR_TrapObserver trapObserver = GetOwningQuest() as GR_TrapObserver
     if (aeCombatState == 0)
         trapObserver.CombatStart()
         Debug("Left combat") 

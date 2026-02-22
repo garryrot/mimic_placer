@@ -1,6 +1,6 @@
 Scriptname GR_TrapDefeat extends Quest
 
-GR_TrapDefeatObserver Property TrapDefeatObserver Auto
+GR_TrapObserver Property TrapDefeatObserver Auto
 
 ReferenceAlias Property PlayerAlias Auto
 Actor Property PlayerRef Auto

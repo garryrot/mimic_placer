@@ -1,8 +1,9 @@
-Scriptname GR_TrapDefeatObserver extends Quest
+Scriptname GR_TrapObserver extends Quest
 
 GR_TrapDefeat Property TrapDefeatQuest Auto
 GR_TrapAttack Property TrapAttackQuest Auto
 GR_TrapMimicObserver Property TrapMimicObserverQuest Auto
+GR_TrapConfig Property TrapConfig Auto
 
 Actor Property PlayerRef Auto
 
@@ -14,21 +15,6 @@ GlobalVariable Property GR_TrapDefeatMaxDistance Auto
 
 ; Default 0
 GlobalVariable Property GR_TrapSexDialogue Auto
-
-String ConfigTrapApproach = "../TrapDefeat/TrapApproach.json"
-String ConfigTrapConseqence = "../TrapDefeat/TrapConsequence.json"
-
-Int ConfigApproachEnabled = 1
-Int ConfigDamagePlayer = 1
-Float ConfigApproachChance = 0.55
-
-Float ConfigDropGoldChance = 0.7
-Int ConfigDropGoldSnare = 1
-Int ConfigDropGoldSnareMin = 5
-Int ConfigDropGoldSnareMax = 12
-
-Float ConfigDropWeaponChance = 0.7
-Int ConfigDropWeaponSnare = 0
 
 ; False if player was discovered via line of sight
 Bool Property AlertPlayer Auto
@@ -42,36 +28,6 @@ EndEvent
 Function Maintenance()
     Debug("Maintenance")
     ResetEvents()
-    ReloadConfig()
-EndFunction
-
-Function ReloadConfig()
-    ConfigApproachEnabled = JsonUtil.GetIntValue(ConfigTrapApproach, "approach-enabled")
-    ConfigDamagePlayer = JsonUtil.GetIntValue(ConfigTrapApproach, "damage-player")
-    GR_TrapSexDialogue.SetValueInt(JsonUtil.GetIntValue(ConfigTrapApproach, "sexualised-dialogue"))
-
-    ConfigApproachChance = JsonUtil.GetFloatValue(ConfigTrapApproach, "approach-chance")
-    GR_TrapDefeatMaxDistance.SetValue(JsonUtil.GetFloatValue(ConfigTrapApproach, "approach-max-distance"))
-
-    ConfigDropGoldSnare = JsonUtil.GetIntValue(ConfigTrapConseqence, "snare-drop-gold")
-    ConfigDropGoldSnareMin = JsonUtil.GetIntValue(ConfigTrapConseqence, "snare-drop-gold-min")
-    ConfigDropGoldSnareMax = JsonUtil.GetIntValue(ConfigTrapConseqence, "snare-drop-gold-max")
-    ConfigDropWeaponSnare = JsonUtil.GetIntValue(ConfigTrapConseqence, "snare-drop-weapon")
-
-    ConfigDropGoldChance = JsonUtil.GetFloatValue(ConfigTrapConseqence, "snare-drop-gold-chance")
-    ConfigDropWeaponChance = JsonUtil.GetFloatValue(ConfigTrapConseqence, "snare-drop-weapon-chance")
-
-    Debug("Config Enabled=" + ConfigApproachEnabled \
-          + " DamagePlayer=" + ConfigDamagePlayer \ 
-          + " ApproachChance=" + ConfigApproachChance \
-          + " SexDialogue=" +  GR_TrapSexDialogue.GetValueInt() \ 
-          + " MaxDistance=" + GR_TrapDefeatMaxDistance.GetValue() \
-          + " DropGoldSnare=" + ConfigDropGoldSnare \
-          + " DropGoldSnare=" + ConfigDropGoldSnareMin \
-          + " DropGoldSnare=" + ConfigDropGoldSnareMax \
-          + " DropGoldSnare=" + ConfigDropWeaponSnare \
-          + " DropGoldChance=" + ConfigDropGoldChance \
-          + " DropWeaponChance=" + ConfigDropWeaponChance )
 EndFunction
 
 Function ResetEvents()
@@ -102,7 +58,7 @@ State Default
 
     Event TrapEvent(string eventName, string strArg, float numArg, form mimic)
         Debug("Event " + eventName)
-        If !ConfigApproachEnabled
+        If !TrapConfig.GR_TrapEnabled.GetValueInt()
             Debug("Approach disabled")
             return
         EndIf
@@ -114,7 +70,7 @@ State Default
 
     Function OnAnimationEvent(ObjectReference source, String eventName)
         Debug("OnAnimationEvent (Default) Evt=" + eventName)
-        If !ConfigApproachEnabled
+        If !TrapConfig.GR_TrapEnabled.GetValueInt()
             Debug("Approach disabled")
             return
         EndIf
@@ -323,7 +279,7 @@ EndFunction
 ; ==================================================
 
 Bool Function ApproachIfDetected()
-    If Utility.RandomFloat() < ConfigApproachChance
+    If Utility.RandomFloat() < TrapConfig.GR_TrapApproachChance.GetValue()
         StartApproach()
         return true
     Else
@@ -403,14 +359,14 @@ EndFunction
 
 Function SnareProgress()
     DamageAV("Stamina", 1.0, 0)
-    If ConfigDamagePlayer
+    If TrapConfig.GR_TrapDamagePlayer.GetValueInt()
         DamageAV("Health", 0.2, 0.5)
     EndIf
 
-    If ConfigDropGoldSnare && Utility.RandomFloat() < ConfigDropGoldChance
+    If TrapConfig.GR_TrapSnareDropGold.GetValueInt() && Utility.RandomFloat() < TrapConfig.GR_TrapSnareDropGoldChance.GetValue()
         DropRandomGoldScatter()
     EndIf
-    If ConfigDropWeaponSnare && Utility.RandomFloat() < ConfigDropWeaponChance
+    If TrapConfig.GR_TrapSnareDropWeapon.GetValueInt() && Utility.RandomFloat() < TrapConfig.GR_TrapSnareDropWeaponChance.GetValue()
         DropEquippedWeapons()
     EndIf
 EndFunction
@@ -425,7 +381,7 @@ EndFunction
 
 Function MimicProgress()
     DamageAV("Stamina", 1.0, 0)
-    If ConfigDamagePlayer
+    If TrapConfig.GR_TrapDamagePlayer.GetValueInt()
         DamageAV("Magicka", 0.5, 0)
         DamageAV("Health", 0.2, 0.5)
     EndIf
@@ -450,7 +406,7 @@ Function DropRandomGoldScatter()
     if playerGold <= 0
         return
     endif
-    int totalGold = Utility.RandomInt(ConfigDropGoldSnareMin, ConfigDropGoldSnareMax)
+    int totalGold = Utility.RandomInt(TrapConfig.GR_TrapSnareDropGoldMin.GetValueInt(), TrapConfig.GR_TrapSnareDropGoldMax.GetValueInt())
     if totalGold > playerGold
         totalGold = playerGold
     endif
