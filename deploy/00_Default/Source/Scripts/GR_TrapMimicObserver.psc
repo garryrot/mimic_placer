@@ -13,6 +13,8 @@ Bool maintenance = false
 Bool startVore = false
 Bool voreStarted = false
 
+int trapExtraMimicFormCount = 0
+
 Event OnInit()
     Debug("OnInit")
     Maintenance()
@@ -39,13 +41,13 @@ Event OnUpdate()
     ElseIf voreStarted
         RegisterForSingleUpdate(8.0)
         Debug("Sending progress...")
-        currentMimic.SendModEvent("Mimic_VoreProgress")
+        currentMimic.SendModEvent("GR_TrapProgress", "mimic")
     ElseIf startVore
         startVore = false
         voreStarted = true
         Debug("observing vore " + currentMimic + " type=" + (currentMimic as BakaTrapMimic).MimicType)
 
-        currentMimic.SendModEvent("Mimic_VoreStart")
+        currentMimic.SendModEvent("GR_TrapStart", "mimic")
         RegisterForAnimationEvent(PlayerRef, "MimicVoreSpitLoop")			
         RegisterForAnimationEvent(PlayerRef, "FootLeft")
         RegisterForAnimationEvent(PlayerRef, "FootRight")
@@ -56,10 +58,10 @@ EndEvent
 
 Function InitActivatorForms()
     Debug("InitActivatorForms")
-    int extraMimicCount = TrapConfig.GR_TrapExtraMimicFormCount
+    int extraMimicCount = JsonUtil.GetIntValue(TrapConfig.TrapBakaMimicsJson, "extra-mimic-form-count")
 	int i = 0
 	While i < extraMimicCount
-        Form add = JsonUtil.GetFormValue(TrapConfig.GR_TrapBakaMimicsJson, "extra-mimic-" + i)
+        Form add = JsonUtil.GetFormValue(TrapConfig.TrapBakaMimicsJson, "extra-mimic-" + i)
 		If MimicActivatorForms.Find(add) < 0
 			Debug("Adding extra mimic-form " + i + ": " + add)
 			MimicActivatorForms.AddForm(add)
@@ -100,12 +102,12 @@ Function OnAnimationEvent(ObjectReference source, String eventName)
 	If eventName == "MimicVoreSpitLoop"
         Debug("Player escaped from mimic")
         voreStarted = false
-        currentMimic.SendModEvent("Mimic_VoreEnd")
+        currentMimic.SendModEvent("GR_TrapEscape", "mimic")
         StopObserving()
     ElseIf eventName == "FootLeft" || eventName == "FootRight" || eventName == "IdleStop" 
         Debug("Player won struggle")
         voreStarted = false
-        currentMimic.SendModEvent("Mimic_VoreEnd")
+        currentMimic.SendModEvent("GR_TrapEscape", "mimic")
         StopObserving()
     Else
         Debug("Unknown event " + eventName)

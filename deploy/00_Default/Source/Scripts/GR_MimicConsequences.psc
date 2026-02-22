@@ -24,9 +24,9 @@ Function Maintenance()
         PlayerRef = Game.GetPlayer()
     EndIf
     UnregisterForAllModEvents()
-    RegisterForModEvent("Mimic_VoreStart", "StartVore")
-    RegisterForModEvent("Mimic_VoreProgress", "ProgressVore")
-    RegisterForModEvent("Mimic_VoreEnd", "StopVore")
+    RegisterForModEvent("GR_TrapStart", "StartVore")
+    RegisterForModEvent("GR_TrapProgress", "ProgressVore")
+    RegisterForModEvent("GR_TrapEscape", "StopVore")
     RegisterForSingleUpdate(2.0)
 EndFunction
 
@@ -41,7 +41,10 @@ EndEvent
 ; EVENTS
 ; ==================================================
 
-Event StartVore(string eventName, string strArg, float numArg, form mimic)
+Event StartVore(string eventName, string trapType, float numArg, form mimic)
+    If trapType != "mimic"
+        return
+    EndIf
     Debug("StartVore " + mimic)
     currentMimic = mimic as BakaTrapMimic
     If !currentMimic
@@ -60,7 +63,10 @@ Event StartVore(string eventName, string strArg, float numArg, form mimic)
     StartLoseArmor()
 EndEvent
 
-Event ProgressVore(string eventName, string strArg, float numArg, form mimic)
+Event ProgressVore(string eventName, string trapType, float numArg, form mimic)
+    If trapType != "mimic"
+        return
+    EndIf
     FindChest()
     Debug("ProgressVore MimicType=" + MimicType + " Ticks=" + VoreTicks + " PairedLootChest=" + originalChest)
 
@@ -74,7 +80,10 @@ Event ProgressVore(string eventName, string strArg, float numArg, form mimic)
     ProgressBadEnd()
 EndEvent
 
-Function StopVore(string eventName, string strArg, float numArg, form mimic)
+Function StopVore(string eventName, string trapType, float numArg, form mimic)
+    If trapType != "mimic"
+        return
+    EndIf
     Debug("StopVore")
     StopFindLoot()
 EndFunction

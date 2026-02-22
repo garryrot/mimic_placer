@@ -32,13 +32,68 @@ EndFunction
 
 Function ResetEvents()
     UnregisterForAllModEvents()
-    RegisterForModEvent("Mimic_VoreStart", "TrapEvent")
-    RegisterForModEvent("Mimic_VoreProgress", "TrapEvent")
-    RegisterForModEvent("Mimic_VoreEnd", "TrapEvent")
+    RegisterForModEvent("GR_TrapStart", "TrapEvent")
+    RegisterForModEvent("GR_TrapProgress", "TrapEvent")
+    RegisterForModEvent("GR_TrapEscape", "TrapEvent")
 
-    RegisterForAnimationEvent(PlayerRef, "staggerStart") ; Escape SnareRope
+    RegisterForAnimationEvent(PlayerRef, "StaggerStart") ; Escape SnareRope
     RegisterForAnimationEvent(PlayerRef, "SnareRopeUndoSelfFailEnd") ; Start Alert
     RegisterForAnimationEvent(PlayerRef, "SnareRopeUndoSelfLoop") ; Dmg stam/health
+EndFunction
+
+String Function GetTrapType()
+    Int trapTypeInt = GR_TrapType.GetValueInt()
+    If trapTypeInt == 0
+        return "mimic"
+    ElseIf trapTypeInt == 1
+        return "snare"
+    ElseIf trapTypeInt == 2
+        return "deathworm"
+    EndIf
+    return ""
+EndFunction
+
+Function SetTrapType(String trapType)
+    If trapType == "mimic"
+        GR_TrapType.SetValueInt(0)
+    ElseIf trapType == "deathworm"
+        GR_TrapType.SetValueInt(2)
+    ElseIf trapType == "snare"
+        GR_TrapType.SetValueInt(1)
+    EndIf
+EndFunction
+
+Function OnAnimationEvent(ObjectReference source, String eventName)
+    Debug("OnAnimationEvent Evt=" + eventName)
+    If !TrapConfig.GR_TrapEnabled.GetValueInt()
+        Debug("Approach disabled")
+        return
+    EndIf
+
+    If TrapConfig.GR_PatchedScripts.GetValueInt() == 0
+        ; Fallback handler
+        If eventName == "DeathWormVoreSuccessLoop"
+            If GetState() == "Default"
+                SendModEvent("GR_TrapStart", "deathworm")
+            Else
+                SendModEvent("GR_TrapProgress", "deathworm")
+            EndIf
+        ElseIf eventName == "SnareRopeUndoSelfLoop"
+            If GetState() == "Default"
+                SendModEvent("GR_TrapStart", "snare")
+            Else
+                SendModEvent("GR_TrapProgress", "snare")
+            EndIf
+        ElseIf eventName == "SnareRopeUndoSelfFailEnd"
+            SendModEvent("GR_TrapProgress", "snare")
+        ElseIf eventName == "StaggerStart"
+            SendModEvent("GR_TrapEscape", GetTrapType())
+        Else
+            Debug("Unhandled Evt=" + eventName)
+        EndIf
+    Else
+        Debug("Scripts Patched")
+    EndIf
 EndFunction
 
 State Default
@@ -56,39 +111,17 @@ State Default
         EndIf
     EndEvent
 
-    Event TrapEvent(string eventName, string strArg, float numArg, form mimic)
-        Debug("Event " + eventName)
+    Event TrapEvent(string eventName, string trapType, float numArg, form mimic)
+        Debug("Event " + eventName + " TrapType=" + trapType)
         If !TrapConfig.GR_TrapEnabled.GetValueInt()
             Debug("Approach disabled")
             return
         EndIf
-        If eventName == "Mimic_VoreStart"
-            GR_TrapType.SetValueInt(0) ; Mimic
+        If eventName == "GR_TrapStart" || eventName == "GR_TrapProgress"
+            SetTrapType(trapType)
             GoToState("Trapped")
         EndIf
     EndEvent
-
-    Function OnAnimationEvent(ObjectReference source, String eventName)
-        Debug("OnAnimationEvent (Default) Evt=" + eventName)
-        If !TrapConfig.GR_TrapEnabled.GetValueInt()
-            Debug("Approach disabled")
-            return
-        EndIf
-
-        If eventName == "DeathWormVoreSuccessLoop"
-            GR_TrapType.SetValueInt(2) ; Deathworm
-            If !ApproachIfDetected()
-                GoToState("Trapped")
-            EndIf
-            return
-        ElseIf eventName == "SnareRopeUndoSelfLoop"
-            GR_TrapType.SetValueInt(1) ; Snare
-            SnareProgress()
-            GoToState("Trapped")
-        Else
-            Debug("Unhandled Evt=" + eventName)
-        EndIf
-    EndFunction
 EndState
 
 ; Trapped: Player is currently trapped but not detected by enemies
@@ -100,36 +133,23 @@ State Trapped
         If PlayerRef.GetCombatState() == 1
             Debug("Player already in combat")
             StartApproach()
-        Else
-            ApproachIfDetected()
         EndIf
     EndEvent
 
     Event TrapEvent(string eventName, string strArg, float numArg, Form trap)
-        Debug("Event (Trapped): " + eventName)
-        If eventName == "Mimic_VoreProgress"
-            MimicProgress()
+        Debug("Event (Trapped): " + eventName + " TrapType=" + strArg)
+        If eventName == "GR_TrapProgress"
+            If strArg == "mimic"
+                MimicProgress()
+            ElseIf strArg == "snare"
+                SnareProgress()
+            EndIf
             ApproachIfDetected()
-        ElseIf eventName == "Mimic_VoreEnd"
+        ElseIf eventName == "GR_TrapEscape"
             Debug("Escaped before player was noticed")
             GoToState("PostEscape")
         EndIf
     EndEvent
-
-    Function OnAnimationEvent(ObjectReference source, String eventName)
-        Debug("OnAnimationEvent (Trapped) Evt=" + eventName)
-        If eventName == "DeathWormVoreSuccessLoop" ; Will probably never happen
-            ApproachIfDetected()
-        ElseIf eventName == "SnareRopeUndoSelfFailEnd"
-            ApproachIfDetected()
-        ElseIf eventName == "staggerStart"
-            GoToState("PostEscape")
-        ElseIf eventName == "SnareRopeUndoSelfLoop"
-            SnareProgress()
-        Else
-            Debug("Unhandled Evt=" + eventName)
-        EndIf
-    EndFunction
 
     Function CombatStart()
         Debug("Player entered combat, goto approach")
@@ -159,21 +179,13 @@ State Attack
 
     Event TrapEvent(string eventName, string strArg, float numArg, form mimic)
         Debug("TrapEvent (Attack) Evt=" + eventName)
-        If eventName == "Mimic_VoreEnd"
+        If eventName == "GR_TrapEscape"
             GoToState("PostEscape")
-        ElseIf eventName == "Mimic_VoreProgress"
+        ElseIf eventName == "GR_TrapProgress"
             MimicProgress()
         EndIf
     EndEvent
 
-    Function OnAnimationEvent(ObjectReference source, String eventName)
-        Debug("OnAnimationEvent (Attack) Evt=" + eventName)
-        If eventName == "staggerStart"
-            GoToState("PostEscape")
-        ElseIf eventName == "SnareRopeUndoSelfLoop"
-            SnareProgress()
-        EndIf
-    EndFunction
     
     Event OnEndState()
         Debug("State: EndState Attack")
@@ -197,21 +209,13 @@ State Approach
 
     Event TrapEvent(string eventName, string strArg, float numArg, form trap)
         Debug("Event (Approach): " + eventName)
-        If eventName == "Mimic_VoreEnd"
+        If eventName == "GR_TrapEscape"
             GoToState("PostEscape")
-        ElseIf eventName == "Mimic_VoreProgress"
+        ElseIf eventName == "GR_TrapProgress"
             MimicProgress()
         EndIf
     EndEvent
 
-    Function OnAnimationEvent(ObjectReference source, String eventName)
-        Debug("OnAnimationEvent Approach Evt=" + eventName + " Src=" + source)
-        If eventName == "staggerStart"
-            GoToState("PostEscape")
-        ElseIf eventName == "SnareRopeUndoSelfLoop"
-            SnareProgress()
-        EndIf
-    EndFunction
 
     Event OnEndState()
         Debug("State: EndState Approach")
@@ -227,25 +231,31 @@ State PostEscape
         If TrapDefeatQuest.IsRunning()
             trapDefeatQuest.SetStage(20)
         EndIf
+        String trapType = ""
         If GR_TrapType.GetValueInt() == 1 ; Snare Rope
-            SnareProgress()
+            trapType = "snare"
             RegisterForSingleUpdate(1.0)
         Else
             ; Mimic/VoreWorm has a longer get-up animation
-            MimicProgress()
+            trapType = "mimic"
             RegisterForSingleUpdate(8.0)
+        EndIf
+    EndEvent
+
+    Event TrapEvent(string eventName, string strArg, float numArg, form trap)
+        Debug("Event (PostEscape): " + eventName + " TrapType=" + strArg)
+        If eventName == "GR_TrapEscape"
+            If strArg == "snare"
+                SnareEscape()
+            Else
+                MimicEscape()
+            EndIf
+            GoToState("Default")
         EndIf
     EndEvent
 
     Event OnUpdate()
         Debug("OnUpdate Back to default" )
-        If GR_TrapType.GetValueInt() == 1 ; Snare Rope
-            SnareEscape()
-        Else
-            ; Mimic/VoreWorm
-            MimicEscape()
-        EndIf
-        GoToState("Default")
     EndEvent
 EndState
 
@@ -345,9 +355,7 @@ Event TrapEvent(string eventName, string strArg, float numArg, form sender)
     Debug("TrapEvent noop " + eventName)
 EndEvent
 
-Function OnAnimationEvent(ObjectReference source, String eventName)
-    Debug("OnAnimationEvent noop evt=" + eventName + " src=" + source)
-EndFunction
+
 
 Function PlayerEnterCombat()
     Debug("PlayerEnterCombat noop")
@@ -392,7 +400,7 @@ Function MimicEscape()
 EndFunction
 
 ; ==================================================
-; DEBUG
+; UTILITY
 ; ==================================================
 
 MiscObject Property Septims Auto
@@ -466,6 +474,10 @@ Function BlackFade(bool fadeOut)
         Game.FadeOutGame(false, true, 0.2, 3.0)
     endIf
 EndFunction
+
+; ==================================================
+; LOG
+; ==================================================
 
 Function Debug(string msg)
     Debug.Trace("[omnom] TRAP.OBSV " + msg)
