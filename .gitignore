@@ -1,4 +1,4 @@
-deploy/00_Default/scripts/*.pex
+deploy/**/scripts/*.pex
 temp/*
 package/*
 

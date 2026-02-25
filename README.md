@@ -98,7 +98,7 @@ If you want to test whether it works:
 ### How Outcomes Work
 
 - I use a perk and `RegisterForAnimation` to observe mimic activation and player release.
-- When that happens I dispatch a `Mimic_VoreStart` and `Mimic_VoreEnd` event
+- When that happens I dispatch a `GR_TrapStart` and `GR_TrapEscape` event
 - The time between those events is used to calculate the severity of the outcomes
 
 Please note that if you use BaseObjectSwapper to replace other containers their loot will be gone!

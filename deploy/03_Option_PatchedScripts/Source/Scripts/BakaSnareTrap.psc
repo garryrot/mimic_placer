@@ -80,6 +80,9 @@ state Open
 				PlayVoice(ActorRef, 80, 1, 3.0)
 				playAnimation("TriggerA01")
 				actorref.playidle(SnareRopeActivateEnter)
+				If actorref == playerref
+					SendModEvent("GR_TrapStart", "snare")
+				EndIf
 				WaitForAnimationEvent("TransA01")
 				GoToState("Hooked")
 			else
@@ -163,8 +166,12 @@ EndState
 State UntieFail
 	Event OnBeginState()
 		Utility.wait(3.0)
+		If actorref == playerref
+			SendModEvent("GR_TrapProgress", "snare")
+		EndIf
 		GoToState("Hooked")
 	EndEvent
+	
 	event OnTriggerEnter(objectReference TriggerRef)
 	endEvent
 	
@@ -178,6 +185,9 @@ State Escaped
 		(TNTRController as TNTRControllerScript).ClearHookedActor(itrap)
 		Utility.wait(2.0)
 		(TNTRController as TNTRControllerScript).ResetCoordinates(actorref, false)
+		If actorref == playerref
+			SendModEvent("GR_TrapEscape", "snare")
+		EndIf
 	endEvent
 	
 	event OnTriggerEnter(objectReference TriggerRef)

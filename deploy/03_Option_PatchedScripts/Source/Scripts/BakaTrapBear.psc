@@ -97,24 +97,37 @@ endState
 
 State ClosedStuck
 	Event OnBeginState()
-		actorref.playidle(beartrapStruggle);It's not sequence animation
+		actorref.playidle(beartrapStruggle) ;It's not sequence animation
+		If playerRef == actorref
+			SendModEvent("GR_TrapStart", "bear")
+			RegisterForModEvent("AEL_GameEnd", "OnGameEnd")
+			AELStruggle.MakeGame(90)
+		EndIf
+
 		if QTE
 			Utility.wait(3.0)
 		else
 			Utility.wait(3.0)
 		endif
-		actorref.playidle(beartrapescape)
-		playAnimation("Trans03")
-		;if actorref.WaitForAnimationEvent("StaggerIdleStart");Looks dubious
-		;	Debug.notification("StaggerIdleStart")
-		;endif
-		;	Debug.notification("StaggerIdleStart Fail")
-		;actorref.playidle(StaggerStart)
-		WaitForAnimationEvent("Trans04")
-		(TNTRController as TNTRControllerScript).ResetCoordinates(actorref)
-		goToState("Closed")
+
+		If playerRef != actorref
+			BearTrapEscape()
+		EndIf
 	endEvent
 	
+	Event OnGameEnd(string eventName, string strArg, float numArg, form sender)
+		SPE_Interface.CloseCustomMenu()
+		If numArg > 0
+			UnregisterForModEvent("AEL_GameEnd")
+			BearTrapEscape()
+			SendModEvent("GR_TrapEscape", "bear")
+		Else
+			SendModEvent("GR_TrapProgress", "bear")
+			Utility.Wait(8.0)
+			AELStruggle.MakeGame(90)
+		EndIf
+	EndEvent
+
 	event OnTriggerEnter(objectReference TriggerRef)
 	endEvent
 	
@@ -153,6 +166,17 @@ Bool function checkPerks(objectReference triggerRef)
 		return True
 	endif
 endFunction
+
+Event OnGameEnd(string eventName, string strArg, float numArg, form sender)
+EndEvent
+
+Function BearTrapEscape()
+	actorref.playidle(beartrapescape)
+	playAnimation("Trans03")
+	WaitForAnimationEvent("Trans04")
+	(TNTRController as TNTRControllerScript).ResetCoordinates(actorref)
+	goToState("Closed")
+EndFunction
 
 ;==========================================================
 int property LvlThreshold1 auto

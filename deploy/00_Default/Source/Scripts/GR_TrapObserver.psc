@@ -7,13 +7,10 @@ GR_TrapConfig Property TrapConfig Auto
 
 Actor Property PlayerRef Auto
 
-; 0 -> Mimic, 1 -> SnareLoop, 2 -> DeathWorm
+; 0 -> mimic, 1 -> snare, 2 -> deathworm
 GlobalVariable Property GR_TrapType Auto
 
-; Default 10_000
 GlobalVariable Property GR_TrapDefeatMaxDistance Auto
-
-; Default 0
 GlobalVariable Property GR_TrapSexDialogue Auto
 
 ; False if player was discovered via line of sight
@@ -35,10 +32,15 @@ Function ResetEvents()
     RegisterForModEvent("GR_TrapStart", "TrapEvent")
     RegisterForModEvent("GR_TrapProgress", "TrapEvent")
     RegisterForModEvent("GR_TrapEscape", "TrapEvent")
-
-    RegisterForAnimationEvent(PlayerRef, "StaggerStart") ; Escape SnareRope
-    RegisterForAnimationEvent(PlayerRef, "SnareRopeUndoSelfFailEnd") ; Start Alert
-    RegisterForAnimationEvent(PlayerRef, "SnareRopeUndoSelfLoop") ; Dmg stam/health
+    
+    If TrapConfig.GR_PatchedScripts.GetValueInt() == 0
+        ; Fallback handling
+        RegisterForAnimationEvent(PlayerRef, "StaggerStart") ; Escape SnareRope
+        RegisterForAnimationEvent(PlayerRef, "SnareRopeUndoSelfFailEnd") ; Start Alert
+        RegisterForAnimationEvent(PlayerRef, "SnareRopeUndoSelfLoop") ; Dmg stam/health
+    Else 
+        Debug("Scripts Patched")
+    EndIf
 EndFunction
 
 String Function GetTrapType()
@@ -49,6 +51,8 @@ String Function GetTrapType()
         return "snare"
     ElseIf trapTypeInt == 2
         return "deathworm"
+    ElseIf trapTypeInt == 3
+        return "bear"
     EndIf
     return ""
 EndFunction
@@ -60,6 +64,10 @@ Function SetTrapType(String trapType)
         GR_TrapType.SetValueInt(2)
     ElseIf trapType == "snare"
         GR_TrapType.SetValueInt(1)
+    ElseIf trapType == "bear"
+        GR_TrapType.SetValueInt(3)
+    Else
+        GR_TrapType.SetValueInt(-1)
     EndIf
 EndFunction
 
@@ -70,29 +78,25 @@ Function OnAnimationEvent(ObjectReference source, String eventName)
         return
     EndIf
 
-    If TrapConfig.GR_PatchedScripts.GetValueInt() == 0
-        ; Fallback handler
-        If eventName == "DeathWormVoreSuccessLoop"
-            If GetState() == "Default"
-                SendModEvent("GR_TrapStart", "deathworm")
-            Else
-                SendModEvent("GR_TrapProgress", "deathworm")
-            EndIf
-        ElseIf eventName == "SnareRopeUndoSelfLoop"
-            If GetState() == "Default"
-                SendModEvent("GR_TrapStart", "snare")
-            Else
-                SendModEvent("GR_TrapProgress", "snare")
-            EndIf
-        ElseIf eventName == "SnareRopeUndoSelfFailEnd"
-            SendModEvent("GR_TrapProgress", "snare")
-        ElseIf eventName == "StaggerStart"
-            SendModEvent("GR_TrapEscape", GetTrapType())
+    ; Fallback handler
+    If eventName == "DeathWormVoreSuccessLoop"
+        If GetState() == "Default"
+            SendModEvent("GR_TrapStart", "deathworm")
         Else
-            Debug("Unhandled Evt=" + eventName)
+            SendModEvent("GR_TrapProgress", "deathworm")
         EndIf
+    ElseIf eventName == "SnareRopeUndoSelfLoop"
+        If GetState() == "Default"
+            SendModEvent("GR_TrapStart", "snare")
+        Else
+            SendModEvent("GR_TrapProgress", "snare")
+        EndIf
+    ElseIf eventName == "SnareRopeUndoSelfFailEnd"
+        SendModEvent("GR_TrapProgress", "snare")
+    ElseIf eventName == "StaggerStart"
+        SendModEvent("GR_TrapEscape", GetTrapType())
     Else
-        Debug("Scripts Patched")
+        Debug("Unhandled Evt=" + eventName)
     EndIf
 EndFunction
 

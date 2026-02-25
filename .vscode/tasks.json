@@ -3,9 +3,21 @@
     "version": "2.0.0",
     "tasks": [
 		{
-			"label": "Build Papyrus (Release)",
+			"label": "Build Main (Release)",
 			"type": "pyro",
 			"projectFile": ".\\deploy\\00_Default\\skyrimse.ppj",
+			"gamePath": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Skyrim Special Edition\\",
+			"problemMatcher": [
+				"$PapyrusCompiler"
+			],
+			"group": {
+				"kind": "build"
+			}
+		},
+		{
+			"label": "Build Patched (Release)",
+			"type": "pyro",
+			"projectFile": ".\\deploy\\03_Option_PatchedScripts\\skyrimse.ppj",
 			"gamePath": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Skyrim Special Edition\\",
 			"problemMatcher": [
 				"$PapyrusCompiler"
