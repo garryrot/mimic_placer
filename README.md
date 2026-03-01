@@ -6,6 +6,14 @@ THIS IS SOME EARLY PREVIEW USE AT YOUR OWN RISK.
 
 If you have a good acronym please DM.
 
+## Repo Layout
+
+- `deploy/mimic` contains the OMNOM / Mimic Placer project (all former deploy folders except patched scripts).
+- `deploy/trap` contains the Trap Defeat project (`03_Option_PatchedScripts`) and its own FOMOD.
+- `package.ps1 -Project mimic|trap|all` builds one or both archives.
+- `deploy.ps1 -Project mimic|trap` deploys a selected project to the CK output mod folder.
+- Wrapper scripts: `package-mimic.ps1`, `package-trap.ps1`, `deploy-mimic.ps1`, `deploy-trap.ps1`.
+
 ## Features
 
 - Mimics will randomly replace vanilla in-game containers. 

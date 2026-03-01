@@ -34,7 +34,6 @@ Function ResetEvents()
     RegisterForModEvent("GR_TrapEscape", "TrapEvent")
     
     If TrapConfig.GR_PatchedScripts.GetValueInt() == 0
-        ; Fallback handling
         RegisterForAnimationEvent(PlayerRef, "StaggerStart") ; Escape SnareRope
         RegisterForAnimationEvent(PlayerRef, "SnareRopeUndoSelfFailEnd") ; Start Alert
         RegisterForAnimationEvent(PlayerRef, "SnareRopeUndoSelfLoop") ; Dmg stam/health

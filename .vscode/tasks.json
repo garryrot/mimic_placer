@@ -3,9 +3,9 @@
     "version": "2.0.0",
     "tasks": [
 		{
-			"label": "Build Main (Release)",
+			"label": "Build Mimic (Release)",
 			"type": "pyro",
-			"projectFile": ".\\deploy\\00_Default\\skyrimse.ppj",
+			"projectFile": ".\\deploy\\mimic\\00_Default\\skyrimse.ppj",
 			"gamePath": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Skyrim Special Edition\\",
 			"problemMatcher": [
 				"$PapyrusCompiler"
@@ -15,9 +15,9 @@
 			}
 		},
 		{
-			"label": "Build Patched (Release)",
+			"label": "Build Trap Core (Release)",
 			"type": "pyro",
-			"projectFile": ".\\deploy\\03_Option_PatchedScripts\\skyrimse.ppj",
+			"projectFile": ".\\deploy\\trap\\00_Default\\skyrimse.ppj",
 			"gamePath": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Skyrim Special Edition\\",
 			"problemMatcher": [
 				"$PapyrusCompiler"
@@ -27,20 +27,76 @@
 			}
 		},
 		{
-			"label": "Package Mod",
+			"label": "Build Trap Patched Scripts (Release)",
+			"type": "pyro",
+			"projectFile": ".\\deploy\\trap\\03_Option_PatchedScripts\\skyrimse.ppj",
+			"gamePath": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Skyrim Special Edition\\",
+			"problemMatcher": [
+				"$PapyrusCompiler"
+			],
+			"group": {
+				"kind": "build"
+			}
+		},
+		{
+			"label": "Build Trap (Release)",
 			"type": "shell",
-			"command": "./package.ps1",
-			"dependsOn": "Build Papyrus (Release)",
+			"command": "echo Building Trap projects complete",
+			"dependsOn": [
+				"Build Trap Core (Release)",
+				"Build Trap Patched Scripts (Release)"
+			],
+			"dependsOrder": "sequence",
+			"problemMatcher": []
+		},
+		{
+			"label": "Package Mimic",
+			"type": "shell",
+			"command": "./package.ps1 -Project mimic",
+			"dependsOn": "Build Mimic (Release)",
 			"presentation": {
 				"reveal": "always",
 				"panel": "new"
 			}
 		},
 		{
-			"label": "Deploy Mod",
+			"label": "Package Trap",
 			"type": "shell",
-			"command": "./deploy.ps1",
-			"dependsOn": "Build Papyrus (Release)",
+			"command": "./package.ps1 -Project trap",
+			"dependsOn": "Build Trap (Release)",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			}
+		},
+		{
+			"label": "Package All",
+			"type": "shell",
+			"command": "./package.ps1 -Project all",
+			"dependsOn": [
+				"Build Mimic (Release)",
+				"Build Trap (Release)"
+			],
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			}
+		},
+		{
+			"label": "Deploy Mimic",
+			"type": "shell",
+			"command": "./deploy.ps1 -Project mimic",
+			"dependsOn": "Build Mimic (Release)",
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			}
+		},
+		{
+			"label": "Deploy Trap",
+			"type": "shell",
+			"command": "./deploy.ps1 -Project trap",
+			"dependsOn": "Build Trap (Release)",
 			"presentation": {
 				"reveal": "always",
 				"panel": "new"
