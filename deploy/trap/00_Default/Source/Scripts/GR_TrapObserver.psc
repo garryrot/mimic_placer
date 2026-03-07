@@ -441,14 +441,14 @@ Function DropEquippedWeapons()
     Weapon leftWeapon  = PlayerRef.GetEquippedWeapon(true)
 
     Bool dropped = False
-    if rightWeapon ;   !rightWeapon.HasKeyword(MagicBoundWeapon)
+    if rightWeapon ; && !rightWeapon.HasKeyword(MagicBoundWeapon)
         PlayerRef.UnequipItem(rightWeapon)
         PlayerRef.RemoveItem(rightWeapon, 1, true)
         PlayerRef.PlaceAtMe(rightWeapon, 1).MoveTo(PlayerRef, 5, 7, 100)
         dropped = True
     endif
 
-    if leftWeapon && leftWeapon != rightWeapon
+    if leftWeapon && leftWeapon != rightWeapon ; && !leftWeapon.HasKeyword(MagicBoundWeapon)
         PlayerRef.UnequipItem(leftWeapon)
         PlayerRef.RemoveItem(leftWeapon, 1, true)
         PlayerRef.PlaceAtMe(leftWeapon, 1).MoveTo(PlayerRef, 5, 7, 100)

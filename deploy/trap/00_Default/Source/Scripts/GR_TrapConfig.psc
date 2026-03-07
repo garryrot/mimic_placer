@@ -25,26 +25,20 @@ GlobalVariable Property GR_TrapSnareDropWeapon Auto
 
 Event OnInit()
     Debug("OnInit")
-    ; When no config files are found, default to disabled
-    ; GR_TrapEnabled.SetValueInt(0)
-    ; GR_TrapDamagePlayer.SetValueInt(1)
-    ; GR_TrapSexualisedDialogue.SetValueInt(0)
-    ; GR_TrapApproachChance.SetValue(0.55)
-    ; GR_TrapApproachMaxDistance.SetValue(9000.0)
-    ; GR_TrapSnareDropGold.SetValueInt(1)
-    ; GR_TrapSnareDropGoldMin.SetValueInt(5)
-    ; GR_TrapSnareDropGoldMax.SetValueInt(21)
-    ; GR_TrapSnareDropWeapon.SetValueInt(0)
-    ; GR_TrapSnareDropGoldChance.SetValue(0.7)
-    ; GR_TrapSnareDropWeaponChance.SetValue(0.7)
+    RegisterForSingleUpdate(15.0) 
+EndEvent
+
+Event OnUpdate()
+    LoadConfig()
 EndEvent
 
 Function Maintenance()
-    LoadConfig()
+    Debug("Maintenance")
 EndFunction
 
 Function LoadConfig()
     Debug("LoadConfig " + GR_TrapEnabled + " " + GR_TrapDamagePlayer + " " + GR_TrapSexualisedDialogue + " " + GR_TrapApproachChance)
+    Debug.Notification("Trap Outcomes: Loading configs...")
 
     GR_PatchedScripts.SetValueInt(JsonUtil.GetIntValue(TrapInteropJson, "patched-scripts"))
 
@@ -63,6 +57,39 @@ Function LoadConfig()
     GR_TrapSnareDropWeaponChance.SetValue(JsonUtil.GetFloatValue(TrapConsequenceJson, "snare-drop-weapon-chance"))
 
     Debug("approach-enabled=" + GR_TrapEnabled.GetValueInt() \
+        + " damage-player=" + GR_TrapDamagePlayer.GetValueInt() \
+        + " approach-chance=" + GR_TrapApproachChance.GetValue() \
+        + " sexualised-dialogue=" + GR_TrapSexualisedDialogue.GetValueInt() \
+        + " approach-max-distance=" + GR_TrapApproachMaxDistance.GetValue() \
+        + " snare-drop-gold=" + GR_TrapSnareDropGold.GetValueInt() \
+        + " snare-drop-gold-min=" + GR_TrapSnareDropGoldMin.GetValueInt() \
+        + " snare-drop-gold-max=" + GR_TrapSnareDropGoldMax.GetValueInt() \
+        + " snare-drop-weapon=" + GR_TrapSnareDropWeapon.GetValueInt() \
+        + " snare-drop-gold-chance=" + GR_TrapSnareDropGoldChance.GetValue() \
+        + " snare-drop-weapon-chance=" + GR_TrapSnareDropWeaponChance.GetValue() )
+EndFunction
+
+
+Function SaveConfig()
+    Debug.Notification("Trap Outcomes: Saving configs...")
+
+    JsonUtil.SetIntValue(TrapApproachJson, "approach-enabled", GR_TrapEnabled.GetValueInt())
+    JsonUtil.SetIntValue(TrapApproachJson, "damage-player", GR_TrapDamagePlayer.GetValueInt())
+    JsonUtil.SetIntValue(TrapApproachJson, "sexualised-dialogue", GR_TrapSexualisedDialogue.GetValueInt())
+    JsonUtil.SetFloatValue(TrapApproachJson, "approach-chance", GR_TrapApproachChance.GetValue())
+    JsonUtil.SetFloatValue(TrapApproachJson, "approach-max-distance", GR_TrapApproachMaxDistance.GetValue())
+
+    JsonUtil.SetIntValue(TrapConsequenceJson, "snare-drop-gold", GR_TrapSnareDropGold.GetValueInt())
+    JsonUtil.SetIntValue(TrapConsequenceJson, "snare-drop-gold-min", GR_TrapSnareDropGoldMin.GetValueInt())
+    JsonUtil.SetIntValue(TrapConsequenceJson, "snare-drop-gold-max", GR_TrapSnareDropGoldMax.GetValueInt())
+    JsonUtil.SetIntValue(TrapConsequenceJson, "snare-drop-weapon", GR_TrapSnareDropWeapon.GetValueInt())
+    JsonUtil.SetFloatValue(TrapConsequenceJson, "snare-drop-gold-chance", GR_TrapSnareDropGoldChance.GetValue())
+    JsonUtil.SetFloatValue(TrapConsequenceJson, "snare-drop-weapon-chance", GR_TrapSnareDropWeaponChance.GetValue())
+
+    JsonUtil.Save(TrapApproachJson)
+    JsonUtil.Save(TrapConsequenceJson)
+
+    Debug("saved approach-enabled=" + GR_TrapEnabled.GetValueInt() \
         + " damage-player=" + GR_TrapDamagePlayer.GetValueInt() \
         + " approach-chance=" + GR_TrapApproachChance.GetValue() \
         + " sexualised-dialogue=" + GR_TrapSexualisedDialogue.GetValueInt() \
