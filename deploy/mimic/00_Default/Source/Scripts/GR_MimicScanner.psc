@@ -3,19 +3,20 @@ ScriptName GR_MimicScanner extends Quest Hidden
 GR_MimicPlacer Property lib Auto
 Actor Property PlayerRef Auto
 
-String DistributionConfig = "../MimicPlacer/Distribution.json"
+; Debugging
+GlobalVariable Property GR_MimicCheatNotifyMimics Auto
 
-; Config
-Float ScanInterval = 30.0
-Float ScanRadiusInterior = 10000.0
-Float ScanRadiusExterior = 20000.0 ; unused
-Float MimicChance = 0.5
-Float Weight1Vore = 20.0 ; Vore
-Float Weight2Vore = 80.0 ; Sex
-Float Weight3Vore = 20.0 ; Instant-Vore
-Float ChestsMaxAllowedRescale = 0.1
-int cheatNotifyMimics = 0
-int dumpMimics = 0
+; Scanning
+GlobalVariable Property GR_MimicDistributeMimics Auto
+GlobalVariable Property GR_MimicScanRadius Auto
+GlobalVariable Property GR_MimicScanInterval Auto
+GlobalVariable Property GR_MimicChestsMaxAllowedRescale Auto
+
+; Placing
+GlobalVariable Property GR_MimicChance Auto
+GlobalVariable Property GR_MimicWeightVore Auto
+GlobalVariable Property GR_MimicWeightSex Auto
+GlobalVariable Property GR_MimicWeightInstant Auto
 
 ; Keep track of processed chest reference IDs so that each chest is only 
 ; rolled for once, to prevent re-rolling until every chest is a mimic.
@@ -50,33 +51,25 @@ Event OnUpdate()
 	Debug("OnUpdate()")
 	If Init
 		Init = False
-		If !JsonUtil.JsonExists(DistributionConfig)
-			Debug.MessageBox("OMNOM config '" + DistributionConfig + "' not found or 'PapyrusUtil' not installed. Mod will be dysfunct.")
+		If !GR_MimicScanRadius
+			Error("Mimic globals are not set. Using defaults.")
 		EndIf
-		cheatNotifyMimics = JsonUtil.GetIntValue(DistributionConfig, "cheat-notify-mimics")
-		dumpMimics = JsonUtil.GetIntValue(DistributionConfig, "debug-dump-mimics")
-		ScanRadiusInterior = JsonUtil.GetFloatValue(DistributionConfig, "scan-radius")
-		ScanRadiusExterior = JsonUtil.GetFloatValue(DistributionConfig, "scan-radius-outside")
-		ScanInterval = JsonUtil.GetFloatValue(DistributionConfig, "scan-interval")
-		MimicChance = JsonUtil.GetFloatValue(DistributionConfig, "mimic-chance")
-		Weight1Vore = JsonUtil.GetFloatValue(DistributionConfig, "mimic-weight-vore")
-		Weight2Vore = JsonUtil.GetFloatValue(DistributionConfig, "mimic-weight-sex")
-		Weight3Vore = JsonUtil.GetFloatValue(DistributionConfig, "mimic-weight-instant")
-		ChestsMaxAllowedRescale = JsonUtil.GetFloatValue(DistributionConfig, "chests-max-allowed-rescale")
-		Debug("Init settings ScanInterval=" + ScanInterval + " ScanRadiusInterior=" + ScanRadiusInterior + " MimicChance=" + MimicChance)
+		Debug("Init settings ScanInterval=" + GR_MimicScanInterval.GetValue() + " ScanRadiusInterior=" + GR_MimicScanRadius.GetValue() + " MimicChance=" + GR_MimicChance.GetValue())
 
 		; DestroyAllMimics()
 	Else
-		If Utility.GetCurrentRealTime() - lastProcessCells > ScanInterval
+		If GR_MimicDistributeMimics.GetValueInt() == 0
+			Debug("Distribution disabled")
+		ElseIf Utility.GetCurrentRealTime() - lastProcessCells > GR_MimicScanInterval.GetValue()
 			ProcessCell()
 		Else
-			Float secUntil = ScanInterval - (Utility.GetCurrentRealTime() - lastProcessCells)
+			Float secUntil = GR_MimicScanInterval.GetValue() - (Utility.GetCurrentRealTime() - lastProcessCells)
 			Debug("last scna too early, scanning in " + secUntil + "s current-time=" + Utility.GetCurrentRealTime() + " last-scan=" + lastProcessCells)
 			RegisterForSingleUpdate(secUntil)
 		EndIf
 	EndIf
 	UnregisterForUpdate()
-	RegisterForSingleUpdate(ScanInterval)
+	RegisterForSingleUpdate(GR_MimicScanInterval.GetValue())
 EndEvent
 
 ; This will reset all "visited" vanilla chests making them
@@ -105,12 +98,12 @@ EndFunction
 
 ; Search for viable boss chests using 'FindRandomReference' and replace them with a mimic
 Function PlaceMimicsInRadius()
-	Debug("PlaceMimicsInRadius(): scan-radius=" + ScanRadiusInterior + " mimic-chance=" + MimicChance)
+	Debug("PlaceMimicsInRadius(): scan-radius=" + GR_MimicScanRadius.GetValue() + " mimic-chance=" + GR_MimicChance.GetValue())
 	Int visited = 0
 	Int skipped = 0
 	Int unusable = 0
 	Int placed = 0
-	ObjectReference[] largeChests = PO3_SKSEFunctions.FindAllReferencesOfType(PlayerRef, lib.LargeChestForms, ScanRadiusInterior)
+	ObjectReference[] largeChests = PO3_SKSEFunctions.FindAllReferencesOfType(PlayerRef, lib.LargeChestForms, GR_MimicScanRadius.GetValue())
 	Int i = 0
 	While i < largeChests.Length
 		ObjectReference largeChest = largeChests[i]
@@ -129,28 +122,31 @@ Function PlaceMimicsInRadius()
 				Debug("Chest " + largeChest as Form + " controlled by enable-parent and cannot be disabled, will be ignored...")
 				viable = false
 				unusable += 1
-			ElseIf largeChest.GetScale() < (1.0 - ChestsMaxAllowedRescale) || largeChest.GetScale() > (1.0 + ChestsMaxAllowedRescale)
+			ElseIf largeChest.GetScale() < (1.0 - GR_MimicChestsMaxAllowedRescale.GetValue()) || largeChest.GetScale() > (1.0 + GR_MimicChestsMaxAllowedRescale.GetValue())
 				Debug("Ignoring rescaled chest, scale=" + largeChest.GetScale())
 				viable = false
 				unusable += 1
 			EndIf
 			
-			If viable && Utility.RandomFloat() < MimicChance
+			If viable && Utility.RandomFloat() < GR_MimicChance.GetValue()
 				placed += 1
-				Float rollType = Utility.RandomFloat(0.0, Weight1Vore + Weight2Vore + Weight3Vore)
+				Float weightVore = GR_MimicWeightVore.GetValue()
+				Float weightSex = GR_MimicWeightSex.GetValue()
+				Float weightInstant = GR_MimicWeightInstant.GetValue()
+				Float rollType = Utility.RandomFloat(0.0, weightVore + weightSex + weightInstant)
 				GR_BakaMimicAddon guard
-				If rollType < Weight1Vore
-					If cheatNotifyMimics > 0
+				If rollType < weightVore
+					If GR_MimicCheatNotifyMimics.GetValueInt() > 0
 						Debug.Notification("Mimic created (Vore)")
 					EndIf
 					guard = lib.PlaceBakaMimic(largeChest, 1)
-				ElseIf rollType < (Weight1Vore + Weight2Vore)
-					If cheatNotifyMimics > 0
+				ElseIf rollType < (weightVore + weightSex)
+					If GR_MimicCheatNotifyMimics.GetValueInt() > 0
 						Debug.Notification("Mimic created")
 					EndIf
 					guard = lib.PlaceBakaMimic(largeChest, 2)
 				Else
-					If cheatNotifyMimics > 0
+					If GR_MimicCheatNotifyMimics.GetValueInt() > 0
 						Debug.Notification("Mimic created (Instant Vore)")
 					EndIf
 					guard = lib.PlaceBakaMimic(largeChest, 3)
@@ -168,11 +164,6 @@ Function PlaceMimicsInRadius()
 		EndIf
 		i += 1
 	EndWhile
-	If placed > 0
-		If dumpMimics > 0
-			DumpMimics()
-		EndIf
-	EndIf
 	Debug("Result - placed=" + placed + " checked=" + visited + " skipped=" + skipped + " unusable=" + unusable)
 EndFunction
 
@@ -195,7 +186,7 @@ EndFunction
 Function FixMimicsOnGameLoad()
 	Debug("FixMimicsOnGameLoad()")
 	Int fixed = 0
-	ObjectReference[] mimics = PO3_SKSEFunctions.FindAllReferencesOfType(PlayerRef, lib.MimicActivatorForms, ScanRadiusInterior)
+	ObjectReference[] mimics = PO3_SKSEFunctions.FindAllReferencesOfType(PlayerRef, lib.MimicActivatorForms, GR_MimicScanRadius.GetValue())
 	Int i = 0
 	While i < mimics.Length
 		GR_BakaMimicAddon addon = Game.FindClosestReferenceOfTypeFromRef(Game.GetFormFromFile(0x816, "GR_MimicPlacer.esp"), mimics[i], 10.0) as GR_BakaMimicAddon

@@ -20,28 +20,32 @@ Int _oidSnareDropWeapon
 Int _oidSnareDropGoldChance
 Int _oidSnareDropWeaponChance
 
+Int _oidCreditsAuthor
+Int _oidCreditsAbout
+
 Int Function GetVersion()
-    return 1
+    return 3
 EndFunction
 
 Event OnConfigInit()
-    ModName = "TNTR: Trap Outcomes"
-    Pages = new String[2]
-    Pages[0] = "Credits"
+    ModName = "TNTR: More Evil Traps"
+    Pages = new String[3]
+    Pages[0] = "Trap Outcomes"
+    Pages[1] = "Debug"
+    Pages[2] = "Credits"
 EndEvent
 
 Event OnPageReset(String page)
-    If page != "" && page != "Credits"
-        return
-    EndIf
-
     SetTitleText("Trap Outcomes")
     SetCursorFillMode(TOP_TO_BOTTOM)
 
     If page == "Credits"
         AddHeaderOption("Credits")
-        AddTextOption("Special thanks", "Bakafactory for creating TNTR", OPTION_FLAG_DISABLED)
-        AddTextOption("About this mod", "This is an unofficial TNTR extensions by Gerroth1", OPTION_FLAG_DISABLED)
+        _oidCreditsAuthor = AddTextOption("Special Thanks", "")
+        _oidCreditsAbout = AddTextOption("About", "")
+        return
+    ElseIf page == "Debug"
+        
         return
     EndIf
 
@@ -57,10 +61,10 @@ Event OnPageReset(String page)
         approachDependentFlags = OPTION_FLAG_DISABLED
     EndIf
 
-    _oidTrapEnabled = AddToggleOption("Approach enabled", GetBool(TrapConfig.GR_TrapEnabled))
+    _oidTrapEnabled = AddToggleOption("Trap Enemy Approach", GetBool(TrapConfig.GR_TrapEnabled))
+    _oidTrapApproachChance = AddSliderOption("Enemy Approach Chance", TrapConfig.GR_TrapApproachChance.GetValue(), "{2}", approachDependentFlags)
     _oidTrapDamagePlayer = AddToggleOption("Damage player", GetBool(TrapConfig.GR_TrapDamagePlayer), approachDependentFlags)
-    _oidTrapSexualisedDialogue = AddToggleOption("Sexualised dialogue", GetBool(TrapConfig.GR_TrapSexualisedDialogue), approachDependentFlags)
-    _oidTrapApproachChance = AddSliderOption("Approach chance", TrapConfig.GR_TrapApproachChance.GetValue(), "{2}", approachDependentFlags)
+    _oidTrapSexualisedDialogue = AddToggleOption("Sexualised approach dialogue", GetBool(TrapConfig.GR_TrapSexualisedDialogue), approachDependentFlags)
     _oidTrapApproachMaxDistance = AddSliderOption("Approach max distance", TrapConfig.GR_TrapApproachMaxDistance.GetValue(), "{0}", approachDependentFlags)
 
     SetCursorPosition(1)
@@ -73,9 +77,14 @@ Event OnPageReset(String page)
     _oidSnareDropGold = AddToggleOption("Drop gold", GetBool(TrapConfig.GR_TrapSnareDropGold))
     _oidSnareDropGoldMin = AddSliderOption("Drop gold min", TrapConfig.GR_TrapSnareDropGoldMin.GetValue(), "{0}", snareGoldDependentFlags)
     _oidSnareDropGoldMax = AddSliderOption("Drop gold max", TrapConfig.GR_TrapSnareDropGoldMax.GetValue(), "{0}", snareGoldDependentFlags)
-    _oidSnareDropWeapon = AddToggleOption("Drop weapon", GetBool(TrapConfig.GR_TrapSnareDropWeapon))
     _oidSnareDropGoldChance = AddSliderOption("Drop gold chance", TrapConfig.GR_TrapSnareDropGoldChance.GetValue(), "{2}", snareGoldDependentFlags)
-    _oidSnareDropWeaponChance = AddSliderOption("Drop weapon chance", TrapConfig.GR_TrapSnareDropWeaponChance.GetValue(), "{2}")
+
+    Int waeaponDropDependentFlag = 0
+    If !GetBool(TrapConfig.GR_TrapSnareDropWeapon)
+        waeaponDropDependentFlag = OPTION_FLAG_DISABLED
+    EndIf
+    _oidSnareDropWeapon = AddToggleOption("Drop weapon", GetBool(TrapConfig.GR_TrapSnareDropWeapon))
+    _oidSnareDropWeaponChance = AddSliderOption("Drop weapon chance", TrapConfig.GR_TrapSnareDropWeaponChance.GetValue(), "{2}", waeaponDropDependentFlag)
 EndEvent
 
 Event OnOptionSelect(Int option)
@@ -163,9 +172,9 @@ Event OnOptionHighlight(Int option)
     ElseIf option == _oidSaveConfig
         SetInfoText("Save all settings to json files in SKSE/Plugins/TrapDefeat/*.json")
     ElseIf option == _oidPatchedScripts
-        SetInfoText("Patched traps enable outcomes for bear traps and more reliable outcome trigger.")
+        SetInfoText("Required for bear trap integration")
     ElseIf option == _oidTrapEnabled
-        SetInfoText("Enemies notice and approach you when being trapped.")
+        SetInfoText("When enabled, enemies can notice you being trapped and may approach you when being trapped.")
     ElseIf option == _oidTrapDamagePlayer
         SetInfoText("Damage player stamina and health when trapped.")
     ElseIf option == _oidTrapSexualisedDialogue
@@ -175,7 +184,7 @@ Event OnOptionHighlight(Int option)
     ElseIf option == _oidTrapApproachMaxDistance
         SetInfoText("Enemies from this distance will approach you when trapped")
     ElseIf option == _oidSnareDropGold
-        SetInfoText("Enable dropping gold when ")
+        SetInfoText("Enable dropping gold when trapped by a snare trap.")
     ElseIf option == _oidSnareDropGoldMin
         SetInfoText("Minimum gold dropped by snare trap on each succesfull roll.")
     ElseIf option == _oidSnareDropGoldMax
@@ -186,6 +195,10 @@ Event OnOptionHighlight(Int option)
         SetInfoText("Chance that you drop your gold in snare traps.")
     ElseIf option == _oidSnareDropWeaponChance
         SetInfoText("Chance that you drop your weapon in snare traps.")
+    ElseIf option == _oidCreditsAbout
+        SetInfoText("This is an unofficial TNTR extension by Gerroth1")
+    ElseIf option == _oidCreditsAuthor
+        SetInfoText("Special thanks to Bakafactory for creating the original TNTR mod.")
     Else
         SetInfoText("")
     EndIf

@@ -18,7 +18,7 @@
     "float": {
         "mimic-loot-chance-per-tick": 0.08,
 
-        "mimic-lose-armor-chance-per-tick": 1.00,
+        "mimic-lose-armor-chance-per-tick": 0.10,
 
         "mimic-lose-gold-chance": 0.05,
         "mimic-lose-gold-scale-per-lvl": 1.05

@@ -4,7 +4,24 @@ GR_MimicPlacer Property lib Auto
 Actor Property PlayerRef Auto
 GR_MimicStolenQuest Property MimicStolenQuest Auto
 
-String CONFIG_FILE_CONS = "../MimicPlacer/Consequences.json"
+GlobalVariable Property GR_MimicLoot Auto
+GlobalVariable Property GR_MimicLootMaxItemCount Auto
+GlobalVariable Property GR_MimicLootMaxGoldCount Auto
+GlobalVariable Property GR_MimicLootChanceAccumulates Auto
+GlobalVariable Property GR_MimicLootChancePerTick Auto
+
+GlobalVariable Property GR_MimicVoreBadEnd Auto
+GlobalVariable Property GR_MimicVoreBadEndMinTicks Auto
+GlobalVariable Property GR_MimicVoreBadEndSimpleSlavery Auto
+
+GlobalVariable Property GR_MimicLoseGold Auto
+GlobalVariable Property GR_MimicLoseGoldMin Auto
+GlobalVariable Property GR_MimicLoseGoldMax Auto
+GlobalVariable Property GR_MimicLoseGoldChance Auto
+GlobalVariable Property GR_MimicLoseGoldScalePerLvl Auto
+
+GlobalVariable Property GR_MimicLoseArmor Auto
+GlobalVariable Property GR_MimicLoseArmorChancePerTick Auto
 
 ; State
 BakaTrapMimic currentMimic
@@ -115,11 +132,11 @@ Int ConfigMimicLootChanceAccumulates = 1
 Float ConfigMimicLootChancePerTick = 0.05
 
 Function ConfigFindLoot()
-    ConfigMimicLoot = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-loot")
-    ConfigMimicLootMaxItemCount = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-loot-max-item-count")
-    ConfigMimicLootMaxGoldCount = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-loot-max-gold-count")
-    ConfigMimicLootChanceAccumulates = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-loot-chance-accumulates")
-    ConfigMimicLootChancePerTick = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-loot-chance-per-tick")
+    ConfigMimicLoot = GR_MimicLoot.GetValueInt()
+    ConfigMimicLootMaxItemCount = GR_MimicLootMaxItemCount.GetValueInt()
+    ConfigMimicLootMaxGoldCount = GR_MimicLootMaxGoldCount.GetValueInt()
+    ConfigMimicLootChanceAccumulates = GR_MimicLootChanceAccumulates.GetValueInt()
+    ConfigMimicLootChancePerTick = GR_MimicLootChancePerTick.GetValue()
 
     Debug("Init settings MimicLoot=" + ConfigMimicLoot + \ 
             " MaxItemCount=" + ConfigMimicLootMaxItemCount + \ 
@@ -237,8 +254,8 @@ Form WeaponRight
 Form WeaponLeft
 
 Function ConfigLoseArmor()
-    ConfigMimicLoseArmor = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-lose-armor")
-    ConfigMimicLoseArmorChancePerTick = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-lose-armor-chance-per-tick")
+    ConfigMimicLoseArmor = GR_MimicLoseArmor.GetValueInt()
+    ConfigMimicLoseArmorChancePerTick = GR_MimicLoseArmorChancePerTick.GetValue()
     Debug("ConfigLoseArmor=" + ConfigMimicLoseArmor + " ChancePerTick=" + ConfigMimicLoseArmorChancePerTick + " MinTicks=" + ConfigMimicLoseArmorMinTicks)
 EndFunction
 
@@ -324,11 +341,11 @@ Float ConfigMimicLoseGoldLvlScale = 1.08
 Float ConfigMimicLoseGoldChance = 0.3
 
 Function ConfigLoseGold()
-    ConfigMimicLoseGold = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-lose-gold")
-    ConfigMimicLoseGoldMin = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-lose-gold-min")
-    ConfigMimicLoseGoldMax = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-lose-gold-max")
-    ConfigMimicLoseGoldLvlScale = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-lose-gold-scale-per-lvl")
-    ConfigMimicLoseGoldChance = JsonUtil.GetFloatValue(CONFIG_FILE_CONS, "mimic-lose-gold-chance")
+    ConfigMimicLoseGold = GR_MimicLoseGold.GetValueInt()
+    ConfigMimicLoseGoldMin = GR_MimicLoseGoldMin.GetValueInt()
+    ConfigMimicLoseGoldMax = GR_MimicLoseGoldMax.GetValueInt()
+    ConfigMimicLoseGoldLvlScale = GR_MimicLoseGoldScalePerLvl.GetValue()
+    ConfigMimicLoseGoldChance = GR_MimicLoseGoldChance.GetValue()
 
     Debug("ConfigLoseGold=" + ConfigMimicLoseGold + \
             " Min=" + ConfigMimicLoseGoldMin + \
@@ -373,16 +390,14 @@ EndFunction
 ; CONSEQUENCE - BAD END
 ; ==================================================
 
-; TODO: Move this to Trap
-
 Int ConfigMimicVoreBadEnd = 1
 Int ConfigVoreBadEndMinTicks = 11
 Int ConfigVoreBadEndSimpleSlavery = 0
 
-Function ConfigBadEnd()        
-    ConfigMimicVoreBadEnd = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-vore-bad-end")
-    ConfigVoreBadEndMinTicks = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-vore-bad-end-min-ticks")
-    ConfigVoreBadEndSimpleSlavery = JsonUtil.GetIntValue(CONFIG_FILE_CONS, "mimic-vore-bad-end-simple-slavery")
+Function ConfigBadEnd()
+    ConfigMimicVoreBadEnd = GR_MimicVoreBadEnd.GetValueInt()
+    ConfigVoreBadEndMinTicks = GR_MimicVoreBadEndMinTicks.GetValueInt()
+    ConfigVoreBadEndSimpleSlavery = GR_MimicVoreBadEndSimpleSlavery.GetValueInt()
 
     Debug(" VoreDeath=" + ConfigMimicVoreBadEnd + \
           " VoreKillsAfterTicks=" + ConfigVoreBadEndMinTicks + \

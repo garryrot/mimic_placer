@@ -1,10 +1,11 @@
 {
     "int": {
         "cheat-notify-mimics": 0,
+        "distribute-mimics": 1,
         "debug-dump-mimics": 0
     },
     "float": {
-        "scan-radius": 10000.0,
+        "scan-radius": 18000.0,
         "scan-radius-outside": 20000.0, 
         "scan-interval": 30.0,
         "mimic-chance": 0.28,      

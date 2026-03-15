@@ -1,6 +1,5 @@
 ScriptName GR_MimicPlacer extends Quest Hidden 
 
-String Config = "../MimicPlacer/Settings.json"
 String ConfigBakaMimics = "../MimicPlacer/BakaMimics.json"
 
 Actor Property PlayerRef Auto
@@ -43,20 +42,6 @@ Function Maintenance()
 	EndIf
 	If !PlayerRef
 		PlayerRef = Game.GetPlayer()
-	EndIf
-	If JsonUtil.GetIntValue(Config, "add-debug-spell") == 1
-	    If !PlayerRef.HasSpell(DebugSpellMimic)
-			PlayerRef.AddSpell(DebugSpellMimic)
-	    EndIf
-	    If !PlayerRef.HasSpell(DebugSpellMimicVore)
-			PlayerRef.AddSpell(DebugSpellMimicVore)
-	    EndIf
-	    If !PlayerRef.HasSpell(DebugSpellMimicInstant)
-			PlayerRef.AddSpell(DebugSpellMimicInstant)
-	    EndIf
-		If !PlayerRef.HasSpell(DebugDestroyMimic)
-			PlayerRef.AddSpell(DebugDestroyMimic)
-		EndIf
 	EndIf
 
 	If !BakaMimicForm
@@ -132,6 +117,30 @@ bool Function RemoveBakaMimicClosest()
 		return True
 	EndIf
 	return False
+EndFunction
+
+Function AddDebugSpells()
+	If !PlayerRef
+		PlayerRef = Game.GetPlayer()
+	EndIf
+	If !PlayerRef
+		return
+	EndIf
+
+	If !PlayerRef.HasSpell(DebugSpellMimic)
+		PlayerRef.AddSpell(DebugSpellMimic)
+	EndIf
+	If !PlayerRef.HasSpell(DebugSpellMimicVore)
+		PlayerRef.AddSpell(DebugSpellMimicVore)
+	EndIf
+	If !PlayerRef.HasSpell(DebugSpellMimicInstant)
+		PlayerRef.AddSpell(DebugSpellMimicInstant)
+	EndIf
+	If !PlayerRef.HasSpell(DebugDestroyMimic)
+		PlayerRef.AddSpell(DebugDestroyMimic)
+	EndIf
+
+	Debug.Notification("Mimic debug spells added")
 EndFunction
 
 ObjectReference Function FindPairedChest(ObjectReference mimic)
