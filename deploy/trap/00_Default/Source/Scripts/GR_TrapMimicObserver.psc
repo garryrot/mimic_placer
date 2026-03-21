@@ -39,7 +39,7 @@ Event OnUpdate()
         InitActivatorForms()
         maintenance = false
     ElseIf voreStarted
-        RegisterForSingleUpdate(8.0)
+        RegisterForSingleUpdate(11.0)
         Debug("Sending progress...")
         currentMimic.SendModEvent("GR_TrapProgress", "mimic")
     ElseIf startVore
@@ -47,12 +47,12 @@ Event OnUpdate()
         voreStarted = true
         Debug("observing vore " + currentMimic + " type=" + (currentMimic as BakaTrapMimic).MimicType)
 
-        currentMimic.SendModEvent("GR_TrapStart", "mimic")
+        currentMimic.SendModEvent("GR_TrapProgress", "mimic")
         RegisterForAnimationEvent(PlayerRef, "MimicVoreSpitLoop")			
         RegisterForAnimationEvent(PlayerRef, "FootLeft")
         RegisterForAnimationEvent(PlayerRef, "FootRight")
         RegisterForAnimationEvent(PlayerRef, "IdleForceDefaultState")
-        RegisterForSingleUpdate(8.0)
+        RegisterForSingleUpdate(11.0)
     EndIf
 EndEvent
 
@@ -74,6 +74,8 @@ EndFunction
 Function OnActivateMimic(ObjectReference mimic)
     Debug("OnActivateMimic")
     currentMimic = mimic
+
+    currentMimic.SendModEvent("GR_TrapStart", "mimic")
 
     ; Just estimate the duration of the struggle and intro 
     ; animations based on the mimic type worst case the 

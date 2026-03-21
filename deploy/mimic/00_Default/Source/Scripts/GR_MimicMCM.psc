@@ -19,6 +19,8 @@ Int _oidMimicWeightInstant
 Int _oidChestsMaxAllowedRescale
 
 ; Consequences
+Int _oidHelpConsequencesDisabled
+
 Int _oidMimicLoot
 Int _oidMimicLootMaxItemCount
 Int _oidMimicLootMaxGoldCount
@@ -37,6 +39,7 @@ Int _oidMimicLoseGoldScalePerLvl
 
 Int _oidMimicLoseArmor
 Int _oidMimicLoseArmorChancePerTick
+
 
 Int _oidCreditsAuthor
 Int _oidCreditsAbout
@@ -61,7 +64,7 @@ Event OnPageReset(String page)
     If page == "Credits"
         AddHeaderOption("Credits")
         _oidCreditsAuthor = AddTextOption("Special Thanks", "")
-       _oidCreditsAbout= AddTextOption("About", "")
+       _oidCreditsAbout = AddTextOption("About", "")
         return
     ElseIf page == "Debug"
         AddHeaderOption("Actions")
@@ -79,19 +82,29 @@ Event OnPageReset(String page)
         distDependentFlags = OPTION_FLAG_DISABLED
     EndIf
 
-    Int stealDependentFlags = 0
+    Int trapDefeatDependentFlags = 0
+    If !HasLoadedMod("GR_TrapDefeat.esp")
+        trapDefeatDependentFlags = OPTION_FLAG_DISABLED
+    EndIf
+
+    Int stealDependentFlags = trapDefeatDependentFlags
     If !GetBool(MimicConfig.GR_MimicLoseArmor)
         stealDependentFlags = OPTION_FLAG_DISABLED
     EndIf
     
-    Int loseGoldDependentFlags = 0
+    Int loseGoldDependentFlags = trapDefeatDependentFlags
     If !GetBool(MimicConfig.GR_MimicLoseGold)
         loseGoldDependentFlags = OPTION_FLAG_DISABLED
     EndIf
 
-    Int badEndDependentFlags = 0
+    Int badEndDependentFlags = trapDefeatDependentFlags
     If !GetBool(MimicConfig.GR_MimicVoreBadEnd)
         badEndDependentFlags = OPTION_FLAG_DISABLED
+    EndIf
+
+    Int findLootDependentFlags = trapDefeatDependentFlags
+    If !GetBool(MimicConfig.GR_MimicLoot)
+        findLootDependentFlags = OPTION_FLAG_DISABLED
     EndIf
 
     AddHeaderOption("Actions")
@@ -110,25 +123,29 @@ Event OnPageReset(String page)
     _oidChestsMaxAllowedRescale = AddSliderOption("Max allowed chest rescale", MimicConfig.GR_MimicChestsMaxAllowedRescale.GetValue(), "{2}", distDependentFlags)
 
     SetCursorPosition(1)
+    If trapDefeatDependentFlags
+        _oidHelpConsequencesDisabled = AddTextOption("Consequences Disabled", "")
+    EndIf
+
     AddHeaderOption("Mimics contain loot")
-    _oidMimicLoot = AddToggleOption("Enable finding loot", GetBool(MimicConfig.GR_MimicLoot))
-    _oidMimicLootMaxItemCount = AddSliderOption("Max items", MimicConfig.GR_MimicLootMaxItemCount.GetValue(), "{0}")
-    _oidMimicLootMaxGoldCount = AddSliderOption("Max gold", MimicConfig.GR_MimicLootMaxGoldCount.GetValue(), "{0}")
-    _oidMimicLootChancePerTick = AddSliderOption("Loot chance (per tick)", MimicConfig.GR_MimicLootChancePerTick.GetValue(), "{2}")
-    _oidMimicLootChanceAccumulates = AddToggleOption("Chance accumulates", GetBool(MimicConfig.GR_MimicLootChanceAccumulates))
+    _oidMimicLoot = AddToggleOption("Enable finding loot", GetBool(MimicConfig.GR_MimicLoot), trapDefeatDependentFlags)
+    _oidMimicLootMaxItemCount = AddSliderOption("Max items", MimicConfig.GR_MimicLootMaxItemCount.GetValue(), "{0}",findLootDependentFlags)
+    _oidMimicLootMaxGoldCount = AddSliderOption("Max gold", MimicConfig.GR_MimicLootMaxGoldCount.GetValue(), "{0}",findLootDependentFlags)
+    _oidMimicLootChancePerTick = AddSliderOption("Loot chance (per tick)", MimicConfig.GR_MimicLootChancePerTick.GetValue(), "{2}",findLootDependentFlags)
+    _oidMimicLootChanceAccumulates = AddToggleOption("Chance accumulates", GetBool(MimicConfig.GR_MimicLootChanceAccumulates),findLootDependentFlags)
 
     AddHeaderOption("Mimics steal loot")
-    _oidMimicLoseArmor = AddToggleOption("Enable losing armor", GetBool(MimicConfig.GR_MimicLoseArmor))
+    _oidMimicLoseArmor = AddToggleOption("Enable losing armor", GetBool(MimicConfig.GR_MimicLoseArmor), trapDefeatDependentFlags)
     _oidMimicLoseArmorChancePerTick = AddSliderOption("Lose armor chance per tick", MimicConfig.GR_MimicLoseArmorChancePerTick.GetValue(), "{2}", stealDependentFlags)
 
-    _oidMimicLoseGold = AddToggleOption("Lose gold", GetBool(MimicConfig.GR_MimicLoseGold))
+    _oidMimicLoseGold = AddToggleOption("Lose gold", GetBool(MimicConfig.GR_MimicLoseGold), stealDependentFlags)
     _oidMimicLoseGoldMin = AddSliderOption("Lose gold min", MimicConfig.GR_MimicLoseGoldMin.GetValue(), "{0}", loseGoldDependentFlags)
     _oidMimicLoseGoldMax = AddSliderOption("Lose gold max", MimicConfig.GR_MimicLoseGoldMax.GetValue(), "{0}", loseGoldDependentFlags)
     _oidMimicLoseGoldChance = AddSliderOption("Lose gold chance", MimicConfig.GR_MimicLoseGoldChance.GetValue(), "{2}", loseGoldDependentFlags)
     _oidMimicLoseGoldScalePerLvl = AddSliderOption("Lose gold scale per lvl", MimicConfig.GR_MimicLoseGoldScalePerLvl.GetValue(), "{2}", loseGoldDependentFlags)
 
     AddHeaderOption("Bad end")
-    _oidMimicVoreBadEnd = AddToggleOption("Vore bad end", GetBool(MimicConfig.GR_MimicVoreBadEnd))
+    _oidMimicVoreBadEnd = AddToggleOption("Vore bad end", GetBool(MimicConfig.GR_MimicVoreBadEnd), trapDefeatDependentFlags)
     _oidMimicVoreBadEndMinTicks = AddSliderOption("Vore bad end min ticks", MimicConfig.GR_MimicVoreBadEndMinTicks.GetValue(), "{0}", badEndDependentFlags)
     _oidMimicVoreBadEndSimpleSlavery = AddToggleOption("Vore bad end simple slavery", GetBool(MimicConfig.GR_MimicVoreBadEndSimpleSlavery), badEndDependentFlags)
 EndEvent
@@ -148,8 +165,7 @@ Event OnOptionSelect(Int option)
         Debug.Notification("Dumping mimics...")
     ElseIf option == _oidDestroyAllMimics
         MimicConfig.MimicScanner.DestroyAllMimics()
-        Debug.MessageBox("Dumping all Mimics. Close MCM now...")
-        Debug.Notification("Destroying all mimics and re-setting...")
+        Debug.MessageBox("Destroying all Mimics. Close MCM and wait for notification...")
     ElseIf option == _oidMimicDistributeMimics
         ToggleGlobal(MimicConfig.GR_MimicDistributeMimics, _oidMimicDistributeMimics)
         ForcePageReset()
@@ -374,6 +390,8 @@ Event OnOptionHighlight(Int option)
     ElseIf option == _oidDestroyAllMimics
         SetInfoText("This remove ALL placed mimics in the entire world and restore them back to original containers." \
         + " Use this for uninstalling the mod or when specifically prompted.")
+    ElseIf option == _oidHelpConsequencesDisabled
+        SetInfoText("Mimic consequences require `EET - Extra Evil Traps`. Assure that GR_TrapDefeat.esp is present and loaded.")
     Else
         SetInfoText("")
     EndIf
@@ -391,4 +409,8 @@ EndFunction
 
 Bool Function GetBool(GlobalVariable gv)
     return gv.GetValueInt() != 0
+EndFunction
+
+Bool Function HasLoadedMod(String pluginName)
+    return Game.GetModByName(pluginName) != 255
 EndFunction

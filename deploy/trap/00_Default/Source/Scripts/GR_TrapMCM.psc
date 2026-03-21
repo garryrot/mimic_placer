@@ -6,6 +6,7 @@ Int _oidLoadConfig
 Int _oidSaveConfig
 
 Int _oidPatchedScripts
+Int _oidStrugglingQTE
 
 Int _oidTrapEnabled
 Int _oidTrapDamagePlayer
@@ -28,7 +29,7 @@ Int Function GetVersion()
 EndFunction
 
 Event OnConfigInit()
-    ModName = "TNTR: More Evil Traps"
+    ModName = "TNTR: Extra Evil Traps"
     Pages = new String[3]
     Pages[0] = "Trap Outcomes"
     Pages[1] = "Debug"
@@ -41,18 +42,21 @@ Event OnPageReset(String page)
 
     If page == "Credits"
         AddHeaderOption("Credits")
-        _oidCreditsAuthor = AddTextOption("Special Thanks", "")
         _oidCreditsAbout = AddTextOption("About", "")
+        _oidCreditsAuthor = AddTextOption("Special Thanks", "")
         return
     ElseIf page == "Debug"
-        
+        AddHeaderOption("Bear Trap Dependencies")
+        AddToggleOption("Patched TNTR scripts?", TrapConfig.PatchedBearScripts, OPTION_FLAG_DISABLED)
+        _oidStrugglingQTE = AddToggleOption("Struggling QTE", IsStrugglingQteLoaded(), OPTION_FLAG_DISABLED)
+        AddHeaderOption("Snare Trap")
+        AddToggleOption("Patched Snare Trap scripts?", TrapConfig.PatchedSnareScripts, OPTION_FLAG_DISABLED)
         return
     EndIf
 
     AddHeaderOption("Config")
     _oidLoadConfig = AddTextOption("Load config file...", "")
     _oidSaveConfig = AddTextOption("Store config file...", "")
-    _oidPatchedScripts = AddToggleOption("Patched TNTR scripts?", GetBool(TrapConfig.GR_PatchedScripts), OPTION_FLAG_DISABLED)
     AddEmptyOption()
 
     AddHeaderOption("Approach")
@@ -173,10 +177,12 @@ Event OnOptionHighlight(Int option)
         SetInfoText("Save all settings to json files in SKSE/Plugins/TrapDefeat/*.json")
     ElseIf option == _oidPatchedScripts
         SetInfoText("Required for bear trap integration")
+    ElseIf option == _oidStrugglingQTE
+        SetInfoText("Shows whether AcheronExtensionLibrary.esp is currently loaded.")
     ElseIf option == _oidTrapEnabled
         SetInfoText("When enabled, enemies can notice you being trapped and may approach you when being trapped.")
     ElseIf option == _oidTrapDamagePlayer
-        SetInfoText("Damage player stamina and health when trapped.")
+        SetInfoText("Damage player health when trapped. If disabled, only stamina is damaged.")
     ElseIf option == _oidTrapSexualisedDialogue
         SetInfoText("Enables sexualised approach dialogue where applicable.")
     ElseIf option == _oidTrapApproachChance
@@ -216,5 +222,9 @@ EndFunction
 
 Bool Function GetBool(GlobalVariable gv)
     return gv.GetValueInt() != 0
+EndFunction
+
+Bool Function IsStrugglingQteLoaded()
+    return Game.GetModByName("AcheronExtensionLibrary.esp") != 255
 EndFunction
 

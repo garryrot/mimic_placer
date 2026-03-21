@@ -5,7 +5,7 @@
         "sexualised-dialogue": 1
     },
     "float": {
-        "approach-chance": 1.0,
+        "approach-chance": 0.45,
         "approach-max-distance": 20000
     }
 }

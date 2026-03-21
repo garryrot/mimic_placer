@@ -30,6 +30,7 @@ ObjectReference originalChest
 Int MimicType = 0
 Int VoreTicks = 0
 Int ConsequenceCnt = 0
+Bool LoseArmorStarted = false
 
 Event OnInit()
 	Maintenance()
@@ -62,6 +63,7 @@ Event StartVore(string eventName, string trapType, float numArg, form mimic)
     If trapType != "mimic"
         return
     EndIf
+
     Debug("StartVore " + mimic)
     currentMimic = mimic as BakaTrapMimic
     If !currentMimic
@@ -73,25 +75,32 @@ Event StartVore(string eventName, string trapType, float numArg, form mimic)
     VoreTicks = 0
     FoundLoot = 0
     ConsequenceCnt = 0
+    LoseArmorStarted = 0
 
     MimicType = currentMimic.MimicType
     originalChest = None
 
-    StartLoseArmor()
 EndEvent
 
 Event ProgressVore(string eventName, string trapType, float numArg, form mimic)
     If trapType != "mimic"
         return
     EndIf
+
     FindChest()
     Debug("ProgressVore MimicType=" + MimicType + " Ticks=" + VoreTicks + " PairedLootChest=" + originalChest)
+
+    If LoseArmorStarted == 0
+        StartLoseArmor()
+        LoseArmorStarted = 1
+    ElseIf originalChest != None
+        ProgressLoseArmor()
+    EndIf
 
     VoreTicks += 1
     If originalChest != None
         ProgressFindLoot()
         ProgressLoseGold()
-        ProgressLoseArmor()
     EndIf
 
     ProgressBadEnd()

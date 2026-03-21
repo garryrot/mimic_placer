@@ -34,7 +34,6 @@ Event onReset()
 	self.reset()
 endEvent
 
-
 event onLoad()
 	hitBase = (self as objectReference) as TrapHitBase
 	ResolveLeveledDamage()
@@ -98,10 +97,11 @@ endState
 State ClosedStuck
 	Event OnBeginState()
 		actorref.playidle(beartrapStruggle) ;It's not sequence animation
-		If playerRef == actorref
+		Bool qteInstalled = Game.GetModByName("AcheronExtensionLibrary.esp") != 255
+		If playerRef == actorref && qteInstalled
 			SendModEvent("GR_TrapStart", "bear")
 			RegisterForModEvent("AEL_GameEnd", "OnGameEnd")
-			AELStruggle.MakeGame(90)
+			AELStruggle.MakeGame(65)
 		EndIf
 
 		if QTE
@@ -110,7 +110,7 @@ State ClosedStuck
 			Utility.wait(3.0)
 		endif
 
-		If playerRef != actorref
+		If playerRef != actorref || !qteInstalled
 			BearTrapEscape()
 		EndIf
 	endEvent

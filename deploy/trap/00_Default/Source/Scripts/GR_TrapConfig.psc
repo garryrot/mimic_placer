@@ -3,7 +3,8 @@ Scriptname GR_TrapConfig extends Quest
 String Property TrapApproachJson = "../TrapDefeat/TrapApproach.json" Auto
 String Property TrapConsequenceJson = "../TrapDefeat/TrapConsequence.json" Auto
 String Property TrapBakaMimicsJson = "../MimicPlacer/BakaMimics.json" Auto
-String Property TrapInteropJson = "../TrapDefeat/Interop.json" Auto
+String Property BearInteropJson = "../TrapDefeat/BearTrapPatch.json" Auto
+String Property SnareInteropJson = "../TrapDefeat/SnareTrapPatch.json" Auto
 
 ; Interop
 GlobalVariable Property GR_PatchedScripts Auto
@@ -23,6 +24,10 @@ GlobalVariable Property GR_TrapSnareDropGoldMax Auto
 GlobalVariable Property GR_TrapSnareDropWeaponChance Auto
 GlobalVariable Property GR_TrapSnareDropWeapon Auto
 
+; Interop
+Bool Property PatchedBearScripts Auto
+Bool Property PatchedSnareScripts Auto
+
 Event OnInit()
     Debug("OnInit")
     RegisterForSingleUpdate(15.0) 
@@ -34,13 +39,13 @@ EndEvent
 
 Function Maintenance()
     Debug("Maintenance")
+    PatchedBearScripts = JsonUtil.GetIntValue(BearInteropJson, "patched-script-bear") == 1
+    PatchedSnareScripts = JsonUtil.GetIntValue(SnareInteropJson, "patched-script-snare") == 1
 EndFunction
 
 Function LoadConfig()
     Debug("LoadConfig " + GR_TrapEnabled + " " + GR_TrapDamagePlayer + " " + GR_TrapSexualisedDialogue + " " + GR_TrapApproachChance)
     Debug.Notification("Trap Outcomes: Loading configs...")
-
-    GR_PatchedScripts.SetValueInt(JsonUtil.GetIntValue(TrapInteropJson, "patched-scripts"))
 
     GR_TrapEnabled.SetValueInt(JsonUtil.GetIntValue(TrapApproachJson, "approach-enabled"))
     GR_TrapDamagePlayer.SetValueInt(JsonUtil.GetIntValue(TrapApproachJson, "damage-player"))

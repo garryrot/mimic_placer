@@ -185,10 +185,13 @@ State Attack
         If eventName == "GR_TrapEscape"
             GoToState("PostEscape")
         ElseIf eventName == "GR_TrapProgress"
-            MimicProgress()
+            If strArg == "mimic"
+                MimicProgress()
+            ElseIf strArg == "snare"
+                SnareProgress()
+            EndIf
         EndIf
     EndEvent
-
     
     Event OnEndState()
         Debug("State: EndState Attack")
@@ -215,7 +218,11 @@ State Approach
         If eventName == "GR_TrapEscape"
             GoToState("PostEscape")
         ElseIf eventName == "GR_TrapProgress"
-            MimicProgress()
+            If strArg == "mimic"
+                MimicProgress()
+            ElseIf strArg == "snare"
+                SnareProgress()
+            EndIf
         EndIf
     EndEvent
 
