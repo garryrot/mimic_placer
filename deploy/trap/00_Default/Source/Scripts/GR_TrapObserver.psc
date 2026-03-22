@@ -428,7 +428,7 @@ Function DropRandomGoldScatter()
     if totalGold > playerGold
         totalGold = playerGold
     endif
-    PlayerRef.RemoveItem(Septims, totalGold, false)
+    PlayerRef.RemoveItem(Septims, totalGold, true)
     int remaining = totalGold
     Debug.Notification("Gold drops out of your bag and scatters across the floor...")
     while remaining > 0
@@ -446,17 +446,18 @@ EndFunction
 Function DropEquippedWeapons()
     Weapon rightWeapon = PlayerRef.GetEquippedWeapon(false)
     Weapon leftWeapon  = PlayerRef.GetEquippedWeapon(true)
+    Debug("DropEquippedWeapons " + rightWeapon + " " + leftWeapon)
 
     Bool dropped = False
-    if rightWeapon ; && !rightWeapon.HasKeyword(MagicBoundWeapon)
-        PlayerRef.UnequipItem(rightWeapon)
+    if rightWeapon && rightWeapon.GetFormID() != 0x1f4 ; && !rightWeapon.HasKeyword(MagicBoundWeapon)
+        PlayerRef.UnequipItem(rightWeapon, false, true)
         PlayerRef.RemoveItem(rightWeapon, 1, true)
         PlayerRef.PlaceAtMe(rightWeapon, 1).MoveTo(PlayerRef, 5, 7, 100)
         dropped = True
     endif
 
-    if leftWeapon && leftWeapon != rightWeapon ; && !leftWeapon.HasKeyword(MagicBoundWeapon)
-        PlayerRef.UnequipItem(leftWeapon)
+    if leftWeapon && leftWeapon != rightWeapon && leftWeapon.GetFormID() != 0x1f4 ; && !leftWeapon.HasKeyword(MagicBoundWeapon)
+        PlayerRef.UnequipItem(leftWeapon, false, true)
         PlayerRef.RemoveItem(leftWeapon, 1, true)
         PlayerRef.PlaceAtMe(leftWeapon, 1).MoveTo(PlayerRef, 5, 7, 100)
         dropped = True

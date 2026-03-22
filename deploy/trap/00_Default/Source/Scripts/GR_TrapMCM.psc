@@ -176,9 +176,9 @@ Event OnOptionHighlight(Int option)
     ElseIf option == _oidSaveConfig
         SetInfoText("Save all settings to json files in SKSE/Plugins/TrapDefeat/*.json")
     ElseIf option == _oidPatchedScripts
-        SetInfoText("Required for bear trap integration")
+        SetInfoText("Patched bear-trap script is required for bear trap integration")
     ElseIf option == _oidStrugglingQTE
-        SetInfoText("Shows whether AcheronExtensionLibrary.esp is currently loaded.")
+        SetInfoText("StrugglingQTE `AcheronExtensionLibrary.esp` is required for bear trap integration.")
     ElseIf option == _oidTrapEnabled
         SetInfoText("When enabled, enemies can notice you being trapped and may approach you when being trapped.")
     ElseIf option == _oidTrapDamagePlayer
@@ -198,9 +198,9 @@ Event OnOptionHighlight(Int option)
     ElseIf option == _oidSnareDropWeapon
         SetInfoText("Enable weapon drop consequence for snare traps.")
     ElseIf option == _oidSnareDropGoldChance
-        SetInfoText("Chance that you drop your gold in snare traps.")
+        SetInfoText("Chance that you drop your gold when struggling in a snare traps.")
     ElseIf option == _oidSnareDropWeaponChance
-        SetInfoText("Chance that you drop your weapon in snare traps.")
+        SetInfoText("Chance that you drop your weapon when struggling in a snare traps.")
     ElseIf option == _oidCreditsAbout
         SetInfoText("This is an unofficial TNTR extension by Gerroth1")
     ElseIf option == _oidCreditsAuthor
