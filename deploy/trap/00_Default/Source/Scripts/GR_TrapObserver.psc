@@ -16,6 +16,9 @@ GlobalVariable Property GR_TrapSexDialogue Auto
 ; False if player was discovered via line of sight
 Bool Property AlertPlayer Auto
 
+; Fix: Prevent devious devices animations when player is trapped
+Faction zadAnimationFaction
+
 Event OnInit()
     Debug("OnInit")
     Maintenance()
@@ -24,6 +27,12 @@ EndEvent
 
 Function Maintenance()
     Debug("Maintenance")
+    zadAnimationFaction = Game.GetFormFromFile(0x29567, "Devious Devices - Integration.esm") as Faction
+    If !zadAnimationFaction
+        Debug("ZadAnimationFaction not found")
+    Else
+        Debug("ZadAnimationFaction here!")
+    EndIf
     ResetEvents()
 EndFunction
 
@@ -133,6 +142,10 @@ EndState
 State Trapped
     Event OnBeginState()
         Debug("State: Trapped")
+        If zadAnimationFaction
+            Debug("Adding player to animation faction...")
+            PlayerRef.AddToFaction(zadAnimationFaction)
+        EndIf
         If PlayerRef.GetCombatState() == 1
             Debug("Player already in combat")
             StartApproach()
@@ -249,6 +262,11 @@ State PostEscape
             ; Mimic/VoreWorm has a longer get-up animation
             trapType = "mimic"
             RegisterForSingleUpdate(8.0)
+        EndIf
+        
+        If zadAnimationFaction
+            Debug("Removing player from zadAnimationFaction")
+            PlayerRef.RemoveFromFaction(zadAnimationFaction)
         EndIf
     EndEvent
 

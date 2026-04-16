@@ -27,7 +27,41 @@ Function Maintenance()
     EndIf
     maintenance = true
     RegisterForSingleUpdate(0.5)
+    RegisterForModEvent("GR_TrapStart", "PlayerTrapped")
+    RegisterForModEvent("GR_TrapEscape", "PlayerEscape")
 EndFunction
+
+Event PlayerTrapped(string eventName, string trapType, float numArg, form sender)
+    currentMimic = sender as ObjectReference
+    Debug("PlayerTrapped " + eventName + " " + trapType + " mimic=" + currentMimic)
+    If trapType == "mimic"  
+        ; Just estimate the duration of the struggle and intro 
+        ; animations based on the mimic type worst case the 
+        ; calculation of consequences is just not accurate
+        startVore = True
+        If (currentMimic as BakaTrapMimic).MimicType == 3
+            ; Instant Mimic
+            RegisterForSingleUpdate(1.0)
+        ElseIf (currentMimic as BakaTrapMimic).MimicType == 1
+            ; Vore Mimic
+            RegisterForSingleUpdate(12.0)
+        Else
+            RegisterForSingleUpdate(20.0)
+        EndIf
+    EndIf
+EndEvent
+
+Event PlayerEscape(string eventName, string trapType, float numArg, form mimic)
+    Debug("PlayerEscaped " + eventName + " " + trapType)
+    If trapType == "mimic"  
+        Debug("StopObserving()")
+        UnregisterForAnimationEvent(PlayerRef, "MimicVoreSpitLoop")			
+        UnregisterForAnimationEvent(PlayerRef, "FootLeft")
+        UnregisterForAnimationEvent(PlayerRef, "FootRight")
+        UnregisterForAnimationEvent(PlayerRef, "IdleForceDefaultState")
+        voreStarted = false
+    EndIf
+EndEvent
 
 Event OnUpdate()
     Debug("OnUpdate")
@@ -38,6 +72,7 @@ Event OnUpdate()
         EndIf
         InitActivatorForms()
         maintenance = false
+        RegisterForModEvent("GR_MimicAssault", "MimicAssault")
     ElseIf voreStarted
         RegisterForSingleUpdate(11.0)
         Debug("Sending progress...")
@@ -46,7 +81,6 @@ Event OnUpdate()
         startVore = false
         voreStarted = true
         Debug("observing vore " + currentMimic + " type=" + (currentMimic as BakaTrapMimic).MimicType)
-
         currentMimic.SendModEvent("GR_TrapProgress", "mimic")
         RegisterForAnimationEvent(PlayerRef, "MimicVoreSpitLoop")			
         RegisterForAnimationEvent(PlayerRef, "FootLeft")
@@ -54,6 +88,11 @@ Event OnUpdate()
         RegisterForAnimationEvent(PlayerRef, "IdleForceDefaultState")
         RegisterForSingleUpdate(11.0)
     EndIf
+EndEvent
+
+Event MimicAssault(string eventName, string trapType, float numArg, form mimic)
+    Debug("MimicAssault")
+    OnActivateMimic(mimic as ObjectReference)
 EndEvent
 
 Function InitActivatorForms()
@@ -73,31 +112,7 @@ EndFunction
 ; Called by perk
 Function OnActivateMimic(ObjectReference mimic)
     Debug("OnActivateMimic")
-    currentMimic = mimic
-
-    currentMimic.SendModEvent("GR_TrapStart", "mimic")
-
-    ; Just estimate the duration of the struggle and intro 
-    ; animations based on the mimic type worst case the 
-    ; calculation of consequences is just not accurate
-    startVore = True
-    If (mimic as BakaTrapMimic).MimicType == 3
-        ; Instant Mimic
-        RegisterForSingleUpdate(1.0)
-    ElseIf (mimic as BakaTrapMimic).MimicType == 1
-        ; Vore Mimic
-        RegisterForSingleUpdate(12.0)
-    Else
-        RegisterForSingleUpdate(20.0)
-    EndIf
-EndFunction
-
-Function StopObserving()
-    Debug("StopObserving()")
-    UnregisterForAnimationEvent(PlayerRef, "MimicVoreSpitLoop")			
-    UnregisterForAnimationEvent(PlayerRef, "FootLeft")
-    UnregisterForAnimationEvent(PlayerRef, "FootRight")
-    UnregisterForAnimationEvent(PlayerRef, "IdleForceDefaultState")
+    mimic.SendModEvent("GR_TrapStart", "mimic")
 EndFunction
 
 Function OnAnimationEvent(ObjectReference source, String eventName)
@@ -105,12 +120,10 @@ Function OnAnimationEvent(ObjectReference source, String eventName)
         Debug("Player escaped from mimic")
         voreStarted = false
         currentMimic.SendModEvent("GR_TrapEscape", "mimic")
-        StopObserving()
     ElseIf eventName == "FootLeft" || eventName == "FootRight" || eventName == "IdleStop" 
         Debug("Player won struggle")
         voreStarted = false
         currentMimic.SendModEvent("GR_TrapEscape", "mimic")
-        StopObserving()
     Else
         Debug("Unknown event " + eventName)
     EndIf

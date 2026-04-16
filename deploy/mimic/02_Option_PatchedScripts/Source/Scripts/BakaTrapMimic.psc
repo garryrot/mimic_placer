@@ -64,7 +64,6 @@ String Property TNTRRemoveLowerFormList = "tntr.removelower" autoreadonly hidden
 String Property TNTRRemoveSkirtFormList = "tntr.removeskirt" autoreadonly hidden
 String Property TNTRRemoveUpperFormList = "tntr.removeupper" autoreadonly hidden
 
-
 int Xaxis
 int Yaxis
 
@@ -77,6 +76,8 @@ actor VoiceActor
 float finterval
 int icount
 int iVoiceStrength
+
+Bool attackAssault
 
 ;TriggerVoreStart - Mimic Start
 
@@ -92,7 +93,6 @@ Function ResetTrap()
 EndFunction
 
 Function MimicTest()
-
 EndFunction
 
 Function DispenseArmor(String FormlistString, bool bUnequipall)
@@ -334,7 +334,9 @@ Function SuccessVore()
 		if WaitForAnimationEvent("StripEventLowerA")
 			(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 2)
 			PlayVoice(ActorRef, 30, 1, 3.0)
-			actorref.UnequipItem(thisarmor)
+			If (! thisarmor.HasKeywordString("zad_InventoryDevice") && ! thisarmor.HasKeywordString("zad_Lockable")) 
+				actorref.UnequipItem(thisarmor)
+			EndIf
 		endif
 		WaitForAnimationEvent("TransVoreEndSuccess")
 		actorref.playidle(MimicVoreEndSuccessLoop)
@@ -468,17 +470,21 @@ State VoreQTEStage02
 			Wait(1.0)
 		endwhile
 		if actorref.isinfaction(MimicVoreDefaultFaction)
-			playAnimationAndWait("TriggerMimicBurp","TransMimicBurp");Digestion complete
+			PlayAnimation("TriggerMimicBurp");Digestion complete
+
+			Utility.Wait(12)
+			SendModEvent("GR_VoreDeath")
 
 			PlayAnimation("TriggerVoreSpit");This is test so it doesn't actually kill the actor.
 			actorref.playidle(MimicVoreSpit)
 			
-			;actorref.kill()
-			
 			WaitForAnimationEvent("TransPlay")
+			
+			Utility.Wait(4)
 			if RemoveHeel
 				(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
 			endif
+
 			actorref.playidle(MimicVoreGetUpAfterSpit)
 			ResetTrap()
 		else
@@ -806,26 +812,51 @@ state Close
 endState
 
 auto State Ready
-
 	Event OnHit(ObjectReference akAggressor, Form akSource, Projectile akProjectile, bool abPowerAttack, bool abSneakAttack, bool abBashAttack, bool abHitBlocked)
+		Debug.Trace("OnHit " + isFiring)
 		if !isfiring
-			isfiring == true
+			attackAssault = false
+			isfiring = true
 			Mimichitcount += 1
 			
-			if MimicHealth >= Mimichitcount
-				;DeadSound WIP
-				playAnimationAndWait("TriggerDie","TransDie01")
-				goToState("Dead")
-			else
+			Actor aggroActor = akAggressor.GetSelfAsActor()
+			float armorRating = aggroActor.GetActorValue("DamageResist")
+			float assaultChance = 0.5
+			If armorRating < 150
+				assaultChance += ((150 - armorRating) / 150) * 1
+			EndIf
+			assaultChance += (1 - aggroActor.GetActorValuePercentage("Stamina")) * 1
+			float attackChance = 2
+			float lootChance = 1
+			float rand = Utility.RandomFloat(0, assaultChance + attackChance + lootChance)
+			Debug.Trace("Rolling rand=" + rand + " assaultChance=" + assaultChance)
+			if rand < assaultChance
+				Debug.Trace("[ONMON] ASSAULT")
 				playAnimationAndWait("TriggerAttack","TransPlay")
-				;HitSound WIP
-			endif
-			isfiring = false
+				attackAssault = true
+				SendModEvent("GR_MimicAssault") ; Required to trigger detection
+				Activate(akAggressor)
+			ElseIf rand < assaultChance + attackChance
+				Debug.Trace("[ONMON] DEFAULT")
+				if MimicHealth >= Mimichitcount
+					;DeadSound WIP
+					playAnimationAndWait("TriggerDie","TransDie01")
+					goToState("Dead")
+				else
+					akAggressor.GetSelfAsActor().DamageActorValue("Health", 30)
+					akAggressor.GetSelfAsActor().DamageActorValue("Stamina", 100)
+					playAnimationAndWait("TriggerAttack","TransPlay")
+					;HitSound WIP
+				endif
+				isfiring = false
+			Else
+				GotoState("EjectGear")
+			EndIf
 		endif
-		
 	EndEvent
 
 	Event OnBeginState()
+		Debug.Trace("Firing = False")
 		isfiring = false
 		PlayAnimation("Reset")
 	endEvent
@@ -835,7 +866,7 @@ auto State Ready
 
 	event OnActivate(objectReference TriggerRef)
 	int itrigger
-	if !isfiring
+	if !isfiring || attackAssault
 		if MimicType == 2
 			itrigger = acceptableTrigger(TriggerRef)
 		else
@@ -881,6 +912,28 @@ auto State Ready
 			endif
 	EndFunction
 
+EndState
+
+State EjectGear
+	Event OnBeginState()
+		Debug.Trace("[ONMON] EjectGear BeginState")
+		DispenseXmarker = getLinkedRef(MimicDispenseKeyword)
+
+		Debug.Notification("The chest starts to shake...")
+		PlayAnimationAndWait("TriggerMimicShake","TransMimicShake01")
+		PlayAnimation("TriggerMimicThrowup")
+		WaitForAnimationEvent("EventMimicThrowup")
+		SendModEvent("GR_MimicDispense", "", 0)
+		WaitForAnimationEvent("TransMimicThrowup")
+		
+		GoToState("Ready")
+	endEvent
+
+	event OnTriggerEnter(objectReference TriggerRef)
+	endEvent
+	
+	event OnActivate(objectReference TriggerRef)
+	endEvent
 EndState
 
 state VoreStartDefaultState

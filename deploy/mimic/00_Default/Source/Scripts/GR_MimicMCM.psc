@@ -146,7 +146,7 @@ Event OnPageReset(String page)
 
     AddHeaderOption("Bad end")
     _oidMimicVoreBadEnd = AddToggleOption("Vore bad end", GetBool(MimicConfig.GR_MimicVoreBadEnd), trapDefeatDependentFlags)
-    _oidMimicVoreBadEndMinTicks = AddSliderOption("Vore bad end min ticks", MimicConfig.GR_MimicVoreBadEndMinTicks.GetValue(), "{0}", badEndDependentFlags)
+    ; _oidMimicVoreBadEndMinTicks = AddSliderOption("Vore bad end min ticks", MimicConfig.GR_MimicVoreBadEndMinTicks.GetValue(), "{0}", badEndDependentFlags)
     _oidMimicVoreBadEndSimpleSlavery = AddToggleOption("Vore bad end simple slavery", GetBool(MimicConfig.GR_MimicVoreBadEndSimpleSlavery), badEndDependentFlags)
 EndEvent
 

@@ -11,7 +11,7 @@ GlobalVariable Property GR_MimicLootChanceAccumulates Auto
 GlobalVariable Property GR_MimicLootChancePerTick Auto
 
 GlobalVariable Property GR_MimicVoreBadEnd Auto
-GlobalVariable Property GR_MimicVoreBadEndMinTicks Auto
+GlobalVariable Property GR_MimicVoreBadEndMinTicks Auto ; Unused
 GlobalVariable Property GR_MimicVoreBadEndSimpleSlavery Auto
 
 GlobalVariable Property GR_MimicLoseGold Auto
@@ -45,6 +45,8 @@ Function Maintenance()
     RegisterForModEvent("GR_TrapStart", "StartVore")
     RegisterForModEvent("GR_TrapProgress", "ProgressVore")
     RegisterForModEvent("GR_TrapEscape", "StopVore")
+    RegisterForModEvent("GR_VoreDeath", "VoreDeath")
+    RegisterForModEvent("GR_MimicDispense", "MimicDispense")
     RegisterForSingleUpdate(2.0)
 EndFunction
 
@@ -58,6 +60,19 @@ EndEvent
 ; ==================================================
 ; EVENTS
 ; ==================================================
+
+Event MimicDispense(string eventName, string strArg, float numArg, form mimic)
+    currentMimic = mimic as BakaTrapMimic
+    originalChest = None
+    FindChest()
+    Debug("MimicDispense " + mimic + " as " + currentMimic + " chest=" + originalChest)
+    If currentMimic
+		GR_BakaMimicAddon addon = Game.FindClosestReferenceOfTypeFromRef(Game.GetFormFromFile(0x816, "GR_MimicPlacer.esp"), currentMimic, 10.0) as GR_BakaMimicAddon
+        If (addon) ; addon is unused but this only works for converted mimics
+            FindLootMoveToReference(currentMimic, false)
+        EndIf
+    EndIf
+EndEvent
 
 Event StartVore(string eventName, string trapType, float numArg, form mimic)
     If trapType != "mimic"
@@ -79,7 +94,6 @@ Event StartVore(string eventName, string trapType, float numArg, form mimic)
 
     MimicType = currentMimic.MimicType
     originalChest = None
-
 EndEvent
 
 Event ProgressVore(string eventName, string trapType, float numArg, form mimic)
@@ -103,7 +117,7 @@ Event ProgressVore(string eventName, string trapType, float numArg, form mimic)
         ProgressLoseGold()
     EndIf
 
-    ProgressBadEnd()
+    ; ProgressBadEnd()
 EndEvent
 
 Function StopVore(string eventName, string trapType, float numArg, form mimic)
@@ -184,13 +198,13 @@ Function StopFindLoot()
         EndIf
     EndIf
     While i < FoundLoot
-        FindLootMoveToPlayer()
+        FindLootMoveToReference(None, true)
         i += 1
     EndWhile
     FoundLoot = 0
 EndFunction
 
-Function FindLootMoveToPlayer()
+Function FindLootMoveToReference(ObjectReference mimic, Bool moveToPlayer)
     Form[] allItems = originalChest.GetContainerForms()
     Debug("FindLootMoveToPlayer() " + allItems)
     Form retrieved = allItems[Utility.RandomInt(0, allItems.Length - 1)]
@@ -198,8 +212,27 @@ Function FindLootMoveToPlayer()
     If retrieved.GetFormID() == 0xf
         count = Utility.RandomInt(1, ConfigMimicLootMaxGoldCount)
     EndIf
-    originalChest.RemoveItem(retrieved, count, false, PlayerRef)
-    Debug("Moved " + retrieved + " (" + count + ") to player")
+    If moveToPlayer
+        originalChest.RemoveItem(retrieved, count, false, PlayerRef)
+    Else
+        float plusX = -35
+        float plusY = -55
+        float angZ = mimic.GetAngleZ()
+        float moveX = (Math.sin(angZ) * plusY) + (Math.cos(angZ) * plusX)
+        float moveY = (Math.cos(angZ) * plusY) - (Math.sin(angZ) * plusX)
+        int i = 0
+        while i < count
+            int amount = Utility.RandomInt(1,4)
+            if amount + i > count
+                amount = count - i
+            EndIf
+            ObjectReference dropped = originalChest.DropObject(retrieved, amount)
+            dropped.MoveTo(mimic, moveX + Utility.RandomInt(-5, 5), moveY +  Utility.RandomInt(-5, 5), 35)
+            Debug.Notification("The chest ejected " + retrieved.GetName())
+            i += amount
+        endWhile
+    EndIf
+    Debug("Moved '" + retrieved.GetName() + "' (" + count + ") to " + mimic)
 EndFunction
 
 ; ==================================================
@@ -270,27 +303,42 @@ EndFunction
 
 Function StartLoseArmor()
     LostGear = 0
-    HeadGear = PlayerRef.GetWornForm(SLOT_HEAD)
-    BodyGear = PlayerRef.GetWornForm(SLOT_BODY)
-    HandsGear = PlayerRef.GetWornForm(SLOT_HANDS)
-    FeetGear = PlayerRef.GetWornForm(SLOT_FEET)
-    ForeArm = PlayerRef.GetWornForm(SLOT_FOREARMS)
-    AmuletGear = PlayerRef.GetWornForm(SLOT_AMULET)
-    CircletGear = PlayerRef.GetWornForm(SLOT_CIRCLET)
-    RingGear = PlayerRef.GetWornForm(SLOT_RING)
-    Calves = PlayerRef.GetWornForm(SLOT_CALVES)
-    Slot49 = PlayerRef.GetWornForm(SLOT_49) ; Skirt
-    Slot52 = PlayerRef.GetWornForm(SLOT_52) ; Panties
+    HeadGear = GetWornFormNonDD(SLOT_HEAD)
+    BodyGear = GetWornFormNonDD(SLOT_BODY)
+    HandsGear = GetWornFormNonDD(SLOT_HANDS)
+    FeetGear = GetWornFormNonDD(SLOT_FEET)
+    ForeArm = GetWornFormNonDD(SLOT_FOREARMS)
+    AmuletGear = GetWornFormNonDD(SLOT_AMULET)
+    CircletGear = GetWornFormNonDD(SLOT_CIRCLET)
+    RingGear = GetWornFormNonDD(SLOT_RING)
+    Calves = GetWornFormNonDD(SLOT_CALVES)
+    Slot49 = GetWornFormNonDD(SLOT_49) ; Skirt
+    Slot52 = GetWornFormNonDD(SLOT_52) ; Panties
 
     ShieldGear = PlayerRef.GetWornForm(SLOT_SHIELD)
     WeaponRight = PlayerRef.GetEquippedWeapon(False)
     WeaponLeft = PlayerRef.GetEquippedWeapon(True)
 EndFunction
 
+Form Function GetWornFormNonDD(int slot)
+    Form formItem = PlayerRef.GetWornForm(slot)
+    If formItem
+        If formItem.HasKeywordString("zad_InventoryDevice")
+            return None
+        EndIf
+        If formItem.HasKeywordString("zad_Lockable")
+            return None
+        EndIf
+    EndIf
+    return formItem
+EndFunction
+
 Function ProgressLoseArmor()  
     Debug("ProgressLoseArmor " + ConfigMimicLoseArmor + " LostGear=" + LostGear)   
     If ConfigMimicLoseArmor == 1 && LostGear == 0 && VoreTicks >= ConfigMimicLoseArmorMinTicks
-        If Utility.RandomFloat() < ConfigMimicLoseArmorChancePerTick
+        Float rand = Utility.RandomFloat()
+        Debug(rand + "/" + ConfigMimicLoseArmorChancePerTick)
+        If rand < ConfigMimicLoseArmorChancePerTick
             StealWornGear()
             LostGear = 1
             ConsequenceCnt += 1
@@ -404,59 +452,50 @@ EndFunction
 ; ==================================================
 
 Int ConfigMimicVoreBadEnd = 1
-Int ConfigVoreBadEndMinTicks = 11
 Int ConfigVoreBadEndSimpleSlavery = 0
 
-Function ConfigBadEnd()
-    ConfigMimicVoreBadEnd = GR_MimicVoreBadEnd.GetValueInt()
-    ConfigVoreBadEndMinTicks = GR_MimicVoreBadEndMinTicks.GetValueInt()
-    ConfigVoreBadEndSimpleSlavery = GR_MimicVoreBadEndSimpleSlavery.GetValueInt()
-
-    Debug(" VoreDeath=" + ConfigMimicVoreBadEnd + \
-          " VoreKillsAfterTicks=" + ConfigVoreBadEndMinTicks + \
-          " VoreBadEndSimpleSlavery=" + ConfigVoreBadEndSimpleSlavery )
-EndFunction
-
-Function ProgressBadEnd()
-    If MimicType == 1 && ConfigMimicVoreBadEnd && VoreTicks > ConfigVoreBadEndMinTicks
-        Debug("Vore killed the player VoreTicks=" + VoreTicks)
-        ConsFadeOutAndDeath() 
-    EndIf
-EndFunction
-
-Function ConsFadeOutAndDeath()
-    currentMimic.MimicShake()
-    FoundLoot = 0
-    Game.FadeOutGame(true, true, 0.0, 60.0)
-    Utility.Wait(1.5)
-    currentMimic.MimicShake()
-    Utility.Wait(2.5)
-    currentMimic.MimicShake()
-    Utility.Wait(1.5)
-    currentMimic.MimicShake()    
-    Utility.Wait(2.5)
-    currentMimic.MimicShake()
-    Utility.Wait(5)
-    currentMimic.MimicShake()
-    Utility.Wait(12)
-    currentMimic.MimicShake()
-    Utility.Wait(9)
+Event VoreDeath(string eventName, string strArg, float numArg, form mimic)
+    Debug("GR_VoreDeath " + eventName)
+    BlackFade(true)
+    Utility.Wait(3.0)
 
     If ConfigVoreBadEndSimpleSlavery == 1
-        Debug.MessageBox("Too weak for any more attempts to fight back, you simply give in to the abuse. " + \
-                        "As the tendrils explore every part of your body, your mind breaks and " + \
+        Debug.MessageBox("Too weak for any more attempts to struggle, you simple give in to the abuse. " + \
+                        "As the tendrils explore your body, gradually, your mind breaks and " + \
                         "you eventually pass out. You only awake as some strangers pull open the lid of the chest" + \ 
                         " and start dragging your helpless body away...")
-        Utility.Wait(8.0)
+        Utility.Wait(1.0)
         currentMimic.ResetTrap() ; Frees player
+        SendModEvent("GR_TrapEscape", "mimic") ; Force all update handling to stop
         SendModEvent("SSLV Entry")
     Else
         Debug.MessageBox("Worn down by the endless assault of the tentacles, you no longer have the strength to fight back. " + \
                         "You are helplessly trapped, slowly being digested as your sanity and consiousness fades away...")
-        Utility.Wait(3)
-        currentMimic.MimicShake()
         Game.GetPlayer().Kill()
+        Game.GetPlayer().DamageAV("Health", 10000)
+        Utility.Wait(1.0)
+        currentMimic.ResetTrap()
+        SendModEvent("GR_TrapEscape", "mimic") ; Force all update handling to stop
     EndIf
+
+    Utility.Wait(3.0)
+    BlackFade(false)
+EndEvent
+
+Function BlackFade(bool fadeOut)
+    if FadeOut
+        Game.FadeOutGame(false, true, 60.0, 0.0)
+    else
+        Game.FadeOutGame(false, true, 0.2, 3.0)
+    endIf
+EndFunction
+
+Function ConfigBadEnd()
+    ConfigMimicVoreBadEnd = GR_MimicVoreBadEnd.GetValueInt()
+    ConfigVoreBadEndSimpleSlavery = GR_MimicVoreBadEndSimpleSlavery.GetValueInt()
+
+    Debug(" VoreDeath=" + ConfigMimicVoreBadEnd + \
+          " VoreBadEndSimpleSlavery=" + ConfigVoreBadEndSimpleSlavery )
 EndFunction
 
 Function Debug(String msg)
