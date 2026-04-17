@@ -148,33 +148,22 @@ EndFunction
 ; ==================================================
 
 Int FoundLoot = 0
-Int ConfigMimicLoot = 1
-Int ConfigMimicLootMaxItemCount = 2
-Int ConfigMimicLootMaxGoldCount = 20
-Int ConfigMimicLootChanceAccumulates = 1
-Float ConfigMimicLootChancePerTick = 0.05
 
 Function ConfigFindLoot()
-    ConfigMimicLoot = GR_MimicLoot.GetValueInt()
-    ConfigMimicLootMaxItemCount = GR_MimicLootMaxItemCount.GetValueInt()
-    ConfigMimicLootMaxGoldCount = GR_MimicLootMaxGoldCount.GetValueInt()
-    ConfigMimicLootChanceAccumulates = GR_MimicLootChanceAccumulates.GetValueInt()
-    ConfigMimicLootChancePerTick = GR_MimicLootChancePerTick.GetValue()
-
-    Debug("Init settings MimicLoot=" + ConfigMimicLoot + \ 
-            " MaxItemCount=" + ConfigMimicLootMaxItemCount + \ 
-            " MaxGoldCount=" + ConfigMimicLootMaxGoldCount + \
-            " ChanceAccumulates=" + ConfigMimicLootChanceAccumulates + \
-            " ChancePerTick=" + ConfigMimicLootChancePerTick )
+    Debug("Init settings MimicLoot=" + GR_MimicLoot.GetValueInt() + \ 
+            " MaxItemCount=" + GR_MimicLootMaxItemCount.GetValueInt() + \ 
+            " MaxGoldCount=" + GR_MimicLootMaxGoldCount.GetValueInt() + \
+            " ChanceAccumulates=" + GR_MimicLootChanceAccumulates.GetValueInt() + \
+            " ChancePerTick=" + GR_MimicLootChancePerTick.GetValue() )
 EndFunction
 
 Function ProgressFindLoot()
-    If ConfigMimicLoot == 1
-        Float lootChance = ConfigMimicLootChancePerTick
-        If ConfigMimicLootChanceAccumulates
-            lootChance = VoreTicks * ConfigMimicLootChancePerTick
+    If GR_MimicLoot.GetValueInt() == 1
+        Float lootChance = GR_MimicLootChancePerTick.GetValue()
+        If GR_MimicLootChanceAccumulates.GetValueInt()
+            lootChance = VoreTicks * GR_MimicLootChancePerTick.GetValue()
         EndIf
-        If VoreTicks > 2 && FoundLoot < ConfigMimicLootMaxItemCount && Utility.RandomFloat() < lootChance
+        If VoreTicks > 2 && FoundLoot < GR_MimicLootMaxItemCount.GetValueInt() && Utility.RandomFloat() < lootChance
             FoundLoot += 1
             ConsequenceCnt += 1
         EndIf
@@ -210,7 +199,7 @@ Function FindLootMoveToReference(ObjectReference mimic, Bool moveToPlayer)
     Form retrieved = allItems[Utility.RandomInt(0, allItems.Length - 1)]
     Int count = 1
     If retrieved.GetFormID() == 0xf
-        count = Utility.RandomInt(1, ConfigMimicLootMaxGoldCount)
+        count = Utility.RandomInt(1, GR_MimicLootMaxGoldCount.GetValueInt())
     EndIf
     If moveToPlayer
         originalChest.RemoveItem(retrieved, count, false, PlayerRef)
@@ -254,29 +243,7 @@ int SLOT_CALVES = 0x00000100
 int SLOT_49 = 0x00080000      ; Skirt
 int SLOT_52 = 0x00400000      ; Panties
 
-; int SLOT_TAIL = 0x00000400 
-; int SLOT_LONGHAIR = 0x00000800
-; int SLOT_EARS = 0x00002000
-; int SLOT_44 = 0x00004000
-; int SLOT_45 = 0x00008000
-; int SLOT_46 = 0x00010000
-; int SLOT_47 = 0x00020000
-; int SLOT_48 = 0x00040000
-; int SLOT_50 = 0x00100000 ; DecapitateHead
-; int SLOT_51 = 0x00200000 ; Decapitate
-; int SLOT_53 = 0x00800000
-; int SLOT_54 = 0x01000000
-; int SLOT_55 = 0x02000000
-; int SLOT_56 = 0x04000000
-; int SLOT_57 = 0x08000000
-; int SLOT_58 = 0x10000000
-; int SLOT_59 = 0x20000000
-; int SLOT_60 = 0x40000000
-; int SLOT_61 = 0x80000000 ; FX01
-
-Int ConfigMimicLoseArmor = 1
 Int ConfigMimicLoseArmorMinTicks = 5 ; At least wait until the player is swalloed
-Float ConfigMimicLoseArmorChancePerTick = 0.10
 
 Int LostGear = 0
 Form HeadGear
@@ -296,9 +263,7 @@ Form WeaponRight
 Form WeaponLeft
 
 Function ConfigLoseArmor()
-    ConfigMimicLoseArmor = GR_MimicLoseArmor.GetValueInt()
-    ConfigMimicLoseArmorChancePerTick = GR_MimicLoseArmorChancePerTick.GetValue()
-    Debug("ConfigLoseArmor=" + ConfigMimicLoseArmor + " ChancePerTick=" + ConfigMimicLoseArmorChancePerTick + " MinTicks=" + ConfigMimicLoseArmorMinTicks)
+    Debug("ConfigLoseArmor=" + GR_MimicLoseArmor.GetValueInt() + " ChancePerTick=" + GR_MimicLoseArmorChancePerTick.GetValue() + " MinTicks=" + ConfigMimicLoseArmorMinTicks)
 EndFunction
 
 Function StartLoseArmor()
@@ -334,11 +299,11 @@ Form Function GetWornFormNonDD(int slot)
 EndFunction
 
 Function ProgressLoseArmor()  
-    Debug("ProgressLoseArmor " + ConfigMimicLoseArmor + " LostGear=" + LostGear)   
-    If ConfigMimicLoseArmor == 1 && LostGear == 0 && VoreTicks >= ConfigMimicLoseArmorMinTicks
+    Debug("ProgressLoseArmor " + GR_MimicLoseArmor.GetValueInt() + " LostGear=" + LostGear)   
+    If GR_MimicLoseArmor.GetValueInt() == 1 && LostGear == 0 && VoreTicks >= ConfigMimicLoseArmorMinTicks
         Float rand = Utility.RandomFloat()
-        Debug(rand + "/" + ConfigMimicLoseArmorChancePerTick)
-        If rand < ConfigMimicLoseArmorChancePerTick
+        Debug(rand + "/" + GR_MimicLoseArmorChancePerTick.GetValue())
+        If rand < GR_MimicLoseArmorChancePerTick.GetValue()
             StealWornGear()
             LostGear = 1
             ConsequenceCnt += 1
@@ -393,32 +358,20 @@ EndFunction
 MiscObject Property Septims Auto
 
 Int LostGold = 0
-
-Int ConfigMimicLoseGold = 1
 Int ConfigMimicLoseGoldMinTicks = 5
-Int ConfigMimicLoseGoldMin = 50
-Int ConfigMimicLoseGoldMax = 300
-Float ConfigMimicLoseGoldLvlScale = 1.08
-Float ConfigMimicLoseGoldChance = 0.3
 
 Function ConfigLoseGold()
-    ConfigMimicLoseGold = GR_MimicLoseGold.GetValueInt()
-    ConfigMimicLoseGoldMin = GR_MimicLoseGoldMin.GetValueInt()
-    ConfigMimicLoseGoldMax = GR_MimicLoseGoldMax.GetValueInt()
-    ConfigMimicLoseGoldLvlScale = GR_MimicLoseGoldScalePerLvl.GetValue()
-    ConfigMimicLoseGoldChance = GR_MimicLoseGoldChance.GetValue()
-
-    Debug("ConfigLoseGold=" + ConfigMimicLoseGold + \
-            " Min=" + ConfigMimicLoseGoldMin + \
-            " Max=" + ConfigMimicLoseGoldMax + \
-            " LvlScale=" + ConfigMimicLoseGoldLvlScale + \
-            " Chance=" + ConfigMimicLoseGoldChance + \
+    Debug("ConfigLoseGold=" + GR_MimicLoseGold.GetValueInt() + \
+            " Min=" + GR_MimicLoseGoldMin.GetValueInt() + \
+            " Max=" + GR_MimicLoseGoldMax.GetValueInt() + \
+            " LvlScale=" + GR_MimicLoseGoldScalePerLvl.GetValue() + \
+            " Chance=" + GR_MimicLoseGoldChance.GetValue() + \
             " MinTicks=" + ConfigMimicLoseGoldMinTicks )
 EndFunction
 
 Function ProgressLoseGold()
-    If ConfigMimicLoseGold && LostGold == 0 && VoreTicks >= ConfigMimicLoseGoldMinTicks
-        If Utility.RandomFloat() < ConfigMimicLoseGoldChance
+    If GR_MimicLoseGold.GetValueInt() && LostGold == 0 && VoreTicks >= ConfigMimicLoseGoldMinTicks
+        If Utility.RandomFloat() < GR_MimicLoseGoldChance.GetValue()
             LoseRandomGold()
             LostGold = 0 
             ConsequenceCnt += 1
@@ -435,8 +388,8 @@ Function LoseRandomGold()
         return
     endif
 
-    Float scaleFactor = Math.pow(ConfigMimicLoseGoldLvlScale, PlayerRef.GetLevel() as Float)
-    int amount = Utility.RandomInt(ConfigMimicLoseGoldMin, ConfigMimicLoseGoldMax)
+    Float scaleFactor = Math.pow(GR_MimicLoseGoldScalePerLvl.GetValue(), PlayerRef.GetLevel() as Float)
+    int amount = Utility.RandomInt(GR_MimicLoseGoldMin.GetValueInt(), GR_MimicLoseGoldMax.GetValueInt())
     if amount > playerGold
         amount = playerGold
     endif
@@ -451,15 +404,12 @@ EndFunction
 ; CONSEQUENCE - BAD END
 ; ==================================================
 
-Int ConfigMimicVoreBadEnd = 1
-Int ConfigVoreBadEndSimpleSlavery = 0
-
 Event VoreDeath(string eventName, string strArg, float numArg, form mimic)
     Debug("GR_VoreDeath " + eventName)
     BlackFade(true)
     Utility.Wait(3.0)
 
-    If ConfigVoreBadEndSimpleSlavery == 1
+    If GR_MimicVoreBadEndSimpleSlavery.GetValueInt() == 1
         Debug.MessageBox("Too weak for any more attempts to struggle, you simple give in to the abuse. " + \
                         "As the tendrils explore your body, gradually, your mind breaks and " + \
                         "you eventually pass out. You only awake as some strangers pull open the lid of the chest" + \ 
@@ -491,11 +441,8 @@ Function BlackFade(bool fadeOut)
 EndFunction
 
 Function ConfigBadEnd()
-    ConfigMimicVoreBadEnd = GR_MimicVoreBadEnd.GetValueInt()
-    ConfigVoreBadEndSimpleSlavery = GR_MimicVoreBadEndSimpleSlavery.GetValueInt()
-
-    Debug(" VoreDeath=" + ConfigMimicVoreBadEnd + \
-          " VoreBadEndSimpleSlavery=" + ConfigVoreBadEndSimpleSlavery )
+    Debug(" VoreDeath=" + GR_MimicVoreBadEnd.GetValueInt() + \
+          " VoreBadEndSimpleSlavery=" + GR_MimicVoreBadEndSimpleSlavery.GetValueInt() )
 EndFunction
 
 Function Debug(String msg)
