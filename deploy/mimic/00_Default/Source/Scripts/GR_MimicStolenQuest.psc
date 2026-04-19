@@ -60,57 +60,131 @@ Event OnInit()
     InitializeQuest()
 EndEvent
 
+Int Property SLOT_HEAD = 0x00000001 Auto
+Int Property SLOT_BODY = 0x00000004 Auto
+Int Property SLOT_HANDS = 0x00000008 Auto
+Int Property SLOT_FEET = 0x00000080 Auto
+Int Property SLOT_FOREARMS = 0x00000010 Auto
+Int Property SLOT_AMULET = 0x00000020 Auto
+Int Property SLOT_CIRCLET = 0x00001000 Auto
+Int Property SLOT_RING = 0x00000040 Auto
+Int Property SLOT_CALVES = 0x00000100 Auto
+Int Property SLOT_49 = 0x00080000 Auto
+Int Property SLOT_52 = 0x00400000 Auto
+Int Property SLOT_SHIELD = 0x200 Auto
+Int SLOT_RIGHTHAND = -1
+Int SLOT_LEFTHAND = -2
+
 Function InitializeQuest()
     ; Quest starts with no objectives displayed
     Debug("GR_MimicStolenQuest initialized")
 EndFunction
 
-; Called from GR_MimicConsequences when items are stolen - displays the objective
-Function MarkItemStolen(String itemCategory)
-    Debug("MarkItemStolen: " + itemCategory)
-    If itemCategory == "Head"
-		HeadGearFound = False
-        SetObjectiveDisplayed(STAGE_HEAD, true)
-    ElseIf itemCategory == "Body"
-		BodyGearFound = False
-        SetObjectiveDisplayed(STAGE_BODY, true)
-    ElseIf itemCategory == "Hands"
-		HandsGearFound = False
-        SetObjectiveDisplayed(STAGE_HANDS, true)
-    ElseIf itemCategory == "Feet"
-		FeetGearFound = False
-        SetObjectiveDisplayed(STAGE_FEET, true)
-    ElseIf itemCategory == "Forearm"
-		ForeArmFound = False
-        SetObjectiveDisplayed(STAGE_FOREARM, true)
-    ElseIf itemCategory == "Amulet"
-		AmuletFound = False
-        SetObjectiveDisplayed(STAGE_AMULET, true)
-    ElseIf itemCategory == "Circlet"
-		CircletFound = False
-        SetObjectiveDisplayed(STAGE_CIRCLET, true)
-    ElseIf itemCategory == "Ring"
-		RingFound = False
-        SetObjectiveDisplayed(STAGE_RING, true)
-    ElseIf itemCategory == "Calves"
-		CalvesFound = False
-        SetObjectiveDisplayed(STAGE_CALVES, true)
-    ElseIf itemCategory == "Skirt"
-		SkirtFound = False
-        SetObjectiveDisplayed(STAGE_SKIRT, true)
-    ElseIf itemCategory == "Panties"
-		PantiesFound = False
-        SetObjectiveDisplayed(STAGE_PANTIES, true)
-    ElseIf itemCategory == "Shield"
-		ShieldFound = False
-        SetObjectiveDisplayed(STAGE_SHIELD, true)
-    ElseIf itemCategory == "WeaponRight"
-		WeaponRightFound = False
-        SetObjectiveDisplayed(STAGE_WEAPON_RIGHT, true)
-    ElseIf itemCategory == "WeaponLeft"
-		WeaponLeftFound = False
-        SetObjectiveDisplayed(STAGE_WEAPON_LEFT, true)
+Int Function GetStageFromSlot(Int slotID)
+    If slotID == SLOT_HEAD
+        return STAGE_HEAD
+    ElseIf slotID == SLOT_BODY
+        return STAGE_BODY
+    ElseIf slotID == SLOT_HANDS
+        return STAGE_HANDS
+    ElseIf slotID == SLOT_FEET
+        return STAGE_FEET
+    ElseIf slotID == SLOT_FOREARMS
+        return STAGE_FOREARM
+    ElseIf slotID == SLOT_AMULET
+        return STAGE_AMULET
+    ElseIf slotID == SLOT_CIRCLET
+        return STAGE_CIRCLET
+    ElseIf slotID == SLOT_RING
+        return STAGE_RING
+    ElseIf slotID == SLOT_CALVES
+        return STAGE_CALVES
+    ElseIf slotID == SLOT_49
+        return STAGE_SKIRT
+    ElseIf slotID == SLOT_52
+        return STAGE_PANTIES
+    ElseIf slotID == SLOT_SHIELD
+        return STAGE_SHIELD
+    ElseIf slotID == SLOT_RIGHTHAND
+        return STAGE_WEAPON_RIGHT
+    ElseIf slotID == SLOT_LEFTHAND
+        return STAGE_WEAPON_LEFT
     EndIf
+    return 0
+EndFunction
+
+ReferenceAlias Function GetAliasFromSlot(Int slotID)
+    If slotID == SLOT_HEAD
+        return HeadGear
+    ElseIf slotID == SLOT_BODY
+        return BodyGear
+    ElseIf slotID == SLOT_HANDS
+        return HandsGear
+    ElseIf slotID == SLOT_FEET
+        return FeetGear
+    ElseIf slotID == SLOT_FOREARMS
+        return ForeArmGear
+    ElseIf slotID == SLOT_AMULET
+        return AmuletGear
+    ElseIf slotID == SLOT_CIRCLET
+        return CircletGear
+    ElseIf slotID == SLOT_RING
+        return RingGear
+    ElseIf slotID == SLOT_CALVES
+        return CalvesGear
+    ElseIf slotID == SLOT_49
+        return SkirtGear
+    ElseIf slotID == SLOT_52
+        return PantiesGear
+    ElseIf slotID == SLOT_SHIELD
+        return ShieldGear
+    ElseIf slotID == SLOT_RIGHTHAND
+        return WeaponRight
+    ElseIf slotID == SLOT_LEFTHAND
+        return WeaponLeft
+    EndIf
+    return None
+EndFunction
+
+Bool Function SetFoundFlagFromSlot(Int slotID, Bool value)
+    If slotID == SLOT_HEAD
+        HeadGearFound = value
+    ElseIf slotID == SLOT_BODY
+        BodyGearFound = value
+    ElseIf slotID == SLOT_HANDS
+        HandsGearFound = value
+    ElseIf slotID == SLOT_FEET
+        FeetGearFound = value
+    ElseIf slotID == SLOT_FOREARMS
+        ForeArmFound = value
+    ElseIf slotID == SLOT_AMULET
+        AmuletFound = value
+    ElseIf slotID == SLOT_CIRCLET
+        CircletFound = value
+    ElseIf slotID == SLOT_RING
+        RingFound = value
+    ElseIf slotID == SLOT_CALVES
+        CalvesFound = value
+    ElseIf slotID == SLOT_49
+        SkirtFound = value
+    ElseIf slotID == SLOT_52
+        PantiesFound = value
+    ElseIf slotID == SLOT_SHIELD
+        ShieldFound = value
+    ElseIf slotID == SLOT_RIGHTHAND
+        WeaponRightFound = value
+    ElseIf slotID == SLOT_LEFTHAND
+        WeaponLeftFound = value
+    EndIf
+    return true
+EndFunction
+
+; Called from GR_MimicConsequences when items are stolen - displays the objective
+Function MarkItemStolen(Int slotID)
+    Debug("MarkItemStolen slot: " + slotID)
+    Int stage = GetStageFromSlot(slotID)
+    SetFoundFlagFromSlot(slotID, false)
+    SetObjectiveDisplayed(stage, true)
 EndFunction
 
 ; Called when items are recovered from the chest - marks objective complete
@@ -190,37 +264,12 @@ Function ResetTracking()
     WeaponLeftFound = True
 EndFunction
 
-Function AddDroppedItemToAliasByCategory(String itemCategory, ObjectReference droppedItem)
-    ; Add dropped item reference to the appropriate alias based on category
-    Debug("Added " + droppedItem + " to " + itemCategory + " alias")
-    If itemCategory == "Head"
-        HeadGear.ForceRefTo(droppedItem)
-    ElseIf itemCategory == "Body"
-        BodyGear.ForceRefTo(droppedItem)
-    ElseIf itemCategory == "Hands"
-        HandsGear.ForceRefTo(droppedItem)
-    ElseIf itemCategory == "Feet"
-        FeetGear.ForceRefTo(droppedItem)
-    ElseIf itemCategory == "Forearm"
-        ForeArmGear.ForceRefTo(droppedItem)
-    ElseIf itemCategory == "Amulet"
-        AmuletGear.ForceRefTo(droppedItem)
-    ElseIf itemCategory == "Circlet"
-        CircletGear.ForceRefTo(droppedItem)
-    ElseIf itemCategory == "Ring"
-        RingGear.ForceRefTo(droppedItem)
-    ElseIf itemCategory == "Calves"
-        CalvesGear.ForceRefTo(droppedItem)
-    ElseIf itemCategory == "Skirt"
-        SkirtGear.ForceRefTo(droppedItem)
-    ElseIf itemCategory == "Panties"
-        PantiesGear.ForceRefTo(droppedItem)
-    ElseIf itemCategory == "Shield"
-        ShieldGear.ForceRefTo(droppedItem)
-    ElseIf itemCategory == "WeaponRight"
-        WeaponRight.ForceRefTo(droppedItem)
-    ElseIf itemCategory == "WeaponLeft"
-        WeaponLeft.ForceRefTo(droppedItem)
+Function AddDroppedItemToAliasByCategory(Int slotID, ObjectReference droppedItem)
+    ; Add dropped item reference to the appropriate alias based on slot ID
+    Debug("Added " + droppedItem + " to slot " + slotID + " alias")
+    ReferenceAlias targetAlias = GetAliasFromSlot(slotID)
+    If targetAlias
+        targetAlias.ForceRefTo(droppedItem)
     EndIf
 EndFunction
 

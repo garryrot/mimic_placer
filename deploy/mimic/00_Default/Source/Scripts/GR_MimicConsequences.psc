@@ -224,45 +224,14 @@ Function FindLootMoveToReference(ObjectReference mimic, Bool moveToPlayer)
     Debug("Moved '" + retrieved.GetName() + "' (" + count + ") to " + mimic)
 EndFunction
 
-String Function IdentifyStolenItemCategory(Form item)
-    If item == HeadGear && StolenHeadGear
-        return "Head"
-    ElseIf item == BodyGear && StolenBodyGear
-        return "Body"
-    ElseIf item == HandsGear && StolenHandsGear
-        return "Hands"
-    ElseIf item == FeetGear && StolenFeetGear
-        return "Feet"
-    ElseIf item == ForeArm && StolenForeArm
-        return "Forearm"
-    ElseIf item == AmuletGear && StolenAmuletGear
-        return "Amulet"
-    ElseIf item == CircletGear && StolenCircletGear
-        return "Circlet"
-    ElseIf item == RingGear && StolenRingGear
-        return "Ring"
-    ElseIf item == Calves && StolenCalves
-        return "Calves"
-    ElseIf item == Slot49 && StolenSlot49
-        return "Skirt"
-    ElseIf item == Slot52 && StolenSlot52
-        return "Panties"
-    ElseIf item == ShieldGear && StolenShieldGear
-        return "Shield"
-    ElseIf item == WeaponRight && StolenWeaponRight
-        return "WeaponRight"
-    ElseIf item == WeaponLeft && StolenWeaponLeft
-        return "WeaponLeft"
-    EndIf
-    return ""
-EndFunction
+
 
 ; ==================================================
 ; CONSEQUENCE - STEAL ARMOR
 ; ==================================================
 
-Int SLOT_RIGHTHAND = 0
-Int SLOT_LEFTHAND = 1
+Int SLOT_RIGHTHAND = -2 ; Not real flags
+Int SLOT_LEFTHAND = -1 ; Not real flags
 Int SLOT_SHIELD = 0x200
 Int SLOT_HEAD = 0x00000001
 Int SLOT_BODY = 0x00000004
@@ -276,7 +245,7 @@ int SLOT_CALVES = 0x00000100
 int SLOT_49 = 0x00080000      ; Skirt
 int SLOT_52 = 0x00400000      ; Panties
 
-Int ConfigMimicLoseArmorMinTicks = 5 ; At least wait until the player is swalloed
+Int ConfigMimicLoseArmorMinTicks = 5 ; Waiting time until the player animation ingulfs the player
 
 Int LostGear = 0
 Form HeadGear
@@ -375,62 +344,62 @@ Function StealWornGear()
     MimicStolenQuest.LootContainer.ForceRefTo(originalChest)
     Debug("ForcedRef " + MimicStolenQuest.LootContainer.GetRef())
 
-    DropIfRandom(1.0, HeadGear, "Head")
-    DropIfRandom(1.0, BodyGear, "Body")
-    DropIfRandom(1.0, HandsGear, "Hands")
-    DropIfRandom(1.0, FeetGear, "Feet")
-    DropIfRandom(0.7, ForeArm, "Forearm")
-    DropIfRandom(0.6, AmuletGear, "Amulet")
-    DropIfRandom(0.6, CircletGear, "Circlet")
-    DropIfRandom(0.6, RingGear, "Ring")
-    DropIfRandom(0.7, Calves, "Calves")
-    DropIfRandom(0.8, Slot49, "Skirt")
-    DropIfRandom(0.8, Slot52, "Panties")
-    DropIfRandom(1.0, ShieldGear, "Shield")
+    DropIfRandom(1.0, HeadGear, SLOT_HEAD)
+    DropIfRandom(1.0, BodyGear, SLOT_BODY)
+    DropIfRandom(1.0, HandsGear, SLOT_HANDS)
+    DropIfRandom(1.0, FeetGear, SLOT_FEET)
+    DropIfRandom(0.7, ForeArm, SLOT_FOREARMS)
+    DropIfRandom(0.6, AmuletGear, SLOT_AMULET)
+    DropIfRandom(0.6, CircletGear, SLOT_CIRCLET)
+    DropIfRandom(0.6, RingGear, SLOT_RING)
+    DropIfRandom(0.7, Calves, SLOT_CALVES)
+    DropIfRandom(0.8, Slot49, SLOT_49)
+    DropIfRandom(0.8, Slot52, SLOT_52)
+    DropIfRandom(1.0, ShieldGear, SLOT_SHIELD)
     If PlayerRef.GetEquippedWeapon(False)
-        DropIfRandom(1.0, WeaponRight, "WeaponRight")
+        DropIfRandom(1.0, WeaponRight, SLOT_RIGHTHAND)
     EndIf
     If PlayerRef.GetEquippedWeapon(True)
-        DropIfRandom(1.0, WeaponLeft, "WeaponLeft")
+        DropIfRandom(1.0, WeaponLeft, SLOT_LEFTHAND)
     EndIf
     Debug.Notification("The trap swallowed your clothes...")
 EndFunction
 
-Bool Function DropIfRandom(Float chance, Form item, String itemCategory)
+Bool Function DropIfRandom(Float chance, Form item, Int slotID)
     If item
         If Utility.RandomFloat() < chance
             ObjectReference droppedItem = PlayerRef.DropObject(item, 1)
-            MimicStolenQuest.AddDroppedItemToAliasByCategory(itemCategory, droppedItem)
+            MimicStolenQuest.AddDroppedItemToAliasByCategory(slotID, droppedItem)
             originalChest.AddItem(droppedItem, 1)
-            MimicStolenQuest.MarkItemStolen(itemCategory)
+            MimicStolenQuest.MarkItemStolen(slotID)
 
-            If itemCategory == "Head"
+            If slotID == SLOT_HEAD
                 StolenHeadGear = True
-            ElseIf itemCategory == "Body"
+            ElseIf slotID == SLOT_BODY
                 StolenBodyGear = True
-            ElseIf itemCategory == "Hands"
+            ElseIf slotID == SLOT_HANDS
                 StolenHandsGear = True
-            ElseIf itemCategory == "Feet"
+            ElseIf slotID == SLOT_FEET
                 StolenFeetGear = True
-            ElseIf itemCategory == "Forearm"
+            ElseIf slotID == SLOT_FOREARMS
                 StolenForeArm = True
-            ElseIf itemCategory == "Amulet"
+            ElseIf slotID == SLOT_AMULET
                 StolenAmuletGear = True
-            ElseIf itemCategory == "Circlet"
+            ElseIf slotID == SLOT_CIRCLET
                 StolenCircletGear = True
-            ElseIf itemCategory == "Ring"
+            ElseIf slotID == SLOT_RING
                 StolenRingGear = True
-            ElseIf itemCategory == "Calves"
+            ElseIf slotID == SLOT_CALVES
                 StolenCalves = True
-            ElseIf itemCategory == "Skirt"
+            ElseIf slotID == SLOT_49
                 StolenSlot49 = True
-            ElseIf itemCategory == "Panties"
+            ElseIf slotID == SLOT_52
                 StolenSlot52 = True
-            ElseIf itemCategory == "Shield"
+            ElseIf slotID == SLOT_SHIELD
                 StolenShieldGear = True
-            ElseIf itemCategory == "WeaponRight"
+            ElseIf slotID == SLOT_RIGHTHAND
                 StolenWeaponRight = True
-            ElseIf itemCategory == "WeaponLeft"
+            ElseIf slotID == SLOT_LEFTHAND
                 StolenWeaponLeft = True
             EndIf
             return true
