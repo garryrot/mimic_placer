@@ -7,8 +7,8 @@ GR_MimicStolenQuest Property MimicStolenQuest Auto
 GlobalVariable Property GR_MimicLoot Auto
 GlobalVariable Property GR_MimicLootMaxItemCount Auto
 GlobalVariable Property GR_MimicLootMaxGoldCount Auto
-GlobalVariable Property GR_MimicLootChanceAccumulates Auto
-GlobalVariable Property GR_MimicLootChancePerTick Auto
+GlobalVariable Property GR_MimicLootChanceAccumulates Auto ; Chance
+GlobalVariable Property GR_MimicLootChancePerTick Auto ; Chance
 
 GlobalVariable Property GR_MimicVoreBadEnd Auto
 GlobalVariable Property GR_MimicVoreBadEndMinTicks Auto ; Unused
@@ -17,11 +17,11 @@ GlobalVariable Property GR_MimicVoreBadEndSimpleSlavery Auto
 GlobalVariable Property GR_MimicLoseGold Auto
 GlobalVariable Property GR_MimicLoseGoldMin Auto
 GlobalVariable Property GR_MimicLoseGoldMax Auto
-GlobalVariable Property GR_MimicLoseGoldChance Auto
+GlobalVariable Property GR_MimicLoseGoldChance Auto ; Chance?
 GlobalVariable Property GR_MimicLoseGoldScalePerLvl Auto
 
 GlobalVariable Property GR_MimicLoseArmor Auto
-GlobalVariable Property GR_MimicLoseArmorChancePerTick Auto
+GlobalVariable Property GR_MimicLoseArmorChancePerTick Auto ; Chance
 
 ; State
 BakaTrapMimic currentMimic
