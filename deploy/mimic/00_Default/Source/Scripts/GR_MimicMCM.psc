@@ -46,16 +46,28 @@ Int _oidCreditsAbout
 Int _oidDestroyAllMimics
 
 Int Function GetVersion()
-    return 3
+    return 4
+EndFunction
+
+Function InitConfig()
+    ModName = "TNTR: Not So Obvious Mimics"
+    Pages = new String[4]
+    Pages[0] = "Placement"
+    Pages[1] = "Outcomes"
+    Pages[2] = "Debug"
+    Pages[3] = "Credits"
 EndFunction
 
 Event OnConfigInit()
-    ModName = "TNTR: Not So Obvious Mimics"
-    Pages = new String[3]
-    Pages[0] = "Mimic Placement"
-    Pages[1] = "Debug"
-    Pages[2] = "Credits"
+    InitConfig()
 EndEvent
+
+event OnVersionUpdate(int aVersion)
+    If CurrentVersion < aVersion
+        Debug.Trace("[omnom] MCM: Updating MCM version to " + GetVersion())
+        InitConfig()
+    EndIf
+endEvent
 
 Event OnPageReset(String page)
     SetTitleText("TNTR: Not So Obvious Mimics")
@@ -68,86 +80,86 @@ Event OnPageReset(String page)
         return
     ElseIf page == "Debug"
         AddHeaderOption("Actions")
-        _oidCheatNotifyMimics = AddToggleOption("Cheat notify mimics", GetBool(MimicConfig.GR_MimicCheatNotifyMimics))
+        _oidCheatNotifyMimics = AddToggleOption("Notify on mimic creation", GetBool(MimicConfig.GR_MimicCheatNotifyMimics))
         _oidDumpMimicsNow = AddTextOption("Dump placed mimics to papyrus...", "")
         _oidAddDebugSpells = AddTextOption("Add debug spells", "")
 
         AddHeaderOption("Danger Zone")
         _oidDestroyAllMimics = AddTextOption("Destroy ALL placed mimics", "")
         return
+    ElseIf page == "Placement"
+        AddHeaderOption("Mimic Distribution")
+        Int distDependentFlags = 0
+        If !GetBool(MimicConfig.GR_MimicDistributeMimics)
+            distDependentFlags = OPTION_FLAG_DISABLED
+        EndIf
+
+        _oidMimicDistributeMimics = AddToggleOption("Distribute mimics", GetBool(MimicConfig.GR_MimicDistributeMimics))
+        _oidScanRadius = AddSliderOption("Scan radius", MimicConfig.GR_MimicScanRadius.GetValue(), "{0}", distDependentFlags)
+        _oidScanInterval = AddSliderOption("Scan interval", MimicConfig.GR_MimicScanInterval.GetValue(), "{1}", distDependentFlags)
+        _oidMimicChance = AddSliderOption("Mimic chance", MimicConfig.GR_MimicChance.GetValue(), "{2}", distDependentFlags)
+        _oidMimicWeightVore = AddSliderOption("Weight vore", MimicConfig.GR_MimicWeightVore.GetValue(), "{1}", distDependentFlags)
+        _oidMimicWeightSex = AddSliderOption("Weight sex", MimicConfig.GR_MimicWeightSex.GetValue(), "{1}", distDependentFlags)
+        _oidMimicWeightInstant = AddSliderOption("Weight instant", MimicConfig.GR_MimicWeightInstant.GetValue(), "{1}", distDependentFlags)
+        _oidChestsMaxAllowedRescale = AddSliderOption("Max allowed chest rescale", MimicConfig.GR_MimicChestsMaxAllowedRescale.GetValue(), "{2}", distDependentFlags)
+
+        SetCursorPosition(1)
+        AddHeaderOption("Config Files")
+        _oidLoadConfig = AddTextOption("Load config file...", "")
+        _oidSaveConfig = AddTextOption("Store config file...", "")
+        AddEmptyOption()
+    Else
+        Int trapDefeatDependentFlags = 0
+        If !HasLoadedMod("GR_TrapDefeat.esp")
+            trapDefeatDependentFlags = OPTION_FLAG_DISABLED
+        EndIf
+
+        Int stealDependentFlags = trapDefeatDependentFlags
+        If !GetBool(MimicConfig.GR_MimicLoseArmor)
+            stealDependentFlags = OPTION_FLAG_DISABLED
+        EndIf
+        
+        Int loseGoldDependentFlags = trapDefeatDependentFlags
+        If !GetBool(MimicConfig.GR_MimicLoseGold)
+            loseGoldDependentFlags = OPTION_FLAG_DISABLED
+        EndIf
+
+        Int badEndDependentFlags = trapDefeatDependentFlags
+        If !GetBool(MimicConfig.GR_MimicVoreBadEnd)
+            badEndDependentFlags = OPTION_FLAG_DISABLED
+        EndIf
+
+        Int findLootDependentFlags = trapDefeatDependentFlags
+        If !GetBool(MimicConfig.GR_MimicLoot)
+            findLootDependentFlags = OPTION_FLAG_DISABLED
+        EndIf
+
+        If trapDefeatDependentFlags
+            _oidHelpConsequencesDisabled = AddTextOption("Consequences Disabled", "")
+        EndIf
+
+        AddHeaderOption("Mimics steal loot")
+        _oidMimicLoseArmor = AddToggleOption("Enable losing armor", GetBool(MimicConfig.GR_MimicLoseArmor), trapDefeatDependentFlags)
+        _oidMimicLoseArmorChancePerTick = AddSliderOption("Lose armor chance per tick", MimicConfig.GR_MimicLoseArmorChancePerTick.GetValue(), "{2}", stealDependentFlags)
+
+        _oidMimicLoseGold = AddToggleOption("Lose gold", GetBool(MimicConfig.GR_MimicLoseGold), stealDependentFlags)
+        _oidMimicLoseGoldMin = AddSliderOption("Lose gold min", MimicConfig.GR_MimicLoseGoldMin.GetValue(), "{0}", loseGoldDependentFlags)
+        _oidMimicLoseGoldMax = AddSliderOption("Lose gold max", MimicConfig.GR_MimicLoseGoldMax.GetValue(), "{0}", loseGoldDependentFlags)
+        _oidMimicLoseGoldChance = AddSliderOption("Lose gold chance", MimicConfig.GR_MimicLoseGoldChance.GetValue(), "{2}", loseGoldDependentFlags)
+        _oidMimicLoseGoldScalePerLvl = AddSliderOption("Lose gold scale per lvl", MimicConfig.GR_MimicLoseGoldScalePerLvl.GetValue(), "{2}", loseGoldDependentFlags)
+
+        AddHeaderOption("Vore Consequences")
+        _oidMimicVoreBadEnd = AddToggleOption("Bad End", GetBool(MimicConfig.GR_MimicVoreBadEnd), trapDefeatDependentFlags)
+        _oidMimicVoreBadEndSimpleSlavery = AddToggleOption("Bad End is Simple Slavery", GetBool(MimicConfig.GR_MimicVoreBadEndSimpleSlavery), badEndDependentFlags)
+
+        SetCursorPosition(1)
+        AddHeaderOption("Mimics contain loot")
+        _oidMimicLoot = AddToggleOption("Enable finding loot", GetBool(MimicConfig.GR_MimicLoot), trapDefeatDependentFlags)
+        _oidMimicLootMaxItemCount = AddSliderOption("Max items", MimicConfig.GR_MimicLootMaxItemCount.GetValue(), "{0}",findLootDependentFlags)
+        _oidMimicLootMaxGoldCount = AddSliderOption("Max gold", MimicConfig.GR_MimicLootMaxGoldCount.GetValue(), "{0}",findLootDependentFlags)
+        _oidMimicLootChancePerTick = AddSliderOption("Loot chance (per tick)", MimicConfig.GR_MimicLootChancePerTick.GetValue(), "{2}",findLootDependentFlags)
+        _oidMimicLootChanceAccumulates = AddToggleOption("Chance accumulates", GetBool(MimicConfig.GR_MimicLootChanceAccumulates),findLootDependentFlags)
     EndIf
-
-    Int distDependentFlags = 0
-    If !GetBool(MimicConfig.GR_MimicDistributeMimics)
-        distDependentFlags = OPTION_FLAG_DISABLED
-    EndIf
-
-    Int trapDefeatDependentFlags = 0
-    If !HasLoadedMod("GR_TrapDefeat.esp")
-        trapDefeatDependentFlags = OPTION_FLAG_DISABLED
-    EndIf
-
-    Int stealDependentFlags = trapDefeatDependentFlags
-    If !GetBool(MimicConfig.GR_MimicLoseArmor)
-        stealDependentFlags = OPTION_FLAG_DISABLED
-    EndIf
-    
-    Int loseGoldDependentFlags = trapDefeatDependentFlags
-    If !GetBool(MimicConfig.GR_MimicLoseGold)
-        loseGoldDependentFlags = OPTION_FLAG_DISABLED
-    EndIf
-
-    Int badEndDependentFlags = trapDefeatDependentFlags
-    If !GetBool(MimicConfig.GR_MimicVoreBadEnd)
-        badEndDependentFlags = OPTION_FLAG_DISABLED
-    EndIf
-
-    Int findLootDependentFlags = trapDefeatDependentFlags
-    If !GetBool(MimicConfig.GR_MimicLoot)
-        findLootDependentFlags = OPTION_FLAG_DISABLED
-    EndIf
-
-    AddHeaderOption("Actions")
-    _oidLoadConfig = AddTextOption("Load config file...", "")
-    _oidSaveConfig = AddTextOption("Store config file...", "")
-    AddEmptyOption()
-
-    AddHeaderOption("Distribution")
-    _oidMimicDistributeMimics = AddToggleOption("Distribute mimics", GetBool(MimicConfig.GR_MimicDistributeMimics))
-    _oidScanRadius = AddSliderOption("Scan radius", MimicConfig.GR_MimicScanRadius.GetValue(), "{0}", distDependentFlags)
-    _oidScanInterval = AddSliderOption("Scan interval", MimicConfig.GR_MimicScanInterval.GetValue(), "{1}", distDependentFlags)
-    _oidMimicChance = AddSliderOption("Mimic chance", MimicConfig.GR_MimicChance.GetValue(), "{2}", distDependentFlags)
-    _oidMimicWeightVore = AddSliderOption("Weight vore", MimicConfig.GR_MimicWeightVore.GetValue(), "{1}", distDependentFlags)
-    _oidMimicWeightSex = AddSliderOption("Weight sex", MimicConfig.GR_MimicWeightSex.GetValue(), "{1}", distDependentFlags)
-    _oidMimicWeightInstant = AddSliderOption("Weight instant", MimicConfig.GR_MimicWeightInstant.GetValue(), "{1}", distDependentFlags)
-    _oidChestsMaxAllowedRescale = AddSliderOption("Max allowed chest rescale", MimicConfig.GR_MimicChestsMaxAllowedRescale.GetValue(), "{2}", distDependentFlags)
-
-    SetCursorPosition(1)
-    If trapDefeatDependentFlags
-        _oidHelpConsequencesDisabled = AddTextOption("Consequences Disabled", "")
-    EndIf
-
-    AddHeaderOption("Mimics contain loot")
-    _oidMimicLoot = AddToggleOption("Enable finding loot", GetBool(MimicConfig.GR_MimicLoot), trapDefeatDependentFlags)
-    _oidMimicLootMaxItemCount = AddSliderOption("Max items", MimicConfig.GR_MimicLootMaxItemCount.GetValue(), "{0}",findLootDependentFlags)
-    _oidMimicLootMaxGoldCount = AddSliderOption("Max gold", MimicConfig.GR_MimicLootMaxGoldCount.GetValue(), "{0}",findLootDependentFlags)
-    _oidMimicLootChancePerTick = AddSliderOption("Loot chance (per tick)", MimicConfig.GR_MimicLootChancePerTick.GetValue(), "{2}",findLootDependentFlags)
-    _oidMimicLootChanceAccumulates = AddToggleOption("Chance accumulates", GetBool(MimicConfig.GR_MimicLootChanceAccumulates),findLootDependentFlags)
-
-    AddHeaderOption("Mimics steal loot")
-    _oidMimicLoseArmor = AddToggleOption("Enable losing armor", GetBool(MimicConfig.GR_MimicLoseArmor), trapDefeatDependentFlags)
-    _oidMimicLoseArmorChancePerTick = AddSliderOption("Lose armor chance per tick", MimicConfig.GR_MimicLoseArmorChancePerTick.GetValue(), "{2}", stealDependentFlags)
-
-    _oidMimicLoseGold = AddToggleOption("Lose gold", GetBool(MimicConfig.GR_MimicLoseGold), stealDependentFlags)
-    _oidMimicLoseGoldMin = AddSliderOption("Lose gold min", MimicConfig.GR_MimicLoseGoldMin.GetValue(), "{0}", loseGoldDependentFlags)
-    _oidMimicLoseGoldMax = AddSliderOption("Lose gold max", MimicConfig.GR_MimicLoseGoldMax.GetValue(), "{0}", loseGoldDependentFlags)
-    _oidMimicLoseGoldChance = AddSliderOption("Lose gold chance", MimicConfig.GR_MimicLoseGoldChance.GetValue(), "{2}", loseGoldDependentFlags)
-    _oidMimicLoseGoldScalePerLvl = AddSliderOption("Lose gold scale per lvl", MimicConfig.GR_MimicLoseGoldScalePerLvl.GetValue(), "{2}", loseGoldDependentFlags)
-
-    AddHeaderOption("Bad end")
-    _oidMimicVoreBadEnd = AddToggleOption("Vore bad end", GetBool(MimicConfig.GR_MimicVoreBadEnd), trapDefeatDependentFlags)
-    ; _oidMimicVoreBadEndMinTicks = AddSliderOption("Vore bad end min ticks", MimicConfig.GR_MimicVoreBadEndMinTicks.GetValue(), "{0}", badEndDependentFlags)
-    _oidMimicVoreBadEndSimpleSlavery = AddToggleOption("Vore bad end simple slavery", GetBool(MimicConfig.GR_MimicVoreBadEndSimpleSlavery), badEndDependentFlags)
 EndEvent
 
 Event OnOptionSelect(Int option)
@@ -332,11 +344,11 @@ Event OnOptionHighlight(Int option)
     ElseIf option == _oidSaveConfig
         SetInfoText("Save all local/MCM settings to json. This allows you to reload them later.")
     ElseIf option == _oidAddDebugSpells
-        SetInfoText("Adds spells for mimic creation / destruction to the player.")
+        SetInfoText("Adds spells for mimic creation / destruction.")
     ElseIf option == _oidDumpMimicsNow
         SetInfoText("This lists every single placed mimic (in the entire world) and dumps them to Papyrus log.")
     ElseIf option == _oidCheatNotifyMimics
-        SetInfoText("Show a notification whenever a mimic is created (this is kind of a cheat)")
+        SetInfoText("Show a notification whenever a mimic is created (this is a cheat)")
     ElseIf option == _oidMimicDistributeMimics
         SetInfoText("Replace boss chests in nearby loaded cell with mimics.")
     ElseIf option == _oidScanRadius
@@ -378,11 +390,9 @@ Event OnOptionHighlight(Int option)
     ElseIf option == _oidMimicLoseGoldScalePerLvl
         SetInfoText("Level scaling multiplier applied to lost gold amount.")
     ElseIf option == _oidMimicVoreBadEnd
-        SetInfoText("Enable fatal bad end for vore mimic type.")
-    ElseIf option == _oidMimicVoreBadEndMinTicks
-        SetInfoText("Minimum vore progress ticks before bad end can trigger.")
+        SetInfoText("When losing the struggling games to 'Vore' mimic the player will be killed")
     ElseIf option == _oidMimicVoreBadEndSimpleSlavery
-        SetInfoText("Use the simple slavery outcome text for vore bad end instead of dying...")
+        SetInfoText("Player blacks out and is transferred to 'Simple Slavery' instead of dying")
     ElseIf option == _oidCreditsAbout
         SetInfoText("This is an unofficial TNTR extension by Gerroth1")
     ElseIf option == _oidCreditsAuthor
