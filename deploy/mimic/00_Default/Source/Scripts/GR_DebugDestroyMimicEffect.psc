@@ -1,11 +1,13 @@
 Scriptname GR_DebugDestroyMimicEffect extends ActiveMagicEffect
 
-GR_MimicPlacer Property lib Auto
+VisualEffect Property effx Auto
+Quest Property lib Auto
 
 Event OnEffectStart(Actor target, Actor caster)
-	if lib.RemoveBakaMimicClosest()
-		Debug.Notification("Mimic returned to chest")
+	GR_BakaMimicAddon addon = (lib as GR_MimicPlacer).RemoveBakaMimicClosest()
+	if addon && addon.PairedContainer
+		effx.Play(addon.PairedContainer, 3.0)
 	Else
-		Debug.Notification("Nearest Mimic not viable")
+		Debug.Notification("Nothing happened")
 	EndIf
 EndEvent

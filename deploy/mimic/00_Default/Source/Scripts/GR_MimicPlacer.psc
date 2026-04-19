@@ -102,21 +102,21 @@ GR_BakaMimicAddon Function PlaceBakaMimic(ObjectReference chest, Int mimicType)
 	return None
 EndFunction
 
-ObjectReference Function PlaceBakaMimicClosestChest(Int mimicType)
+GR_BakaMimicAddon Function PlaceBakaMimicClosestChest(Int mimicType)
 	ObjectReference result = Game.FindClosestReferenceOfAnyTypeInListFromRef(LargeChestForms, Game.GetPlayer(), 500.0)
 	If result && !result.IsDisabled()
 		return PlaceBakaMimic(result, mimicType)
 	EndIf
 EndFunction
 
-bool Function RemoveBakaMimicClosest()
+GR_BakaMimicAddon Function RemoveBakaMimicClosest()
 	GR_BakaMimicAddon addon = Game.FindClosestReferenceOfTypeFromRef(Game.GetFormFromFile(0x816, "GR_MimicPlacer.esp"), Game.GetPlayer(), 400.0) as GR_BakaMimicAddon
 	If addon
 		; This will not remove chests from turned mimic list
 		addon.DestroyMimicAndRestoreChest()
-		return True
+		return addon
 	EndIf
-	return False
+	return None
 EndFunction
 
 Function AddDebugSpells()
