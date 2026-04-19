@@ -105,7 +105,7 @@ Event ProgressVore(string eventName, string trapType, float numArg, form mimic)
     Debug("ProgressVore MimicType=" + MimicType + " Ticks=" + VoreTicks + " PairedLootChest=" + originalChest)
 
     If LoseArmorStarted == 0
-        StartLoseArmor()
+        InitLoseArmor()
         LoseArmorStarted = 1
     ElseIf originalChest != None
         ProgressLoseArmor()
@@ -219,9 +219,42 @@ Function FindLootMoveToReference(ObjectReference mimic, Bool moveToPlayer)
             dropped.MoveTo(mimic, moveX + Utility.RandomInt(-5, 5), moveY +  Utility.RandomInt(-5, 5), 35)
             Debug.Notification("The chest ejected " + retrieved.GetName())
             i += amount
-        endWhile
+        endwhile
     EndIf
     Debug("Moved '" + retrieved.GetName() + "' (" + count + ") to " + mimic)
+EndFunction
+
+String Function IdentifyStolenItemCategory(Form item)
+    If item == HeadGear && StolenHeadGear
+        return "Head"
+    ElseIf item == BodyGear && StolenBodyGear
+        return "Body"
+    ElseIf item == HandsGear && StolenHandsGear
+        return "Hands"
+    ElseIf item == FeetGear && StolenFeetGear
+        return "Feet"
+    ElseIf item == ForeArm && StolenForeArm
+        return "Forearm"
+    ElseIf item == AmuletGear && StolenAmuletGear
+        return "Amulet"
+    ElseIf item == CircletGear && StolenCircletGear
+        return "Circlet"
+    ElseIf item == RingGear && StolenRingGear
+        return "Ring"
+    ElseIf item == Calves && StolenCalves
+        return "Calves"
+    ElseIf item == Slot49 && StolenSlot49
+        return "Skirt"
+    ElseIf item == Slot52 && StolenSlot52
+        return "Panties"
+    ElseIf item == ShieldGear && StolenShieldGear
+        return "Shield"
+    ElseIf item == WeaponRight && StolenWeaponRight
+        return "WeaponRight"
+    ElseIf item == WeaponLeft && StolenWeaponLeft
+        return "WeaponLeft"
+    EndIf
+    return ""
 EndFunction
 
 ; ==================================================
@@ -262,11 +295,27 @@ Form ShieldGear
 Form WeaponRight
 Form WeaponLeft
 
+; Track which items were stolen for quest recovery tracking
+Bool StolenHeadGear = False
+Bool StolenBodyGear = False
+Bool StolenHandsGear = False
+Bool StolenFeetGear = False
+Bool StolenForeArm = False
+Bool StolenAmuletGear = False
+Bool StolenCircletGear = False
+Bool StolenRingGear = False
+Bool StolenCalves = False
+Bool StolenSlot49 = False
+Bool StolenSlot52 = False
+Bool StolenShieldGear = False
+Bool StolenWeaponRight = False
+Bool StolenWeaponLeft = False
+
 Function ConfigLoseArmor()
     Debug("ConfigLoseArmor=" + GR_MimicLoseArmor.GetValueInt() + " ChancePerTick=" + GR_MimicLoseArmorChancePerTick.GetValue() + " MinTicks=" + ConfigMimicLoseArmorMinTicks)
 EndFunction
 
-Function StartLoseArmor()
+Function InitLoseArmor()
     LostGear = 0
     HeadGear = GetWornFormNonDD(SLOT_HEAD)
     BodyGear = GetWornFormNonDD(SLOT_BODY)
@@ -312,39 +361,78 @@ Function ProgressLoseArmor()
 EndFunction
 
 Function StealWornGear()
-    DropIfRandom(1.0, HeadGear)
-    DropIfRandom(1.0, BodyGear)
-    DropIfRandom(1.0, HandsGear)
-    DropIfRandom(1.0, FeetGear)
-    DropIfRandom(0.7, ForeArm)
-    DropIfRandom(0.6, AmuletGear)
-    DropIfRandom(0.6, CircletGear)
-    DropIfRandom(0.6, RingGear)
-    DropIfRandom(0.7, Calves)
-    DropIfRandom(0.8, Slot49)
-    DropIfRandom(0.8, Slot52)
-    DropIfRandom(1.0, ShieldGear)
+    If (MimicStolenQuest.IsCompleted())
+        Debug("Stolen quest previously completed, restarting...")
+        MimicStolenQuest.Stop()
+        Utility.Wait(0.1)
+    EndIf
+
+    If !MimicStolenQuest.IsRunning()
+        MimicStolenQuest.Start()
+        MimicStolenQuest.ResetTracking()
+    EndIf
+
+    MimicStolenQuest.LootContainer.ForceRefTo(originalChest)
+    Debug("ForcedRef " + MimicStolenQuest.LootContainer.GetRef())
+
+    DropIfRandom(1.0, HeadGear, "Head")
+    DropIfRandom(1.0, BodyGear, "Body")
+    DropIfRandom(1.0, HandsGear, "Hands")
+    DropIfRandom(1.0, FeetGear, "Feet")
+    DropIfRandom(0.7, ForeArm, "Forearm")
+    DropIfRandom(0.6, AmuletGear, "Amulet")
+    DropIfRandom(0.6, CircletGear, "Circlet")
+    DropIfRandom(0.6, RingGear, "Ring")
+    DropIfRandom(0.7, Calves, "Calves")
+    DropIfRandom(0.8, Slot49, "Skirt")
+    DropIfRandom(0.8, Slot52, "Panties")
+    DropIfRandom(1.0, ShieldGear, "Shield")
     If PlayerRef.GetEquippedWeapon(False)
-        DropIfRandom(1.0, WeaponRight)
+        DropIfRandom(1.0, WeaponRight, "WeaponRight")
     EndIf
     If PlayerRef.GetEquippedWeapon(True)
-        DropIfRandom(1.0, WeaponLeft)
+        DropIfRandom(1.0, WeaponLeft, "WeaponLeft")
     EndIf
     Debug.Notification("The trap swallowed your clothes...")
-    If !MimicStolenQuest.IsRunning()
-        Debug("Starting quest... " + MimicStolenQuest)
-        MimicStolenQuest.Start()
-        MimicStolenQuest.LootContainer.ForceRefTo(originalChest)
-        Debug("ForcedRef " + MimicStolenQuest.LootContainer.GetRef())
-    Else
-        Debug.Notification("Already running")
-    EndIf
 EndFunction
 
-Bool Function DropIfRandom(Float chance, Form item)
+Bool Function DropIfRandom(Float chance, Form item, String itemCategory)
     If item
         If Utility.RandomFloat() < chance
-            PlayerRef.RemoveItem(item, 1, false, originalChest)
+            ObjectReference droppedItem = PlayerRef.DropObject(item, 1)
+            MimicStolenQuest.AddDroppedItemToAliasByCategory(itemCategory, droppedItem)
+            originalChest.AddItem(droppedItem, 1)
+            MimicStolenQuest.MarkItemStolen(itemCategory)
+
+            If itemCategory == "Head"
+                StolenHeadGear = True
+            ElseIf itemCategory == "Body"
+                StolenBodyGear = True
+            ElseIf itemCategory == "Hands"
+                StolenHandsGear = True
+            ElseIf itemCategory == "Feet"
+                StolenFeetGear = True
+            ElseIf itemCategory == "Forearm"
+                StolenForeArm = True
+            ElseIf itemCategory == "Amulet"
+                StolenAmuletGear = True
+            ElseIf itemCategory == "Circlet"
+                StolenCircletGear = True
+            ElseIf itemCategory == "Ring"
+                StolenRingGear = True
+            ElseIf itemCategory == "Calves"
+                StolenCalves = True
+            ElseIf itemCategory == "Skirt"
+                StolenSlot49 = True
+            ElseIf itemCategory == "Panties"
+                StolenSlot52 = True
+            ElseIf itemCategory == "Shield"
+                StolenShieldGear = True
+            ElseIf itemCategory == "WeaponRight"
+                StolenWeaponRight = True
+            ElseIf itemCategory == "WeaponLeft"
+                StolenWeaponLeft = True
+            EndIf
             return true
         EndIf
     EndIf

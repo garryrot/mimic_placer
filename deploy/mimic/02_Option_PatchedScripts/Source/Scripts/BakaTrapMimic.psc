@@ -777,6 +777,7 @@ State Dead
 	endEvent
 endstate
 
+
 State Open
 	Event OnBeginState()
 		isfiring = true
