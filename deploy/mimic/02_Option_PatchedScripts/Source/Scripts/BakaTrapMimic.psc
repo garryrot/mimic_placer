@@ -814,7 +814,6 @@ endState
 
 auto State Ready
 	Event OnHit(ObjectReference akAggressor, Form akSource, Projectile akProjectile, bool abPowerAttack, bool abSneakAttack, bool abBashAttack, bool abHitBlocked)
-		Debug.Trace("OnHit " + isFiring)
 		if !isfiring
 			attackAssault = false
 			isfiring = true
@@ -832,13 +831,11 @@ auto State Ready
 			float rand = Utility.RandomFloat(0, assaultChance + attackChance + lootChance)
 			Debug.Trace("Rolling rand=" + rand + " assaultChance=" + assaultChance)
 			if rand < assaultChance
-				Debug.Trace("[ONMON] ASSAULT")
 				playAnimationAndWait("TriggerAttack","TransPlay")
 				attackAssault = true
 				SendModEvent("GR_MimicAssault") ; Required to trigger detection
 				Activate(akAggressor)
 			ElseIf rand < assaultChance + attackChance
-				Debug.Trace("[ONMON] DEFAULT")
 				if MimicHealth >= Mimichitcount
 					;DeadSound WIP
 					playAnimationAndWait("TriggerDie","TransDie01")
@@ -857,7 +854,6 @@ auto State Ready
 	EndEvent
 
 	Event OnBeginState()
-		Debug.Trace("Firing = False")
 		isfiring = false
 		PlayAnimation("Reset")
 	endEvent
@@ -917,7 +913,6 @@ EndState
 
 State EjectGear
 	Event OnBeginState()
-		Debug.Trace("[ONMON] EjectGear BeginState")
 		DispenseXmarker = getLinkedRef(MimicDispenseKeyword)
 
 		Debug.Notification("The chest starts to shake...")
