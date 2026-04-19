@@ -463,25 +463,32 @@ EndFunction
 
 Event VoreDeath(string eventName, string strArg, float numArg, form mimic)
     Debug("GR_VoreDeath " + eventName)
+
+    Utility.Wait(1.0)
     BlackFade(true)
-    Utility.Wait(3.0)
+    Utility.Wait(5.0)
 
     If GR_MimicVoreBadEndSimpleSlavery.GetValueInt() == 1
         Debug.MessageBox("Too weak for any more attempts to struggle, you simple give in to the abuse. " + \
                         "As the tendrils explore your body, gradually, your mind breaks and " + \
                         "you eventually pass out. You only awake as some strangers pull open the lid of the chest" + \ 
                         " and start dragging your helpless body away...")
-        Utility.Wait(1.0)
+        Utility.Wait(2.0)
         currentMimic.ResetTrap() ; Frees player
+
+        ; There's a bug that will place the player in front of the mimic 
+        ; after N secs this wait is to prevent that
+        Utility.Wait(12.0)
+
         SendModEvent("GR_TrapEscape", "mimic") ; Force all update handling to stop
         SendModEvent("SSLV Entry")
     Else
         Debug.MessageBox("Worn down by the endless assault of the tentacles, you no longer have the strength to fight back. " + \
                         "You are helplessly trapped, slowly being digested as your sanity and consiousness fades away...")
-        Game.GetPlayer().Kill()
         Game.GetPlayer().DamageAV("Health", 10000)
-        Utility.Wait(1.0)
+        Game.GetPlayer().Kill()
         currentMimic.ResetTrap()
+        Utility.Wait(4.0)
         SendModEvent("GR_TrapEscape", "mimic") ; Force all update handling to stop
     EndIf
 
