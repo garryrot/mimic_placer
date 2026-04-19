@@ -29,11 +29,8 @@ EndEvent
 ; Stage 0
 Function StartPreApproach()
     Debug("Stage 0 - PreApproach Enemies: " + Enemy01.GetActorRef() + " " + Enemy02.GetActorRef() + " " + Enemy03.GetActorRef() + " " + Enemy04.GetActorRef() + " ")
-
-    PrintEnemies()
-
     If ! PrepareEnemies()
-        Debug("Aborting approach, no viable enemies")
+        Debug("Don't start approach, no viable enemies")
         TrapDefeatObserver.FailAndResetToTrapped()
         Stop()
         return
@@ -47,15 +44,6 @@ Function StartPreApproach()
     EndIf
 
     RegisterForSingleUpdate(0.5)
-EndFunction
-
-Function PrintEnemies()
-    Int i = 0
-    While i < EnemyAliases.Length
-        Actor akActor = EnemyAliases[i].GetRef() as Actor
-        Debug("Handling enemy i=" + i + " actor: " + akActor)
-        i += 1
-    EndWhile
 EndFunction
 
 Bool Function PrepareEnemies()
@@ -138,12 +126,10 @@ EndEvent
 
 Bool Function IsValidEnemy(Actor akActor)
     If !akActor
-        Debug("Object not found")
         Return False
     EndIf
 
     If akActor.IsDead() || akActor.IsDisabled()
-        Debug("Not valid enemy or dead")
         Return False
     EndIf
 

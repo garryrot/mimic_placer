@@ -128,12 +128,10 @@ EndFunction
 
 Bool Function IsValidEnemy(Actor akActor)
     If !akActor
-        Debug("Object not found")
         Return False
     EndIf
 
     If akActor.IsDead() || akActor.IsDisabled()
-        Debug("Not valid enemy or dead")
         Return False
     EndIf
 
