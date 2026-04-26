@@ -263,7 +263,7 @@ Function FireVoreSexTrap()
 	WaitForAnimationEvent("TransVoreStart")
 	actorref.playidle(MimicVoreLoop)
 	;actorref.moveto(PosXmarker)
-	(TNTRController as TNTRControllerScript).CheckArmor(actorref)
+	(TNTRController as TNTRControllerScript).CheckArmor(actorref)	
 	Wait(1.0)
 	(GetNthLinkedRef(1) as BakaTrapTriggerBox).DesignateTarget(actorref);QTE
 	(GetNthLinkedRef(1) as BakaTrapTriggerBox).FireQTE(self);QTE
@@ -334,9 +334,7 @@ Function SuccessVore()
 		if WaitForAnimationEvent("StripEventLowerA")
 			(TNTRController as TNTRControllerScript).SetMorphValue(actorref, 1.0, 2)
 			PlayVoice(ActorRef, 30, 1, 3.0)
-			If (! thisarmor.HasKeywordString("zad_InventoryDevice") && ! thisarmor.HasKeywordString("zad_Lockable")) 
-				actorref.UnequipItem(thisarmor)
-			EndIf
+			actorref.UnequipItem(thisarmor)
 		endif
 		WaitForAnimationEvent("TransVoreEndSuccess")
 		actorref.playidle(MimicVoreEndSuccessLoop)
@@ -457,6 +455,7 @@ State VoreQTEStage02
 		PlayAnimation("TriggerVoreSpit")
 		actorref.playidle(MimicVoreSpit)
 		WaitForAnimationEvent("TransPlay")
+
 		if RemoveHeel
 			(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
 		endif
@@ -481,6 +480,7 @@ State VoreQTEStage02
 			WaitForAnimationEvent("TransPlay")
 			
 			Utility.Wait(4)
+
 			if RemoveHeel
 				(TNTRController as TNTRControllerScript).ResetHeelEffect(actorref)
 			endif
@@ -841,8 +841,9 @@ auto State Ready
 					playAnimationAndWait("TriggerDie","TransDie01")
 					goToState("Dead")
 				else
-					akAggressor.GetSelfAsActor().DamageActorValue("Health", 30)
-					akAggressor.GetSelfAsActor().DamageActorValue("Stamina", 100)
+					float dmgMult = Game.GetPlayer().GetLevel() * 3 + 20
+					akAggressor.GetSelfAsActor().DamageActorValue("Health",  dmgMult)
+					akAggressor.GetSelfAsActor().DamageActorValue("Stamina", dmgMult * 1.5)
 					playAnimationAndWait("TriggerAttack","TransPlay")
 					;HitSound WIP
 				endif

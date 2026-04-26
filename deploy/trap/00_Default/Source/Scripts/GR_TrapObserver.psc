@@ -279,11 +279,15 @@ State PostEscape
                 MimicEscape()
             EndIf
             GoToState("Default")
+        ElseIf eventName == "GR_TrapStart" || eventName == "GR_TrapProgress"
+            ; Fail safe in case it gets stuck
+            GoToState("Default")
         EndIf
     EndEvent
 
     Event OnUpdate()
         Debug("OnUpdate Back to default" )
+        GoToState("Default")
     EndEvent
 EndState
 
