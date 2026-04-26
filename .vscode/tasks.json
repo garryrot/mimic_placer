@@ -15,6 +15,18 @@
 			}
 		},
 		{
+			"label": "Build Mimic (Patched Scripts)",
+			"type": "pyro",
+			"projectFile": ".\\deploy\\mimic\\02_Option_PatchedScripts\\skyrimse.ppj",
+			"gamePath": "C:\\Program Files (x86)\\Steam\\steamapps\\common\\Skyrim Special Edition\\",
+			"problemMatcher": [
+				"$PapyrusCompiler"
+			],
+			"group": {
+				"kind": "build"
+			}
+		},
+		{
 			"label": "Build Trap Core (Release)",
 			"type": "pyro",
 			"projectFile": ".\\deploy\\trap\\00_Default\\skyrimse.ppj",
@@ -50,10 +62,25 @@
 			"problemMatcher": []
 		},
 		{
+			"label": "Build All",
+			"type": "shell",
+			"command": "echo Building Trap projects complete",
+			"dependsOn": [
+				"Build Mimic (Release)",
+				"Build Mimic (Patched Scripts)",
+				"Build Trap (Release)"
+			],
+			"dependsOrder": "sequence",
+			"problemMatcher": []
+		},
+		{
 			"label": "Package Mimic",
 			"type": "shell",
 			"command": "./package.ps1 -Project mimic",
-			"dependsOn": "Build Mimic (Release)",
+			"dependsOn": [ 
+				"Build Mimic (Release)",
+				"Build Mimic (Patched Scripts)"
+			],
 			"presentation": {
 				"reveal": "always",
 				"panel": "new"
@@ -75,6 +102,7 @@
 			"command": "./package.ps1 -Project all",
 			"dependsOn": [
 				"Build Mimic (Release)",
+				"Build Mimic (Patched Scripts)",
 				"Build Trap (Release)"
 			],
 			"presentation": {
@@ -83,20 +111,10 @@
 			}
 		},
 		{
-			"label": "Deploy Mimic",
+			"label": "Deploy",
 			"type": "shell",
-			"command": "./deploy.ps1 -Project mimic",
-			"dependsOn": "Build Mimic (Release)",
-			"presentation": {
-				"reveal": "always",
-				"panel": "new"
-			}
-		},
-		{
-			"label": "Deploy Trap",
-			"type": "shell",
-			"command": "./deploy.ps1 -Project trap",
-			"dependsOn": "Build Trap (Release)",
+			"command": "./deploy.ps1",
+			"dependsOn": "Build All",
 			"presentation": {
 				"reveal": "always",
 				"panel": "new"

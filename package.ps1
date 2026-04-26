@@ -1,19 +1,21 @@
 param(
 	[ValidateSet("mimic", "trap", "all")]
-	[string]$Project = "all",
-
-	[string]$Version = "0.1.0"
+	[string]$Project = "all"
 )
 
 $PackageDir = "package"
 $TempRoot = "temp"
 $SevenZipExe = "C:\Program Files\7-Zip\7z.exe"
 
+$OmnomVersion = "1.3.0"
+$TrapVersion = "1.2.1"
+
 function New-ModArchive {
 	param(
 		[string]$DeploySubPath,
 		[string]$ProjectName,
-		[string]$ArchiveName
+		[string]$ArchiveName,
+		[string]$Version
 	)
 
 	$stageDir = Join-Path $TempRoot $ProjectName
@@ -45,10 +47,10 @@ function New-ModArchive {
 New-Item -ItemType Directory -Path $PackageDir -Force | Out-Null
 
 switch ($Project) {
-	"mimic" { New-ModArchive -DeploySubPath "mimic" -ProjectName "mimic" -ArchiveName "OMNOM" }
-	"trap"  { New-ModArchive -DeploySubPath "trap" -ProjectName "trap" -ArchiveName "Trap Defeat" }
+	"mimic" { New-ModArchive -DeploySubPath "mimic" -ProjectName "mimic" -ArchiveName "OMNOM" -Version $OmnomVersion }
+	"trap"  { New-ModArchive -DeploySubPath "trap" -ProjectName "trap" -ArchiveName "Extra Evil Traps" -Version $TrapVersion }
 	"all" {
-		New-ModArchive -DeploySubPath "mimic" -ProjectName "mimic" -ArchiveName "OMNOM"
-		New-ModArchive -DeploySubPath "trap" -ProjectName "trap" -ArchiveName "Trap Defeat"
+		New-ModArchive -DeploySubPath "mimic" -ProjectName "mimic" -ArchiveName "OMNOM" -Version $OmnomVersion
+		New-ModArchive -DeploySubPath "trap" -ProjectName "trap" -ArchiveName "Extra Evil Traps" -Version $TrapVersion 
 	}
 }
