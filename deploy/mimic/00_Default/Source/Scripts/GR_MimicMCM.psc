@@ -39,6 +39,9 @@ Int _oidMimicLoseGoldScalePerLvl
 
 Int _oidMimicLoseArmor
 Int _oidMimicLoseArmorChancePerTick
+Int _oidMimicLoseArmorSlot38
+Int _oidMimicLoseArmorSlot49
+Int _oidMimicLoseArmorSlot52
 
 
 Int _oidCreditsAuthor
@@ -138,21 +141,27 @@ Event OnPageReset(String page)
             _oidHelpConsequencesDisabled = AddTextOption("Consequences Disabled", "")
         EndIf
 
-        AddHeaderOption("Mimics steal loot")
+        AddHeaderOption("Mimics steal armor")
         _oidMimicLoseArmor = AddToggleOption("Enable losing armor", GetBool(MimicConfig.GR_MimicLoseArmor), trapDefeatDependentFlags)
         _oidMimicLoseArmorChancePerTick = AddSliderOption("Lose armor chance per tick", MimicConfig.GR_MimicLoseArmorChancePerTick.GetValue(), "{2}", stealDependentFlags)
-
+    
+        AddHeaderOption("Mimics steal gold")
         _oidMimicLoseGold = AddToggleOption("Lose gold", GetBool(MimicConfig.GR_MimicLoseGold), stealDependentFlags)
         _oidMimicLoseGoldMin = AddSliderOption("Lose gold min", MimicConfig.GR_MimicLoseGoldMin.GetValue(), "{0}", loseGoldDependentFlags)
         _oidMimicLoseGoldMax = AddSliderOption("Lose gold max", MimicConfig.GR_MimicLoseGoldMax.GetValue(), "{0}", loseGoldDependentFlags)
         _oidMimicLoseGoldChance = AddSliderOption("Lose gold chance", MimicConfig.GR_MimicLoseGoldChance.GetValue(), "{2}", loseGoldDependentFlags)
         _oidMimicLoseGoldScalePerLvl = AddSliderOption("Lose gold scale per lvl", MimicConfig.GR_MimicLoseGoldScalePerLvl.GetValue(), "{2}", loseGoldDependentFlags)
 
+        AddHeaderOption("Additional Armor Slots")
+        _oidMimicLoseArmorSlot38 = AddToggleOption("Steal Calves", GetBool(MimicConfig.GR_MimicLoseArmor_Slot38), stealDependentFlags)
+        _oidMimicLoseArmorSlot49 = AddToggleOption("Steal Skirts", GetBool(MimicConfig.GR_MimicLoseArmor_Slot49), stealDependentFlags)
+        _oidMimicLoseArmorSlot52 = AddToggleOption("Steal Panties", GetBool(MimicConfig.GR_MimicLoseArmor_Slot52), stealDependentFlags)
+
+        SetCursorPosition(1)
         AddHeaderOption("Vore Consequences")
         _oidMimicVoreBadEnd = AddToggleOption("Bad End", GetBool(MimicConfig.GR_MimicVoreBadEnd), trapDefeatDependentFlags)
         _oidMimicVoreBadEndSimpleSlavery = AddToggleOption("Bad End is Simple Slavery", GetBool(MimicConfig.GR_MimicVoreBadEndSimpleSlavery), badEndDependentFlags)
 
-        SetCursorPosition(1)
         AddHeaderOption("Mimics contain loot")
         _oidMimicLoot = AddToggleOption("Enable finding loot", GetBool(MimicConfig.GR_MimicLoot), trapDefeatDependentFlags)
         _oidMimicLootMaxItemCount = AddSliderOption("Max items", MimicConfig.GR_MimicLootMaxItemCount.GetValue(), "{0}",findLootDependentFlags)
@@ -191,6 +200,12 @@ Event OnOptionSelect(Int option)
     ElseIf option == _oidMimicLoseArmor
         ToggleGlobal(MimicConfig.GR_MimicLoseArmor, _oidMimicLoseArmor)
         ForcePageReset()
+    ElseIf option == _oidMimicLoseArmorSlot38
+        ToggleGlobal(MimicConfig.GR_MimicLoseArmor_Slot38, _oidMimicLoseArmorSlot38)
+    ElseIf option == _oidMimicLoseArmorSlot49
+        ToggleGlobal(MimicConfig.GR_MimicLoseArmor_Slot49, _oidMimicLoseArmorSlot49)
+    ElseIf option == _oidMimicLoseArmorSlot52
+        ToggleGlobal(MimicConfig.GR_MimicLoseArmor_Slot52, _oidMimicLoseArmorSlot52)
     ElseIf option == _oidMimicLoseGold
         ToggleGlobal(MimicConfig.GR_MimicLoseGold, _oidMimicLoseGold)
         ForcePageReset()
@@ -379,6 +394,12 @@ Event OnOptionHighlight(Int option)
         SetInfoText("Enable losing gear and moving them into the mimic's container. Hint: Will only work for Mimics placed by this mod.")
     ElseIf option == _oidMimicLoseArmorChancePerTick
         SetInfoText("Each 'tick' the player remains trapped in a mimic, this chance is rolled to check if gear gets stolen.")
+    ElseIf option == _oidMimicLoseArmorSlot38
+        SetInfoText("Allow stealing the armor in slot 38 (calves).")
+    ElseIf option == _oidMimicLoseArmorSlot49
+        SetInfoText("Allow stealing the armor in slot 49 (skirt).")
+    ElseIf option == _oidMimicLoseArmorSlot52
+        SetInfoText("Allow stealing the armor in slot 52 (underpants).")
     ElseIf option == _oidMimicLoseGold
         SetInfoText("Enable player losing fold while in mimic.")
     ElseIf option == _oidMimicLoseGoldMin

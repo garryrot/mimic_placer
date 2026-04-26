@@ -44,6 +44,11 @@ GlobalVariable Property GR_MimicLoseGoldScalePerLvl Auto
 GlobalVariable Property GR_MimicLoseArmor Auto ; Int
 GlobalVariable Property GR_MimicLoseArmorChancePerTick Auto
 
+; Slots TODO
+GlobalVariable Property GR_MimicLoseArmor_Slot38 Auto
+GlobalVariable Property GR_MimicLoseArmor_Slot49 Auto
+GlobalVariable Property GR_MimicLoseArmor_Slot52 Auto
+
 Event OnInit()
     Debug("OnInit")
     RegisterForSingleUpdate(15.0)
@@ -82,6 +87,10 @@ Function LoadConfig()
     ; Lose Armor
     GR_MimicLoseArmor.SetValueInt(JsonUtil.GetIntValue(ConsequencesJson, "mimic-lose-armor"))
     GR_MimicLoseArmorChancePerTick.SetValue(JsonUtil.GetFloatValue(ConsequencesJson, "mimic-lose-armor-chance-per-tick"))
+
+    GR_MimicLoseArmor_Slot38.SetValueInt(JsonUtil.GetIntValue(ConsequencesJson, "mimic-lose-armor-38"))
+    GR_MimicLoseArmor_Slot49.SetValueInt(JsonUtil.GetIntValue(ConsequencesJson, "mimic-lose-armor-49"))
+    GR_MimicLoseArmor_Slot52.SetValueInt(JsonUtil.GetIntValue(ConsequencesJson, "mimic-lose-armor-52"))
     
     ; Lose Gold
     GR_MimicLoseGold.SetValueInt(JsonUtil.GetIntValue(ConsequencesJson, "mimic-lose-gold"))

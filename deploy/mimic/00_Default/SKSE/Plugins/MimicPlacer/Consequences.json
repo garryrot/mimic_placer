@@ -13,7 +13,10 @@
         "mimic-lose-gold-min": 10,
         "mimic-lose-gold-max": 350,
 
-        "mimic-lose-armor": 1
+        "mimic-lose-armor": 1,
+        "mimic-lose-armor-38": 1,
+        "mimic-lose-armor-49": 1,
+        "mimic-lose-armor-52": 1
     },
     "float": {
         "mimic-loot-chance-per-tick": 0.08,

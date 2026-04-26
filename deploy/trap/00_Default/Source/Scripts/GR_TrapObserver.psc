@@ -497,7 +497,6 @@ Function DamageAV(String avName, float percentage, float floor)
     If value >= floorValue
         Game.GetPlayer().DamageAV(avName, maxValue * percentage)
     EndIf
-    Debug("DamageAV " + value + " "  + maxValue + " " + floor + " " + floorValue)
 EndFunction
 
 Function BlackFade(bool fadeOut)

@@ -23,6 +23,11 @@ GlobalVariable Property GR_MimicLoseGoldScalePerLvl Auto
 GlobalVariable Property GR_MimicLoseArmor Auto
 GlobalVariable Property GR_MimicLoseArmorChancePerTick Auto ; Chance
 
+GlobalVariable Property GR_MimicLoseArmor_Slot38 Auto
+GlobalVariable Property GR_MimicLoseArmor_Slot49 Auto
+GlobalVariable Property GR_MimicLoseArmor_Slot52 Auto
+FormList Property IgnoredArmorKeywords Auto
+
 ; State
 BakaTrapMimic currentMimic
 BakaTrapTriggerBox currentTriggerBox
@@ -48,6 +53,20 @@ Function Maintenance()
     RegisterForModEvent("GR_VoreDeath", "VoreDeath")
     RegisterForModEvent("GR_MimicDispense", "MimicDispense")
     RegisterForSingleUpdate(2.0)
+
+    String[] ignoredKWs = new String[3]
+    ignoredKWs[0] = "zad_InventoryDevice"
+    ignoredKWs[1] = "zad_Lockable"
+    ignoredKWs[2] = "Sexlab_NoStrip"
+    int i = 0
+    While i < ignoredKWs.Length
+        Keyword kw = Keyword.GetKeyword(ignoredKWs[i])
+        If kw && IgnoredArmorKeywords.Find(kw) < 0
+            Debug("Adding " + kw + " to KW ignore...")
+            IgnoredArmorKeywords.AddForm(kw)
+        EndIf
+        i += 1
+    EndWhile
 EndFunction
 
 Event OnUpdate()
@@ -241,9 +260,9 @@ int SLOT_FOREARMS = 0x00000010
 int SLOT_AMULET = 0x00000020
 int SLOT_CIRCLET = 0x00001000
 int SLOT_RING = 0x00000040
-int SLOT_CALVES = 0x00000100
-int SLOT_49 = 0x00080000      ; Skirt
-int SLOT_52 = 0x00400000      ; Panties
+int SLOT_CALVES = 0x00000100  ; 38
+int SLOT_49 = 0x00080000      ; 49 Skirt
+int SLOT_52 = 0x00400000      ; 52 Underwear
 
 Int ConfigMimicLoseArmorMinTicks = 5 ; Waiting time until the player animation ingulfs the player
 
@@ -294,9 +313,16 @@ Function InitLoseArmor()
     AmuletGear = GetWornFormNonDD(SLOT_AMULET)
     CircletGear = GetWornFormNonDD(SLOT_CIRCLET)
     RingGear = GetWornFormNonDD(SLOT_RING)
-    Calves = GetWornFormNonDD(SLOT_CALVES)
-    Slot49 = GetWornFormNonDD(SLOT_49) ; Skirt
-    Slot52 = GetWornFormNonDD(SLOT_52) ; Panties
+
+    If GR_MimicLoseArmor_Slot38.GetValueInt() != 0
+        Calves = GetWornFormNonDD(SLOT_CALVES) ; Slot 38
+    EndIf
+    If GR_MimicLoseArmor_Slot49.GetValueInt() != 0
+        Slot49 = GetWornFormNonDD(SLOT_49) ; Skirt
+    EndIf
+    If GR_MimicLoseArmor_Slot52.GetValueInt() != 0
+        Slot52 = GetWornFormNonDD(SLOT_52) ; Panties
+    EndIf
 
     ShieldGear = PlayerRef.GetWornForm(SLOT_SHIELD)
     WeaponRight = PlayerRef.GetEquippedWeapon(False)
@@ -306,12 +332,15 @@ EndFunction
 Form Function GetWornFormNonDD(int slot)
     Form formItem = PlayerRef.GetWornForm(slot)
     If formItem
-        If formItem.HasKeywordString("zad_InventoryDevice")
-            return None
-        EndIf
-        If formItem.HasKeywordString("zad_Lockable")
-            return None
-        EndIf
+        Int i = 0
+        While i < IgnoredArmorKeywords.GetSize()
+            Debug("Checking kw[" + i + "] " + IgnoredArmorKeywords.GetAt(i))
+            If formItem.HasKeyword(IgnoredArmorKeywords.GetAt(i) as Keyword)
+                Debug("Item contains ignored Keyword")
+                return None
+            EndIf
+            i += 1
+        EndWhile
     EndIf
     return formItem
 EndFunction
