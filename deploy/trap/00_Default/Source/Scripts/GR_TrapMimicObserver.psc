@@ -48,18 +48,24 @@ Event PlayerTrapped(string eventName, string trapType, float numArg, form sender
         Else
             RegisterForSingleUpdate(20.0)
         EndIf
+        
+        RegisterForAnimationEvent(PlayerRef, "MimicVoreSpitLoop")		
+        RegisterForAnimationEvent(PlayerRef, "FootLeft")
+        RegisterForAnimationEvent(PlayerRef, "FootRight")
+        RegisterForAnimationEvent(PlayerRef, "IdleForceDefaultState")	
     EndIf
 EndEvent
 
 Event PlayerEscape(string eventName, string trapType, float numArg, form mimic)
     Debug("PlayerEscaped " + eventName + " " + trapType)
     If trapType == "mimic"  
-        Debug("StopObserving()")
+        Debug("Assuming player escape")
         UnregisterForAnimationEvent(PlayerRef, "MimicVoreSpitLoop")			
         UnregisterForAnimationEvent(PlayerRef, "FootLeft")
         UnregisterForAnimationEvent(PlayerRef, "FootRight")
         UnregisterForAnimationEvent(PlayerRef, "IdleForceDefaultState")
         voreStarted = false
+        startVore = false
     EndIf
 EndEvent
 
@@ -75,17 +81,13 @@ Event OnUpdate()
         RegisterForModEvent("GR_MimicAssault", "MimicAssault")
     ElseIf voreStarted
         RegisterForSingleUpdate(11.0)
-        Debug("Sending progress...")
+        Debug("Progressing vore...")
         currentMimic.SendModEvent("GR_TrapProgress", "mimic")
     ElseIf startVore
         startVore = false
         voreStarted = true
-        Debug("observing vore " + currentMimic + " type=" + (currentMimic as BakaTrapMimic).MimicType)
+        Debug("Assuming player swallowed " + currentMimic + " type=" + (currentMimic as BakaTrapMimic).MimicType)
         currentMimic.SendModEvent("GR_TrapProgress", "mimic")
-        RegisterForAnimationEvent(PlayerRef, "MimicVoreSpitLoop")			
-        RegisterForAnimationEvent(PlayerRef, "FootLeft")
-        RegisterForAnimationEvent(PlayerRef, "FootRight")
-        RegisterForAnimationEvent(PlayerRef, "IdleForceDefaultState")
         RegisterForSingleUpdate(11.0)
     EndIf
 EndEvent
@@ -116,17 +118,9 @@ Function OnActivateMimic(ObjectReference mimic)
 EndFunction
 
 Function OnAnimationEvent(ObjectReference source, String eventName)
-	If eventName == "MimicVoreSpitLoop"
-        Debug("Player escaped from mimic")
-        voreStarted = false
-        currentMimic.SendModEvent("GR_TrapEscape", "mimic")
-    ElseIf eventName == "FootLeft" || eventName == "FootRight" || eventName == "IdleStop" 
-        Debug("Player won struggle")
-        voreStarted = false
-        currentMimic.SendModEvent("GR_TrapEscape", "mimic")
-    Else
-        Debug("Unknown event " + eventName)
-    EndIf
+    Debug("Player escaped from mimic evt=" + eventName)
+    voreStarted = false
+    currentMimic.SendModEvent("GR_TrapEscape", "mimic")
 EndFunction
 
 Function Error(String msg)
