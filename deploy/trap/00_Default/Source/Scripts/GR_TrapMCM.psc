@@ -7,6 +7,7 @@ Int _oidSaveConfig
 
 Int _oidPatchedScripts
 Int _oidStrugglingQTE
+Int _oidZadAnimatinoFaction
 
 Int _oidTrapEnabled
 Int _oidTrapDamagePlayer
@@ -45,12 +46,16 @@ Event OnPageReset(String page)
         _oidCreditsAbout = AddTextOption("About", "")
         _oidCreditsAuthor = AddTextOption("Special Thanks", "")
         return
+
     ElseIf page == "Debug"
         AddHeaderOption("Bear Trap Dependencies")
         AddToggleOption("Patched TNTR scripts?", TrapConfig.PatchedBearScripts, OPTION_FLAG_DISABLED)
         _oidStrugglingQTE = AddToggleOption("Struggling QTE", IsStrugglingQteLoaded(), OPTION_FLAG_DISABLED)
         AddHeaderOption("Snare Trap")
         AddToggleOption("Patched Snare Trap scripts?", TrapConfig.PatchedSnareScripts, OPTION_FLAG_DISABLED)
+
+        AddHeaderOption("Compatibility")
+        _oidZadAnimatinoFaction = AddToggleOption("DD: Add ZadAnimationFaction", TrapConfig.AddZadAnimationFaction)
         return
     EndIf
 
@@ -69,7 +74,7 @@ Event OnPageReset(String page)
     _oidTrapApproachChance = AddSliderOption("Enemy Approach Chance", TrapConfig.GR_TrapApproachChance.GetValue(), "{2}", approachDependentFlags)
     _oidTrapDamagePlayer = AddToggleOption("Damage player", GetBool(TrapConfig.GR_TrapDamagePlayer), approachDependentFlags)
     _oidTrapSexualisedDialogue = AddToggleOption("Sexualised approach dialogue", GetBool(TrapConfig.GR_TrapSexualisedDialogue), approachDependentFlags)
-    _oidTrapApproachMaxDistance = AddSliderOption("Approach max distance", TrapConfig.GR_TrapApproachMaxDistance.GetValue(), "{0}", approachDependentFlags)
+    _oidTrapApproachMaxDistance = AddSliderOption("Approach max distance", TrapConfig.GR_TrapDefeatMaxDistance.GetValue(), "{0}", approachDependentFlags)
 
     SetCursorPosition(1)
     AddHeaderOption("Snare Trap")
@@ -111,6 +116,9 @@ Event OnOptionSelect(Int option)
         ForcePageReset()
     ElseIf option == _oidSnareDropWeapon
         ToggleGlobal(TrapConfig.GR_TrapSnareDropWeapon, _oidSnareDropWeapon)
+    ElseIf option == _oidZadAnimatinoFaction
+        TrapConfig.AddZadAnimationFaction = !TrapConfig.AddZadAnimationFaction
+        SetToggleOptionValue(_oidZadAnimatinoFaction, TrapConfig.AddZadAnimationFaction)
     EndIf
 EndEvent
 
@@ -121,7 +129,7 @@ Event OnOptionSliderOpen(Int option)
         SetSliderDialogRange(0.0, 1.0)
         SetSliderDialogInterval(0.01)
     ElseIf option == _oidTrapApproachMaxDistance
-        SetSliderDialogStartValue(TrapConfig.GR_TrapApproachMaxDistance.GetValue())
+        SetSliderDialogStartValue(TrapConfig.GR_TrapDefeatMaxDistance.GetValueInt())
         SetSliderDialogDefaultValue(9000.0)
         SetSliderDialogRange(0.0, 50000.0)
         SetSliderDialogInterval(100.0)
@@ -153,7 +161,7 @@ Event OnOptionSliderAccept(Int option, Float value)
         TrapConfig.GR_TrapApproachChance.SetValue(value)
         SetSliderOptionValue(option, value, "{2}")
     ElseIf option == _oidTrapApproachMaxDistance
-        TrapConfig.GR_TrapApproachMaxDistance.SetValue(value)
+        TrapConfig.GR_TrapDefeatMaxDistance.SetValueInt(value as Int)
         SetSliderOptionValue(option, value, "{0}")
     ElseIf option == _oidSnareDropGoldMin
         TrapConfig.GR_TrapSnareDropGoldMin.SetValueInt(value as Int)
@@ -205,8 +213,9 @@ Event OnOptionHighlight(Int option)
         SetInfoText("This is an unofficial TNTR extension by Gerroth1")
     ElseIf option == _oidCreditsAuthor
         SetInfoText("Special thanks to Bakafactory for creating the original TNTR mod.")
+    ElseIf option == _oidZadAnimatinoFaction
+        SetInfoText("Adds player to ZadAnimationFaction during entrapment to prevent DD animations interrupting trap progress. Beware: In unforgiving devices, this flag will also block controls during entrapment.")
     Else
-        SetInfoText("")
     EndIf
 EndEvent
 

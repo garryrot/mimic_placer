@@ -25,9 +25,12 @@ GlobalVariable Property GR_TrapSnareDropGoldMax Auto
 GlobalVariable Property GR_TrapSnareDropWeaponChance Auto
 GlobalVariable Property GR_TrapSnareDropWeapon Auto
 
-; Interop
+; Patched
 Bool Property PatchedBearScripts Auto
 Bool Property PatchedSnareScripts Auto
+
+; Compatibility
+Bool Property AddZadAnimationFaction = False Auto 
 
 Event OnInit()
     Debug("OnInit")

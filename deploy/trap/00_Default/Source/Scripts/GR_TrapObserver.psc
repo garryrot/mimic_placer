@@ -31,8 +31,6 @@ Function Maintenance()
     zadAnimationFaction = Game.GetFormFromFile(0x29567, "Devious Devices - Integration.esm") as Faction
     If !zadAnimationFaction
         Debug("ZadAnimationFaction not found")
-    Else
-        Debug("ZadAnimationFaction here!")
     EndIf
     ResetEvents()
 EndFunction
@@ -143,7 +141,7 @@ EndState
 State Trapped
     Event OnBeginState()
         Debug("State: Trapped")
-        If zadAnimationFaction
+        If zadAnimationFaction && TrapConfig.AddZadAnimationFaction
             Debug("Adding player to animation faction...")
             PlayerRef.AddToFaction(zadAnimationFaction)
         EndIf
@@ -265,7 +263,7 @@ State PostEscape
             RegisterForSingleUpdate(8.0)
         EndIf
         
-        If zadAnimationFaction
+        If zadAnimationFaction && TrapConfig.AddZadAnimationFaction
             Debug("Removing player from zadAnimationFaction")
             PlayerRef.RemoveFromFaction(zadAnimationFaction)
         EndIf
