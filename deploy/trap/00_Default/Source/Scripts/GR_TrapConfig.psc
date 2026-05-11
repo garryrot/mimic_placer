@@ -13,7 +13,8 @@ GlobalVariable Property GR_PatchedScripts Auto
 GlobalVariable Property GR_TrapEnabled Auto
 GlobalVariable Property GR_TrapDamagePlayer Auto
 GlobalVariable Property GR_TrapApproachChance Auto
-GlobalVariable Property GR_TrapApproachMaxDistance Auto
+GlobalVariable Property GR_TrapApproachMaxDistance Auto ; Deprecated
+GlobalVariable Property GR_TrapDefeatMaxDistance Auto
 GlobalVariable Property GR_TrapSexualisedDialogue Auto
 
 ; Snare
@@ -52,7 +53,7 @@ Function LoadConfig()
     GR_TrapSexualisedDialogue.SetValueInt(JsonUtil.GetIntValue(TrapApproachJson, "sexualised-dialogue"))
 
     GR_TrapApproachChance.SetValue(JsonUtil.GetFloatValue(TrapApproachJson, "approach-chance"))
-    GR_TrapApproachMaxDistance.SetValue(JsonUtil.GetFloatValue(TrapApproachJson, "approach-max-distance"))
+    GR_TrapDefeatMaxDistance.SetValue(JsonUtil.GetFloatValue(TrapApproachJson, "approach-max-distance"))
 
     GR_TrapSnareDropGold.SetValueInt(JsonUtil.GetIntValue(TrapConsequenceJson, "snare-drop-gold"))
     GR_TrapSnareDropGoldMin.SetValueInt(JsonUtil.GetIntValue(TrapConsequenceJson, "snare-drop-gold-min"))
@@ -65,7 +66,7 @@ Function LoadConfig()
         + " damage-player=" + GR_TrapDamagePlayer.GetValueInt() \
         + " approach-chance=" + GR_TrapApproachChance.GetValue() \
         + " sexualised-dialogue=" + GR_TrapSexualisedDialogue.GetValueInt() \
-        + " approach-max-distance=" + GR_TrapApproachMaxDistance.GetValue() \
+        + " approach-max-distance=" + GR_TrapDefeatMaxDistance.GetValue() \
         + " snare-drop-gold=" + GR_TrapSnareDropGold.GetValueInt() \
         + " snare-drop-gold-min=" + GR_TrapSnareDropGoldMin.GetValueInt() \
         + " snare-drop-gold-max=" + GR_TrapSnareDropGoldMax.GetValueInt() \
@@ -82,7 +83,7 @@ Function SaveConfig()
     JsonUtil.SetIntValue(TrapApproachJson, "damage-player", GR_TrapDamagePlayer.GetValueInt())
     JsonUtil.SetIntValue(TrapApproachJson, "sexualised-dialogue", GR_TrapSexualisedDialogue.GetValueInt())
     JsonUtil.SetFloatValue(TrapApproachJson, "approach-chance", GR_TrapApproachChance.GetValue())
-    JsonUtil.SetFloatValue(TrapApproachJson, "approach-max-distance", GR_TrapApproachMaxDistance.GetValue())
+    JsonUtil.SetFloatValue(TrapApproachJson, "approach-max-distance", GR_TrapDefeatMaxDistance.GetValue())
 
     JsonUtil.SetIntValue(TrapConsequenceJson, "snare-drop-gold", GR_TrapSnareDropGold.GetValueInt())
     JsonUtil.SetIntValue(TrapConsequenceJson, "snare-drop-gold-min", GR_TrapSnareDropGoldMin.GetValueInt())
@@ -98,7 +99,7 @@ Function SaveConfig()
         + " damage-player=" + GR_TrapDamagePlayer.GetValueInt() \
         + " approach-chance=" + GR_TrapApproachChance.GetValue() \
         + " sexualised-dialogue=" + GR_TrapSexualisedDialogue.GetValueInt() \
-        + " approach-max-distance=" + GR_TrapApproachMaxDistance.GetValue() \
+        + " approach-max-distance=" + GR_TrapDefeatMaxDistance.GetValue() \
         + " snare-drop-gold=" + GR_TrapSnareDropGold.GetValueInt() \
         + " snare-drop-gold-min=" + GR_TrapSnareDropGoldMin.GetValueInt() \
         + " snare-drop-gold-max=" + GR_TrapSnareDropGoldMax.GetValueInt() \

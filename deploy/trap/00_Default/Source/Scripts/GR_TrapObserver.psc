@@ -18,13 +18,14 @@ Bool Property AlertPlayer Auto
 
 ; Fix: Prevent devious devices animations when player is trapped
 Faction zadAnimationFaction
+Bool runsUnforgivingDevices = false
 
 Event OnInit()
     Debug("OnInit")
     Maintenance()
     GoToState("Default")
 EndEvent
-
+ 
 Function Maintenance()
     Debug("Maintenance")
     zadAnimationFaction = Game.GetFormFromFile(0x29567, "Devious Devices - Integration.esm") as Faction

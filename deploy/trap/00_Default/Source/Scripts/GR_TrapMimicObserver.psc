@@ -32,9 +32,10 @@ Function Maintenance()
 EndFunction
 
 Event PlayerTrapped(string eventName, string trapType, float numArg, form sender)
-    currentMimic = sender as ObjectReference
-    Debug("PlayerTrapped " + eventName + " " + trapType + " mimic=" + currentMimic)
+    Debug("PlayerTrapped " + eventName + " " + trapType + " sender=" + sender)
     If trapType == "mimic"  
+        currentMimic = sender as ObjectReference
+
         ; Just estimate the duration of the struggle and intro 
         ; animations based on the mimic type worst case the 
         ; calculation of consequences is just not accurate
@@ -48,7 +49,6 @@ Event PlayerTrapped(string eventName, string trapType, float numArg, form sender
         Else
             RegisterForSingleUpdate(20.0)
         EndIf
-        
         RegisterForAnimationEvent(PlayerRef, "MimicVoreSpitLoop")		
         RegisterForAnimationEvent(PlayerRef, "FootLeft")
         RegisterForAnimationEvent(PlayerRef, "FootRight")
@@ -118,9 +118,11 @@ Function OnActivateMimic(ObjectReference mimic)
 EndFunction
 
 Function OnAnimationEvent(ObjectReference source, String eventName)
-    Debug("Player escaped from mimic evt=" + eventName)
-    voreStarted = false
-    currentMimic.SendModEvent("GR_TrapEscape", "mimic")
+    If eventName == "MimicVoreSpitLoop"	||  eventName == "FootLeft" ||  eventName == "FootRight" ||  eventName == "IdleForceDefaultState"
+        Debug("Player escaped from mimic evt=" + eventName)
+        voreStarted = false
+        currentMimic.SendModEvent("GR_TrapEscape", "mimic")
+    EndIf
 EndFunction
 
 Function Error(String msg)

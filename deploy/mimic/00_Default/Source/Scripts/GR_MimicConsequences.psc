@@ -334,9 +334,9 @@ Form Function GetWornFormNonDD(int slot)
     If formItem
         Int i = 0
         While i < IgnoredArmorKeywords.GetSize()
-            Debug("Checking kw[" + i + "] " + IgnoredArmorKeywords.GetAt(i))
+            ; Debug("Checking kw[" + i + "] " + IgnoredArmorKeywords.GetAt(i))
             If formItem.HasKeyword(IgnoredArmorKeywords.GetAt(i) as Keyword)
-                Debug("Item contains ignored Keyword")
+                Debug("Item " + formItem + " contains ignored kw " + IgnoredArmorKeywords.GetAt(i))
                 return None
             EndIf
             i += 1
