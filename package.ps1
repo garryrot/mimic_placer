@@ -8,7 +8,7 @@ $TempRoot = "temp"
 $SevenZipExe = "C:\Program Files\7-Zip\7z.exe"
 
 $OmnomVersion = "1.3.0"
-$TrapVersion = "1.2.1"
+$TrapVersion = "1.2.3"
 
 function New-ModArchive {
 	param(
