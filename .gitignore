@@ -5,4 +5,4 @@ package/*
 *.png
 *.jpg
 skyrimse.ppj
-deploy.ps1
+drafting/*
