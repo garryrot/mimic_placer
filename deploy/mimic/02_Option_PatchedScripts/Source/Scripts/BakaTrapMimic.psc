@@ -830,7 +830,7 @@ auto State Ready
 			float lootChance = 1
 			float rand = Utility.RandomFloat(0, assaultChance + attackChance + lootChance)
 			Debug.Trace("Rolling rand=" + rand + " assaultChance=" + assaultChance)
-			if rand < assaultChance
+			if rand < assaultChance && akAggressor == Game.GetPlayer()
 				playAnimationAndWait("TriggerAttack","TransPlay")
 				attackAssault = true
 				SendModEvent("GR_MimicAssault") ; Required to trigger detection
